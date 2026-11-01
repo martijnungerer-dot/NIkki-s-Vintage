@@ -1,0 +1,506 @@
+{
+  "schemaVersion": 1,
+  "baseName": "Nikki Vintage — Inventory",
+  "tables": [
+    {
+      "name": "Garments",
+      "description": "One physical vintage garment per SKU. Editorial master; commerce owns live stock.",
+      "fields": [
+        {
+          "name": "SKU",
+          "type": "singleLineText",
+          "description": "Unique immutable item code, e.g. NV-000001. Never reuse. Application enforces uniqueness."
+        },
+        {
+          "name": "Title",
+          "type": "singleLineText",
+          "description": "Customer-facing title; do not invent brand, age or species."
+        },
+        {
+          "name": "Slug",
+          "type": "singleLineText",
+          "description": "Unique stable storefront slug."
+        },
+        {
+          "name": "Category",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "coat"
+              },
+              {
+                "name": "jacket"
+              },
+              {
+                "name": "gilet"
+              },
+              {
+                "name": "other"
+              }
+            ]
+          },
+          "description": "Garment construction."
+        },
+        {
+          "name": "Material",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "fur"
+              },
+              {
+                "name": "leather"
+              },
+              {
+                "name": "shearling"
+              },
+              {
+                "name": "mixed"
+              },
+              {
+                "name": "unknown"
+              }
+            ]
+          },
+          "description": "Verified main material or unknown."
+        },
+        {
+          "name": "Species",
+          "type": "singleLineText",
+          "description": "Only record when supported by label or provenance; unknown is valid."
+        },
+        {
+          "name": "Material evidence",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "unverified"
+              },
+              {
+                "name": "label"
+              },
+              {
+                "name": "supplier evidence"
+              },
+              {
+                "name": "specialist verified"
+              }
+            ]
+          },
+          "description": "Basis for material identification."
+        },
+        {
+          "name": "Brand",
+          "type": "singleLineText",
+          "description": "As seen on the garment label."
+        },
+        {
+          "name": "Era notes",
+          "type": "singleLineText",
+          "description": "Evidence-backed estimate; uncertainty must remain visible."
+        },
+        {
+          "name": "Colour",
+          "type": "singleLineText",
+          "description": "Descriptive colour."
+        },
+        {
+          "name": "Label size",
+          "type": "singleLineText",
+          "description": "Original label text, not a computed modern size."
+        },
+        {
+          "name": "Fit notes",
+          "type": "multilineText",
+          "description": "Nikki's observations; no guaranteed fit."
+        },
+        {
+          "name": "Condition",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "excellent"
+              },
+              {
+                "name": "very good"
+              },
+              {
+                "name": "good"
+              },
+              {
+                "name": "fair"
+              },
+              {
+                "name": "unassessed"
+              }
+            ]
+          },
+          "description": "Condition after inspection."
+        },
+        {
+          "name": "Condition notes",
+          "type": "multilineText",
+          "description": "Wear, repairs and flaws, including where photographed."
+        },
+        {
+          "name": "Description",
+          "type": "multilineText",
+          "description": "Approved public description."
+        },
+        {
+          "name": "Draft price minor",
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "description": "Proposed price in currency minor units; EUR 12500 means EUR 125.00. Not checkout authority."
+        },
+        {
+          "name": "Currency",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "EUR"
+              }
+            ]
+          },
+          "description": "Provisional MVP currency."
+        },
+        {
+          "name": "Editorial status",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "draft"
+              },
+              {
+                "name": "review"
+              },
+              {
+                "name": "ready"
+              },
+              {
+                "name": "published"
+              },
+              {
+                "name": "withdrawn"
+              },
+              {
+                "name": "archived"
+              }
+            ]
+          },
+          "description": "Ready requests validation; published only after successful synchronization."
+        },
+        {
+          "name": "Sale eligibility",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "pending"
+              },
+              {
+                "name": "approved"
+              },
+              {
+                "name": "blocked"
+              }
+            ]
+          },
+          "description": "Nikki verifies sale eligibility and provenance before publishing."
+        },
+        {
+          "name": "Provenance notes",
+          "type": "multilineText",
+          "description": "Private acquisition and material evidence; never exposed to storefront."
+        },
+        {
+          "name": "Purchase cost minor",
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "description": "Private acquisition cost in currency minor units."
+        },
+        {
+          "name": "Storage location",
+          "type": "singleLineText",
+          "description": "Private physical storage location."
+        },
+        {
+          "name": "Commerce product ID",
+          "type": "singleLineText",
+          "description": "Actual platform product ID after creation; leave blank before."
+        },
+        {
+          "name": "Commerce variant ID",
+          "type": "singleLineText",
+          "description": "One variant for this physical garment."
+        },
+        {
+          "name": "Commerce availability",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "unknown"
+              },
+              {
+                "name": "available"
+              },
+              {
+                "name": "reserved"
+              },
+              {
+                "name": "sold"
+              },
+              {
+                "name": "return inspection"
+              },
+              {
+                "name": "withdrawn"
+              }
+            ]
+          },
+          "description": "Read-only projection from commerce; never use to initialize stock again."
+        },
+        {
+          "name": "Content revision",
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "description": "Incremented by publisher for approved content versions."
+        },
+        {
+          "name": "Last sync at",
+          "type": "singleLineText",
+          "description": "Publisher writes UTC ISO 8601 timestamp."
+        },
+        {
+          "name": "Sync error",
+          "type": "multilineText",
+          "description": "Redacted failure summary; no secrets or customer data."
+        }
+      ]
+    },
+    {
+      "name": "Measurements",
+      "description": "One current measurement set per garment. Flat measurements in cm; an omitted measurement is null.",
+      "fields": [
+        {
+          "name": "Measurement key",
+          "type": "singleLineText",
+          "description": "Unique measurement-set key; one current set per garment."
+        },
+        {
+          "name": "Chest flat cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Straight underarm-to-underarm, closed garment flat, not stretched."
+        },
+        {
+          "name": "Shoulder cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Across back, shoulder seam to shoulder seam; omit for raglan."
+        },
+        {
+          "name": "Back length cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Centre back from collar seam to hem, excluding collar."
+        },
+        {
+          "name": "Sleeve cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Shoulder seam to cuff along outer sleeve."
+        },
+        {
+          "name": "Raglan sleeve cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Centre-back neck point to cuff; use for raglan and explain method."
+        },
+        {
+          "name": "Waist flat cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Flat width at natural waist; record position in notes."
+        },
+        {
+          "name": "Hem flat cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Straight flat width across bottom hem."
+        },
+        {
+          "name": "Tolerance cm",
+          "type": "number",
+          "options": {
+            "precision": 1
+          },
+          "description": "Measurement uncertainty, proposed 1.0 cm; confirm per garment."
+        },
+        {
+          "name": "Method version",
+          "type": "singleLineText",
+          "description": "Use flat-v1 when following docs/MEASUREMENTS.md."
+        },
+        {
+          "name": "Measured at",
+          "type": "singleLineText",
+          "description": "ISO 8601 measurement timestamp."
+        },
+        {
+          "name": "Measured by",
+          "type": "singleLineText",
+          "description": "Operator display name; no private contact data."
+        },
+        {
+          "name": "Verification",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "pending"
+              },
+              {
+                "name": "verified"
+              },
+              {
+                "name": "remeasure"
+              }
+            ]
+          },
+          "description": "Nikki checks actual measurements before publishing."
+        },
+        {
+          "name": "Notes",
+          "type": "multilineText",
+          "description": "Closures, thick lining, uneven hem, unavailable dimensions, deviations."
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "description": "One image per row; originals private until approved and copied to durable storefront hosting.",
+      "fields": [
+        {
+          "name": "Media key",
+          "type": "singleLineText",
+          "description": "Unique stable image key."
+        },
+        {
+          "name": "Original",
+          "type": "multipleAttachments",
+          "description": "Original garment photograph."
+        },
+        {
+          "name": "Role",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "front"
+              },
+              {
+                "name": "back"
+              },
+              {
+                "name": "detail"
+              },
+              {
+                "name": "label"
+              },
+              {
+                "name": "flaw"
+              },
+              {
+                "name": "measurement"
+              }
+            ]
+          },
+          "description": "Purpose of photo."
+        },
+        {
+          "name": "Sort order",
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "description": "Display order starting at 1; one primary front photo."
+        },
+        {
+          "name": "Alt text",
+          "type": "singleLineText",
+          "description": "Accurate accessible description."
+        },
+        {
+          "name": "Approval",
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "name": "pending"
+              },
+              {
+                "name": "approved"
+              },
+              {
+                "name": "rejected"
+              }
+            ]
+          },
+          "description": "Human image approval."
+        },
+        {
+          "name": "Published URL",
+          "type": "url",
+          "description": "Stable commerce/CDN image URL, never an expiring Airtable attachment URL."
+        },
+        {
+          "name": "Content hash",
+          "type": "singleLineText",
+          "description": "Publisher computes hash to avoid duplicate uploads."
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "table": "Measurements",
+      "field": "Garment",
+      "targetTable": "Garments",
+      "relationship": "exactly one garment; publisher rejects zero or multiple links"
+    },
+    {
+      "table": "Media",
+      "field": "Garment",
+      "targetTable": "Garments",
+      "relationship": "exactly one garment; publisher rejects zero or multiple links"
+    }
+  ]
+}

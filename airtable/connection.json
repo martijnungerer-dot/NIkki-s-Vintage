@@ -1,0 +1,80 @@
+{
+  "verifiedAt": "2026-11-01",
+  "workspaceName": "My First Workspace",
+  "workspaceId": "wsp3CQUQLpkzoyEfl",
+  "baseName": "Nikki Vintage — Inventory",
+  "baseId": "appcR1TGKaoc4XAU4",
+  "baseUrl": "https://airtable.com/appcR1TGKaoc4XAU4",
+  "connectionScope": "Chat connector verified; website runtime and Claude Airtable access not configured",
+  "tables": {
+    "Garments": {
+      "id": "tblTO7hpCSgq99UYy",
+      "fields": {
+        "SKU": "fldyYWxS6ORU3Fe3x",
+        "Title": "fld9kGnwUUzndwPTb",
+        "Slug": "flduKn4ebksEBMrLg",
+        "Category": "fldQGsLoxGuM32jbp",
+        "Material": "fld7B7uYof3S6f6H0",
+        "Species": "fldvWWe4CVVSAJ96F",
+        "Material evidence": "fldXRHyigLPufMIOe",
+        "Brand": "fldOKxqogMWqz7Lm3",
+        "Era notes": "fldfez1hoIfX9ZkH3",
+        "Colour": "fldTaB6wnTYg9DsWd",
+        "Label size": "fldf3RYOteplcma7v",
+        "Fit notes": "fldTM1ZLfhgy0C0OM",
+        "Condition": "fldzsBOub9I3FBxeU",
+        "Condition notes": "fldFg18aXzuYZME8k",
+        "Description": "fldyTzwJADsXKgMDd",
+        "Draft price minor": "fldzkAKLWz4TzO4Rp",
+        "Currency": "fldym4e0zwoFwXY1T",
+        "Editorial status": "flddqDn94q55viBaQ",
+        "Sale eligibility": "fldWuJmoVS9fNDYfe",
+        "Provenance notes": "fldujmVBat6Ej0nSO",
+        "Purchase cost minor": "fldEgI8Grt9rBg2nt",
+        "Storage location": "fld3UigK4dawUlPI1",
+        "Commerce product ID": "fldnCqjNQwKIXBW0J",
+        "Commerce variant ID": "fldFOJFoqRJpJMQdm",
+        "Commerce availability": "fldG6HcvAvjGwtqDK",
+        "Content revision": "fldxQYoRODpOcv2WM",
+        "Last sync at": "fldOUuMp52ryG6kyH",
+        "Sync error": "fldwExCDmPNdJx9Hw",
+        "Measurements": "fldkVf8Jlbf718A7l",
+        "Media": "fldseimeIPboZG9Qw"
+      }
+    },
+    "Measurements": {
+      "id": "tblRS7aMpxB8o4Oyg",
+      "fields": {
+        "Measurement key": "fldmH1Ktsi37Oxxea",
+        "Chest flat cm": "fldVkd9htqww2XgXW",
+        "Shoulder cm": "fldit8wFFnwDbfRbg",
+        "Back length cm": "fldWskzfIosRkpqqX",
+        "Sleeve cm": "fld5BwvqjpJHg5MEv",
+        "Raglan sleeve cm": "fldeq7pfOVWR6fncX",
+        "Waist flat cm": "fldVev99OUMHkrkDB",
+        "Hem flat cm": "fldKV80dxStpcLY8p",
+        "Tolerance cm": "fldYDFVstQK5yMN0i",
+        "Method version": "fldAVMTaeEpqEjN6x",
+        "Measured at": "fldP9z99tEY9bqBsg",
+        "Measured by": "fldJkd73kKhFj3lEm",
+        "Verification": "fldWvPuDPzCawZz6B",
+        "Notes": "fldkGkzbGDO5nS9fv",
+        "Garment": "fldfsBjgs8HDEwkk6"
+      }
+    },
+    "Media": {
+      "id": "tblt4tLs5CGPZjazG",
+      "fields": {
+        "Media key": "fldMVCagiav8yknwl",
+        "Original": "fldYF8AXcQdZeUhnV",
+        "Role": "fldgp5X0apF1QIZF7",
+        "Sort order": "fldoRPscrzrN4sB4i",
+        "Alt text": "fldWY6GKAk8bMdHh3",
+        "Approval": "fld2N6pJPgrBevKTM",
+        "Published URL": "fldNEMWrKV8DQYjHH",
+        "Content hash": "fldeRkFVe2egY5mBr",
+        "Garment": "fldOok2CFylzM1xLp"
+      }
+    }
+  }
+}

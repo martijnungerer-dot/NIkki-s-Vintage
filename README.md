@@ -20,6 +20,8 @@ Projectstart voor Nikki's gecureerde webshop met unieke vintage kledingstukken v
 4. [Uitvoeringsplan](docs/PLAN.md): bouwvolgorde en acceptatiecriteria.
 5. [Samenwerking](docs/COLLABORATION.md): hoe Codex en Claude veilig bijdragen.
 6. [Toegang en vervolg](docs/ACCESS.md): bewezen verbindingen versus ontbrekende stappen.
+7. [Verkoopconcept](docs/CONCEPT.md): brainstorm over pasprofiel, matching en meldingen.
+8. [Voortgang](docs/STATUS.md): gecontroleerde stand en logboek.
 
 ## Lokaal controleren
 

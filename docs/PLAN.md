@@ -10,6 +10,8 @@ Remote GitHub-repository: NIkki-s-Vintage, privé. Eerste upload/commit en CI-ru
 
 Eigenaar: Nikki met Martijn. Kies merknaam, startmarkt, taal, betaal-/winkelplatform, maatwerk versus theme, budget en stijl. Voer drie echte kledingstukken in, inclusief één afwijkende constructie en één zichtbaar gebrek. Controleer dat meetprotocol, fotografie en prijsinvoer in de praktijk werken.
 
+Werk daarnaast het [verkoopconcept](CONCEPT.md) uit: open vragen beantwoorden en een vraagtest zonder techniek opzetten. De platformkeuze houdt rekening met klantprofielen, meldingen en klantgegevens buiten Airtable.
+
 Klaar wanneer: de drie records compleet en menselijk gecontroleerd zijn; open productbesluiten vastliggen; geen gefingeerde productclaims. Nog niet automatisch publiceren.
 
 ## P2 — Contracten en verbindingen

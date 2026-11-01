@@ -2,9 +2,10 @@
 
 [site-skeleton.html](site-skeleton.html) is een werkend skelet van de winkel, geen eindontwerp. Eén HTML-bestand zonder build of externe afbeeldingen. Openen in een browser is genoeg.
 
-- Binnenkomen (`#home`): meteen een carrousel met stukken, nauwelijks tekst. Hartjes leren de site wat iemand mooi vindt; na drie hartjes verschijnt de Perfect fit-popup.
+- Binnenkomen (`#home`): meteen een carrousel met stukken, nauwelijks tekst. Hartjes op het hele stuk of op losse kenmerken (model, periode, materiaal, lengte, kleur, pasvorm) leren de site wat iemand mooi vindt; na drie hartjes verschijnt de Perfect fit-popup.
 - Bladeren (`#browse`): carrousels per groep, bovenaan een persoonlijke rij.
 - Productpagina (`#product`): fotocarrousel, prijs, platte maten; conditie en herkomst achter uitklapkopjes.
+- Materials (`#materials`): uitleg per stof in een raster, met hartjes. Mission (`#mission`): korte missietekst (voorstel).
 - Perfect fit: popup die om een e-mailadres vraagt, met daarna een plaatshouder voor de AI-meethulp.
 - Getekende jassen in plaats van foto's. Alle stukken, prijzen en maten zijn voorbeelden. Het smaak-leren is een demoregel, geen echte machine learning.
 - Minimalistisch en bewust neutraal: kleur, letters en sfeer bepaalt Nikki. Paginateksten Engels. Gele notities (Nederlands) verschijnen via de knop *Notes*.

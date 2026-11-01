@@ -65,6 +65,11 @@ Idee van Martijn voor de smaakkant: een **swipe-systeem** (à la Tinder) om snel
 - Profilering voor gepersonaliseerde e-mails vraagt onder de AVG duidelijke uitleg en toestemming. Het gedrag van bezoekers zonder account niet langer bewaren dan nodig.
 - Een gesuggereerd stuk kan al verkocht zijn als de mail wordt geopend; de mail linkt naar de actuele beschikbaarheid in het winkelplatform.
 
+### Hartjes op kenmerken
+Bezoekers kunnen in de startcarrousel een hartje geven aan het hele stuk én aan losse kenmerken: model (silhouet), periode, materiaal, lengte, kleur en pasvorm. Dat geeft per klik een veel preciezer signaal dan een hartje voor de hele jas.
+- Dit vraagt gestructureerde velden in Airtable (bijv. keuzelijsten voor model, lengte, kleur, pasvorm en periode per decennium). Nu is er alleen het vrije tekstveld Era notes. Schemawijziging nog niet uitgevoerd; eerst met Nikki de lijsten vaststellen.
+- Een periode wordt alleen getoond als die onderbouwd is (label, constructie, herkomst). Onbekend = geen kenmerk tonen, geen gok.
+
 ### AI-meethulp (nog uit te werken)
 Doel: de klant meet een eigen jas die goed zit, zo nauwkeurig dat we die met Nikki's platte maten kunnen vergelijken. Opties om te bespreken:
 - **Stap-voor-stap met meetlint**: AI legt per maat uit waar je meet, met een tekening, en controleert of de waarden logisch zijn (bijvoorbeeld mouw korter dan ruglengte).

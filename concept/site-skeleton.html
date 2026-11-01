@@ -170,11 +170,6 @@ body:not(.show-notes) .note { display: none; }
 .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
 .dots span.on { background: var(--fg); }
 .foryou { display: flex; justify-content: center; padding-bottom: 84px; }
-/* "Ook nieuw" on the start page: computer only; on a phone the carousel itself is enough. */
-.alsonew { display: flex; flex-direction: column; gap: 12px; padding-block: 8px 24px; }
-.alsonew-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
-.alsonew-grid .card { flex: initial; }
-@media (max-width: 899px) { .alsonew { display: none; } }
 
 /* browse rows */
 .rows { display: flex; flex-direction: column; gap: 36px; padding-block: 28px 56px; }
@@ -278,7 +273,6 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
       <button type="button" class="icon-btn arrow next" id="hero-next" aria-label="Volgend stuk"><svg><use href="#i-right"></use></svg></button>
     </div>
     <div class="dots" id="hero-dots" aria-hidden="true"></div>
-    <div class="wrap alsonew" aria-labelledby="alsonew-title"><h2 id="alsonew-title">Ook nieuw</h2><div class="alsonew-grid" id="alsonew"></div></div>
     <div class="foryou"><a class="btn ghost" href="#browse">Bekijk alles</a></div>
   </section>
 
@@ -531,11 +525,6 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 
   // ---------- home ----------
   var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
-  function renderAlsoNew() {
-    $('alsonew').innerHTML = PIECES.slice(1, 7).map(function (p) {
-      return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + picture(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
-    }).join('');
-  }
   function renderHero() {
     $('hero-track').innerHTML = PIECES.map(function (p) {
       return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + picture(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' +
@@ -729,6 +718,6 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route);
-  renderHero(); renderAlsoNew(); renderProduct(); renderMats(); route();
+  renderHero(); renderProduct(); renderMats(); route();
 })();
 </script>

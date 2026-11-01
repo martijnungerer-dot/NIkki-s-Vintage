@@ -95,10 +95,11 @@ body:not(.show-notes) .note { display: none; }
 .track::-webkit-scrollbar { display: none; }
 .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; }
 .slide .pic { height: clamp(360px, 62vh, 680px); }
-.slide-info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+.slide-info { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
 #hero-track ~ .arrow { top: calc(clamp(360px, 62vh, 680px) / 2); }
-.slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 0 1 auto; }
-.slide-info .tags { flex: 1 1 280px; justify-content: center; }
+.slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 0 1 auto; max-width: 38%; }
+.slide-info .tags { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; padding-block: 4px; }
+.slide-info .tag { flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; }
 .slide-title { font-family: var(--font-display); font-size: 1.15rem; }
 .slide-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }

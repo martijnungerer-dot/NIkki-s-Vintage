@@ -133,13 +133,13 @@ body:not(.show-notes) .note { display: none; }
 .slide-info a { text-decoration: none; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; padding-block: 4px; min-width: 0; flex: 0 0 min(34%, 12rem); max-width: min(34%, 12rem); }
 .slide-info .slide-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
 .slide .pic { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-.overlay { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(calc(100% - 24px), 420px); box-sizing: border-box; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 18px; background: color-mix(in srgb, var(--bg) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--fg); }
+.overlay { position: absolute; left: 12px; right: 12px; bottom: 64px; z-index: 1; display: flex; justify-content: center; }
 .overlay .tags { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: max-content; justify-content: safe center; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .overlay .tags::-webkit-scrollbar { display: none; }
-.overlay .tag { min-height: 32px; background: color-mix(in srgb, var(--bg) 85%, transparent); color: var(--fg); border-color: var(--line); white-space: nowrap; }
-.overlay .tag[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.overlay .tag { min-height: 32px; border: 0; background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--fg); white-space: nowrap; }
+.overlay .tag[aria-pressed="true"] { background: color-mix(in srgb, var(--fg) 85%, transparent); color: var(--bg); }
 .overlay .tag[aria-pressed="true"] svg { fill: var(--bg); stroke: var(--bg); }
-.ov-row { display: flex; align-items: center; justify-content: center; gap: 4px; max-width: 100%; }
+.slide .pic > .likebox { background: color-mix(in srgb, var(--bg) 70%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-color: transparent; }
 .ov-top { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 16px; box-sizing: border-box; background: color-mix(in srgb, var(--bg) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--fg); text-decoration: none; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Keep faces clear: the photo starts below the name band, so text never covers a head. */
 .slide .pic img.photo { top: 44px; height: calc(100% - 44px); }
@@ -264,7 +264,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 <main>
   <!-- HOME: carousel straight away -->
   <section data-view-panel="home">
-    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes. Hartjes (ook: lang drukken op de foto) kunnen op het hele stuk of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm); zo leert de site sneller wat iemand zoekt. Een periode verschijnt alleen als die onderbouwd is. Naam, prijs en kenmerken staan in de foto. Na drie hartjes verschijnt de Perfect fit-popup. De tellers bij het hartje zijn voorbeeldgetallen.</p></div>
+    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes. Hartjes (ook: lang drukken op de foto) kunnen op het hele stuk of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm); zo leert de site sneller wat iemand zoekt. Een periode verschijnt alleen als die onderbouwd is. Naam en prijs staan bovenaan in de foto, de kenmerken midden onderin, het hartje voor het hele stuk rechtsonder. Swipen naar links of rechts telt niet als 'niet mooi'; alleen aangeklikte hartjes tellen. Na drie hartjes verschijnt de Perfect fit-popup. De tellers bij het hartje zijn voorbeeldgetallen.</p></div>
     <div class="hero">
       <div class="track" id="hero-track" aria-roledescription="carousel" aria-label="Stukken"></div>
       <button type="button" class="icon-btn arrow prev" id="hero-prev" aria-label="Vorig stuk"><svg><use href="#i-left"></use></svg></button>
@@ -527,7 +527,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     $('hero-track').innerHTML = PIECES.map(function (p) {
       return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + picture(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' +
         '<a href="#product" data-open="' + p.id + '" class="ov-top">' + p.title + ' · € [PRICE]</a>' +
-        '<div class="overlay">' + tagChips(p) + '<div class="ov-row">' + likeBox(p) + '</div></div></div></div>';
+        '<div class="overlay">' + tagChips(p) + '</div>' + likeBox(p) + '</div></div>';
     }).join('');
     hero.paint();
   }

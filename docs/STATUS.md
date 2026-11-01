@@ -10,6 +10,15 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 1 november 2026 — voorbereiding voor Nikki en Gemini
+- Scope bevestigd door Martijn: uitsluitend een skelet om gevoel bij te krijgen. Keuze Airtable versus direct contentbeheer in een winkelplatform wordt onderzocht; geen integratie gebouwd.
+- Beide prototypes hebben standaard mobiele viewport, UTF-8 en standards mode. Invoer accepteert alleen positieve eindige decimale maten en prijzen, controleert optionele maten en weigert een titel met alleen spaties. Onverwachte AI-bontclassificaties passeren de checklist niet.
+- Alle vijf stijlen, stijl-hartjes en Mijn keuze behouden. Sfeerfoto’s lokaal toevoegen en exporteren naar één HTML-bestand met ingesloten beelden en gekozen beginstijl.
+- Handleiding voor Nikki toegevoegd: werking, mogelijke toekomstige gegevensstroom, inspiratie, Gemini-overdracht en één vraag tegelijk. De platformkeuze wordt niet als definitief gepresenteerd.
+- Chromium-controles geslaagd met externe aanvragen geblokkeerd: mobiel, vijf stijlen, foto-export/heropenen, handleiding en invoer. Foto-export gebruikt een synthetisch testbeeld. Claude en Gemini zelf niet live getest.
+- Gebruikersbeelden nog niet ingebouwd: vier inline referenties zijn zichtbaar in chat, maar niet als afbeeldingsbestand beschikbaar. Het downloadbare bestand bontjas 4.htm bevat een zoekpagina. Wachten op JPG/PNG/WebP; geen nieuwe beelden gegenereerd of aangenomen als echte voorraad.
+
+
 ### 1 november 2026 — foto's in skelet en stijlbord
 - Design-canvas "Stijlen voor Nikki" met vijf stijlen, gevuld met sfeerfoto's van Martijn (één foto met een ander merklogo niet gebruikt). Bontsoort bij deze foto's als [soort]: onbekend.
 - Skelet kan per stuk een foto tonen (anders tekening), met een eigen fotolijst per stijl. Sfeerfoto's alleen in de gepubliceerde privéversie, niet in Git (beeldrechten).
@@ -45,3 +54,4 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Brainstorm over verkoopervaring vastgelegd in [CONCEPT.md](CONCEPT.md): pasprofiel, dossier per kledingstuk, omgekeerd winkelen en swipen. Paspop on hold.
 - Startroutine voor Claude toegevoegd aan `CLAUDE.md`.
 - Gezien in deze omgeving: Node.js 22, niet 24 zoals de README noemt. De huidige projectcheck slaagt daarmee.
+

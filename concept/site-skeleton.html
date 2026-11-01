@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="nl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Guaranteed Second-hand Fur skelet</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <!--
@@ -21,7 +25,7 @@
     is NOT a body circumference. Missing measurements stay empty, never 0.
   - No invented material, species, age, brand or authenticity claims.
   - All pieces, prices and measurements below are examples, not real stock.
-  - No customer data, keys or private fields in this file. Nothing is stored.
+  - No customer data, keys or private fields. Style preferences are stored locally; no checkout or email service is connected.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@400;500&family=Fredoka:wght@500&family=Nunito:wght@400;600&family=Playfair+Display:ital@0;1&family=Montserrat:wght@400;500&family=Bodoni+Moda:ital@0;1&family=Lato:wght@400;700&display=swap">
@@ -71,7 +75,7 @@ input[type="range"] { width: 100%; }
 textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
 a { color: var(--fg); }
 h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.15; text-wrap: balance; }
 h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
@@ -230,6 +234,8 @@ input[type="email"] { min-height: 48px; padding: 0 12px; border: 1px solid var(-
 
 footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: no-preference) { .track { scroll-behavior: smooth; } }
+.photo-caption { position: absolute; left: 8px; top: 8px; z-index: 2; padding: 3px 8px; background: var(--bg); color: var(--fg); font: 11px/1.4 var(--font-body); max-width: calc(100% - 16px); }
+#photo-slot { font: inherit; width: 100%; padding: 10px; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -272,6 +278,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
       <a href="#materials" data-view="materials">Materialen</a>
       <a href="#mission" data-view="mission">Missie</a>
       <button type="button" class="link" data-open-fit>Perfect fit</button>
+      <button type="button" class="link tool" id="open-photos">Sfeerfoto’s</button>
       <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notities</button>
     </nav>
   </div>
@@ -355,7 +362,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 </main>
 
 <footer>
-  <div class="wrap"><span>Skelet v0.3 · alle stukken zijn voorbeelden</span><span>Verzending · Retour · Contact</span></div>
+  <div class="wrap"><span>Skelet · alle stukken, prijzen, maten en hartjestellers zijn voorbeelden</span><span>Verzending · Retour · Contact</span></div>
 </footer>
 
 <dialog id="fit" aria-labelledby="fit-title">
@@ -363,14 +370,14 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     <button type="button" class="icon-btn close" id="fit-close" aria-label="Sluiten"><svg><use href="#i-close"></use></svg></button>
     <form id="fit-form" style="display: flex; flex-direction: column; gap: 16px;">
       <h2 id="fit-title">Jouw perfecte stuk, per e-mail</h2>
-      <p class="muted">We leren wat je mooi vindt. Komt het juiste stuk binnen, dan sturen we het je.</p>
-      <label class="field" for="fit-email">E-mailadres<input id="fit-email" type="email" autocomplete="email" placeholder="jij@voorbeeld.nl"></label>
+      <p class="muted">Probeer hoe een aanmelding zou voelen. In deze proef wordt niets opgeslagen of verstuurd. Gebruik een verzonnen e-mailadres.</p>
+      <label class="field" for="fit-email">E-mailadres<input id="fit-email" type="email" autocomplete="email" placeholder="nikki@example.com"></label>
       <label class="check" for="fit-consent"><input id="fit-consent" type="checkbox">Stuur me suggesties op basis van wat ik mooi vind. Afmelden kan altijd.</label>
       <p class="muted" id="fit-msg" role="status"></p>
       <button type="submit" class="btn">Houd me op de hoogte</button>
     </form>
     <div id="fit-done" hidden style="display: flex; flex-direction: column; gap: 16px;">
-      <h2>Dank je</h2>
+      <h2>Zo zou de bevestiging eruitzien</h2>
       <p class="muted">Wil je ook suggesties die passen? Meet één jas die goed zit. Wij helpen je daarbij.</p>
       <div class="pic ruler" id="fit-ruler"></div>
       <p class="note">Notitie: hier komt de AI-meethulp (foto met liniaal of ander hulpmiddel). Nog uit te werken, zie docs/CONCEPT.md.</p>
@@ -399,9 +406,25 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   </div>
 </dialog>
 
+<dialog id="photo-dialog" aria-labelledby="photo-title">
+  <div class="dlg">
+    <button type="button" class="btn ghost" id="close-photos">Sluiten</button>
+    <h2 id="photo-title">Jouw sfeer in de boetiek</h2>
+    <p class="muted">Kies een plek en voeg een foto toe. Foto’s blijven in deze pagina tot je hem sluit. Bewaar daarna het HTML-bestand om ze mee te nemen naar Gemini.</p>
+    <p class="muted">Gebruik eigen beelden of beelden die je voor deze privé-oefening mag gebruiken. De productnamen, prijzen en kenmerken blijven verzonnen voorbeelden; ze beschrijven jouw foto niet.</p>
+    <label class="field" for="photo-slot">Plek in de collectie<select id="photo-slot"></select></label>
+    <label class="field" for="mood-photo">Foto kiezen (JPEG, PNG of WebP, maximaal 8 MB)<input id="mood-photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
+    <button type="button" class="btn ghost" id="remove-photo">Foto op deze plek weghalen</button>
+    <button type="button" class="btn" id="save-photos">Bewaar HTML met foto’s</button>
+    <p class="muted" id="photo-msg" role="status"></p>
+  </div>
+</dialog>
+<script id="photos-data" type="application/json">{}</script>
 <script>
 (function () {
+  var sourceDocument = '<!doctype html>\n' + document.documentElement.outerHTML;
   var $ = function (id) { return document.getElementById(id); };
+  function escapeAttribute(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
   // ---------- drawings ----------
   var SHAPES = {
@@ -449,14 +472,14 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   function tagsOf(p) {
     return TAG_FIELDS.filter(function (f) { return p[f[0]] != null; }).map(function (f) { return { key: f[0] + ':' + p[f[0]], kind: f[1], value: p[f[0]] }; });
   }
-  // Photos per piece: {id: {src, alt, over: {field overrides}}}. Empty in Git; the published (private)
-  // concept version fills it with mood photos. Real photos of Nikki's own pieces go here later.
-  var PHOTOS = {};
-  PIECES.forEach(function (p) { var ph = PHOTOS[p.id]; if (ph && ph.over) Object.keys(ph.over).forEach(function (k) { p[k] = ph.over[k]; }); });
+  // Embedded mood photos per piece: {id: {src, alt}}. User photos stay out of Git.
+  // The photo dialog exports a private, self-contained HTML copy.
+  var PHOTOS = JSON.parse($('photos-data').textContent);
+  Object.keys(PHOTOS).forEach(function (id) { if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(PHOTOS[id].src || '')) delete PHOTOS[id]; });
   PIECES.sort(function (a, b) { return (PHOTOS[b.id] ? 1 : 0) - (PHOTOS[a.id] ? 1 : 0); });
   function picture(p, opts) {
     var ph = PHOTOS[p.id];
-    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo-bg" src="' + ph.src + '" alt="" aria-hidden="true" draggable="false"><img class="photo" src="' + ph.src + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + ph.alt + '" draggable="false">';
+    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo-bg" src="' + escapeAttribute(ph.src) + '" alt="" aria-hidden="true" draggable="false"><img class="photo" src="' + escapeAttribute(ph.src) + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + escapeAttribute(ph.alt || 'Sfeerfoto') + '" draggable="false"><span class="photo-caption">Sfeerfoto · gegevens zijn voorbeelden</span>';
     return coat(p, opts);
   }
   var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };
@@ -664,6 +687,41 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     if (e.target.closest('[data-open-fit]')) openFit();
   });
 
+
+  // Local mood photos; exported HTML contains the images, never a remote upload.
+  $('photo-slot').innerHTML = PIECES.map(function (p) { return '<option value="' + p.id + '">Plek ' + p.id + ' · ' + p.title + '</option>'; }).join('');
+  $('open-photos').addEventListener('click', function () { $('photo-dialog').showModal(); });
+  $('close-photos').addEventListener('click', function () { $('photo-dialog').close(); });
+  function redrawPhotos() { renderHero(); renderAlsoNew(); renderBrowse(); renderProduct(); }
+  $('mood-photo').addEventListener('change', function () {
+    var file = this.files[0], id = $('photo-slot').value; this.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) { $('photo-msg').textContent = 'Kies een JPEG-, PNG- of WebP-foto van maximaal 8 MB.'; return; }
+    var reader = new FileReader();
+    reader.onerror = function () { $('photo-msg').textContent = 'Deze foto kon niet worden gelezen. Probeer een andere.'; };
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = function () { $('photo-msg').textContent = 'Dit bestand is geen leesbare foto.'; };
+      img.onload = function () {
+        PHOTOS[id] = { src: reader.result, alt: 'Sfeerfoto bij voorbeeld ' + id };
+        redrawPhotos(); $('photo-msg').textContent = 'Foto toegevoegd op plek ' + id + '. Bewaar de HTML om hem mee te nemen.';
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  $('remove-photo').addEventListener('click', function () { delete PHOTOS[$('photo-slot').value]; redrawPhotos(); $('photo-msg').textContent = 'De tekening staat weer op deze plek. Bewaar opnieuw als je deze versie wilt houden.'; });
+  $('save-photos').addEventListener('click', function () {
+    var doc = new DOMParser().parseFromString(sourceDocument, 'text/html');
+    doc.documentElement.setAttribute('data-start-style', STYLES[styleIdx][0]);
+    doc.getElementById('photos-data').textContent = JSON.stringify(PHOTOS).replace(/</g, '\\u003c');
+    var blob = new Blob(['<!doctype html>\n' + doc.documentElement.outerHTML], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = 'nikki-boetiek-met-fotos.html'; link.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+    $('photo-msg').textContent = 'HTML klaargezet als download. Dit bestand bevat je foto’s; deel het alleen met wie ze mag zien.';
+  });
+
   // ---------- perfect fit popup ----------
   var dlg = $('fit');
   $('fit-ruler').innerHTML = rulerDrawing();
@@ -686,7 +744,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var STYLES = [['ivoor', 'Ivoor'], ['parisienne', 'Parisienne'], ['bonbon', 'Bonbon'], ['hollywood', 'Hollywood'], ['boudoir', 'Boudoir']];
   var store = { get: function (k, d) { try { var v = localStorage.getItem('gsf-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
                 set: function (k, v) { try { localStorage.setItem('gsf-' + k, JSON.stringify(v)); } catch (e) {} } };
-  var styleIdx = Math.max(0, STYLES.map(function (x) { return x[0]; }).indexOf(store.get('style', 'ivoor')));
+  var styleIdx = Math.max(0, STYLES.map(function (x) { return x[0]; }).indexOf(document.documentElement.getAttribute('data-start-style') || store.get('style', 'ivoor')));
   var styleLikes = store.get('style-likes', {});
   function applyStyle() {
     var key = STYLES[styleIdx][0];
@@ -750,3 +808,6 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   renderHero(); renderAlsoNew(); renderProduct(); renderMats(); route();
 })();
 </script>
+
+
+</html>

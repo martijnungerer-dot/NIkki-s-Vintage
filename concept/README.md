@@ -37,6 +37,11 @@ Linksonder in het skelet staat een stijlknop. Daarmee wisselt Nikki tussen vijf 
 - Het hartje naast de stijlnaam markeert een stijl die ze mooi vindt.
 - *Mijn keuze* vraagt: mooiste stijl, chic of speels (schuifje) en wat ze zou veranderen. *Kopieer mijn antwoorden* zet alles als korte tekst op het klembord, om naar Martijn te sturen.
 - Keuzes worden alleen in haar eigen browser onthouden; er wordt niets verstuurd.
+- Elke stijl geeft de foto's een eigen lijst: Ivoor een dunne lijn, Parisienne een boog met gouden rand, Bonbon afgeronde hoeken met een sticker, Hollywood een spotlicht, Boudoir een ovaal op behangpatroon.
+
+## Foto's
+
+Het skelet toont per stuk een foto als die in `PHOTOS` (in de code) staat, anders een tekening. In Git is `PHOTOS` leeg. De gepubliceerde, privé conceptversie krijgt sfeerfoto's die Martijn aanleverde; die staan bewust niet in de repository, omdat de beeldrechten niet bij ons liggen en er herkenbare personen op staan. Voor de echte site komen hier foto's van Nikki's eigen jassen. Een nieuwe publicatie vanuit Git toont dus weer tekeningen, tot de foto's opnieuw worden ingevoegd.
 
 ## Verder werken in Gemini
 

@@ -104,6 +104,17 @@ body:not(.show-notes) .note { display: none; }
 /* drawings */
 .pic { position: relative; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 100%; }
 .pic svg.coat { height: 82%; width: auto; max-width: 86%; }
+.pic img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Style frames: each style shapes the photos differently. */
+:root[data-style="parisienne"] .slide .pic { border-radius: 50% 50% 0 0 / 28% 28% 0 0; outline: 1px solid #B08D57; outline-offset: -10px; }
+:root[data-style="parisienne"] .card .pic { border-radius: 50% 50% 0 0 / 30% 30% 0 0; }
+:root[data-style="bonbon"] .slide .pic, :root[data-style="bonbon"] .card .pic { border-radius: 28px; }
+:root[data-style="bonbon"] .slide .pic::before { content: "uniek!"; position: absolute; top: 16px; left: 16px; z-index: 1; background: var(--fg); color: var(--bg); font-family: var(--font-display); padding: 6px 14px; border-radius: 18px; transform: rotate(-6deg); }
+:root[data-style="hollywood"] .slide .pic::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(17, 16, 16, 0) 40%, rgba(17, 16, 16, 0.85) 100%); box-shadow: inset 0 0 0 1px #C9A96E; }
+:root[data-style="boudoir"] .slide .pic { background-color: var(--surface); background-image: radial-gradient(circle, var(--line) 1.5px, transparent 2px); background-size: 22px 22px; }
+:root[data-style="boudoir"] .slide .pic img.photo { inset: 6% 20%; width: 60%; height: 88%; border-radius: 50%; outline: 3px solid var(--fg); outline-offset: 6px; }
+:root[data-style="boudoir"] .card .pic { border-radius: 50%; }
+:root[data-style="ivoor"] .slide .pic::after, :root:not([data-style]) .slide .pic::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(255, 255, 255, 0.7); pointer-events: none; }
 .coat-body { stroke: var(--coat-ink); stroke-width: 1.5; }
 .coat-line { stroke: var(--coat-ink); stroke-width: 1.2; fill: none; }
 
@@ -408,6 +419,16 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   function tagsOf(p) {
     return TAG_FIELDS.filter(function (f) { return p[f[0]] != null; }).map(function (f) { return { key: f[0] + ':' + p[f[0]], kind: f[1], value: p[f[0]] }; });
   }
+  // Photos per piece: {id: {src, alt, over: {field overrides}}}. Empty in Git; the published (private)
+  // concept version fills it with mood photos. Real photos of Nikki's own pieces go here later.
+  var PHOTOS = {};
+  PIECES.forEach(function (p) { var ph = PHOTOS[p.id]; if (ph && ph.over) Object.keys(ph.over).forEach(function (k) { p[k] = ph.over[k]; }); });
+  PIECES.sort(function (a, b) { return (PHOTOS[b.id] ? 1 : 0) - (PHOTOS[a.id] ? 1 : 0); });
+  function picture(p, opts) {
+    var ph = PHOTOS[p.id];
+    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo" src="' + ph.src + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + ph.alt + '" draggable="false">';
+    return coat(p, opts);
+  }
   var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };
 
   // ---------- taste (DEMO, not real machine learning) ----------
@@ -490,7 +511,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
   function renderHero() {
     $('hero-track').innerHTML = PIECES.map(function (p) {
-      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + coat(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' + likeBox(p) + '</div>' +
+      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + picture(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' + likeBox(p) + '</div>' +
         '<div class="slide-info"><a href="#product" data-open="' + p.id + '"><span class="slide-title">' + p.title + '</span><span class="price muted">€ [PRICE]</span></a>' + tagChips(p) + '</div></div>';
     }).join('');
     hero.paint();
@@ -520,7 +541,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   function strip(title, list) {
     return '<div><div class="row-head"><h2>' + title + '</h2><span class="muted">' + list.length + '</span></div><div class="strip">' +
       list.map(function (p) {
-        return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + coat(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
+        return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + picture(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
       }).join('') + '</div></div>';
   }
   function renderBrowse() {
@@ -551,7 +572,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     $('p-like').setAttribute('aria-pressed', String(!!liked[p.id]));
     $('p-like').setAttribute('aria-label', 'Vind ik mooi: ' + p.title);
     $('p-buy-msg').textContent = 'Uniek exemplaar.';
-    var shots = [coat(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
+    var shots = [picture(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
     $('gal-track').innerHTML = shots.map(function (s) { return '<div class="slide"><div class="pic">' + s + '</div></div>'; }).join('');
     gallery.reset();
     var names = ['Borst, plat', 'Schouder', 'Mouw', 'Ruglengte'];

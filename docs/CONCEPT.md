@@ -14,6 +14,8 @@ Status: **brainstorm**. Niets in dit document is een bouwopdracht of definitief 
 - **Binnenkomen = carrousel** met verschillende stukken, zonder tekstblokken. Bladeren door de collectie komt daarna, ook in carrouselvorm.
 - **Smaak leren met machine learning.** Hartjes en kijkgedrag vormen het signaal; de site toont daarop eerst wat iemand waarschijnlijk mooi vindt en mailt het perfecte stuk als suggestie.
 - **Perfect fit = popup** die om een e-mailadres vraagt.
+- **Bontsoort altijd benoemen.** Bij bont staat de soort (nerts, vos, persianer, enzovoort) zichtbaar bij het stuk en is een eigen kenmerk om een hartje aan te geven. Nikki stelt de soort vast vóór publicatie; kan dat niet betrouwbaar, dan wordt het stuk niet als die soort verkocht. Voorstel voor de publisher: bont zonder vastgestelde soort niet publiceren.
+- **Nederlandstalig.** De site is voorlopig in het Nederlands.
 - **AI-meethulp** begeleidt klanten bij het opmeten van hun eigen kleding. Nog uit te werken (zie hieronder).
 
 Het skelet in [concept/](../concept/README.md) volgt deze richting. Het smaak-leren is daar een eenvoudige demoregel, geen echte machine learning.

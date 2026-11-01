@@ -1,4 +1,4 @@
-<title>Guaranteed Second-hand Fur skeleton</title>
+<title>Guaranteed Second-hand Fur skelet</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <!--
   WORKING SKELETON v0.2, NOT A FINAL DESIGN.
@@ -11,6 +11,9 @@
 
   Taste learning in this file is a DEMO: hearts score a few tags and reorder
   the pieces. Real machine learning comes later, behind a server.
+
+  Page text is Dutch (for Nikki). Fur species is always named on fur pieces;
+  Nikki verifies the species before publishing (see docs/CONCEPT.md).
 
   Rules to keep when editing (from the project's AGENTS.md):
   - Every piece is one of one (one SKU = one physical garment).
@@ -185,16 +188,16 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 
 <header class="topbar">
   <div class="wrap">
-    <a class="brand" href="#home" aria-label="Guaranteed Second-hand Fur, home">
+    <a class="brand" href="#home" aria-label="Guaranteed Second-hand Fur, naar start">
       <svg width="36" height="36" aria-hidden="true"><use href="#pin"></use></svg>
       <span class="brand-name">Guaranteed Second-hand Fur</span>
     </a>
-    <nav class="nav" aria-label="Main">
-      <a href="#browse" data-view="browse">Browse</a>
-      <a href="#materials" data-view="materials">Materials</a>
-      <a href="#mission" data-view="mission">Mission</a>
+    <nav class="nav" aria-label="Hoofdmenu">
+      <a href="#browse" data-view="browse">Collectie</a>
+      <a href="#materials" data-view="materials">Materialen</a>
+      <a href="#mission" data-view="mission">Missie</a>
       <button type="button" class="link" data-open-fit>Perfect fit</button>
-      <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notes</button>
+      <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notities</button>
     </nav>
   </div>
 </header>
@@ -202,14 +205,14 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 <main>
   <!-- HOME: carousel straight away -->
   <section data-view-panel="home">
-    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes. Hartjes kunnen op het hele stuk of op losse kenmerken (model, jaren, materiaal, lengte, kleur, pasvorm); zo leert de site sneller wat iemand zoekt. Een periode verschijnt alleen als die onderbouwd is. Na drie hartjes verschijnt de Perfect fit-popup.</p></div>
+    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes. Hartjes kunnen op het hele stuk of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm); zo leert de site sneller wat iemand zoekt. Een periode verschijnt alleen als die onderbouwd is. Na drie hartjes verschijnt de Perfect fit-popup.</p></div>
     <div class="hero">
-      <div class="track" id="hero-track" aria-roledescription="carousel" aria-label="Pieces"></div>
-      <button type="button" class="icon-btn arrow prev" id="hero-prev" aria-label="Previous piece"><svg><use href="#i-left"></use></svg></button>
-      <button type="button" class="icon-btn arrow next" id="hero-next" aria-label="Next piece"><svg><use href="#i-right"></use></svg></button>
+      <div class="track" id="hero-track" aria-roledescription="carousel" aria-label="Stukken"></div>
+      <button type="button" class="icon-btn arrow prev" id="hero-prev" aria-label="Vorig stuk"><svg><use href="#i-left"></use></svg></button>
+      <button type="button" class="icon-btn arrow next" id="hero-next" aria-label="Volgend stuk"><svg><use href="#i-right"></use></svg></button>
     </div>
     <div class="dots" id="hero-dots" aria-hidden="true"></div>
-    <div class="foryou"><a class="btn ghost" href="#browse">Browse all</a></div>
+    <div class="foryou"><a class="btn ghost" href="#browse">Bekijk alles</a></div>
   </section>
 
   <!-- BROWSE: carousel rows -->
@@ -222,9 +225,9 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   <!-- MATERIALS: grid, not a carousel, so materials can be compared side by side -->
   <section data-view-panel="materials" hidden>
     <div class="wrap page">
-      <p class="note">Notitie: uitleg per materiaal, naast elkaar zodat je kunt vergelijken. Een hartje bij een materiaal telt mee voor wat iemand te zien krijgt. Teksten zijn algemene uitleg; Nikki controleert ze.</p>
-      <h1>Materials</h1>
-      <div class="mats" id="mats"></div>
+      <p class="note">Notitie: uitleg per materiaal, naast elkaar zodat je kunt vergelijken. Een hartje bij een materiaal telt mee voor wat iemand te zien krijgt. Teksten zijn algemene uitleg; Nikki controleert ze. Bontsoorten staan apart, omdat de soort bij bont altijd genoemd wordt.</p>
+      <h1>Materialen</h1>
+      <div id="mats" style="display: flex; flex-direction: column; gap: 40px;"></div>
     </div>
   </section>
 
@@ -232,10 +235,10 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   <section data-view-panel="mission" hidden>
     <div class="wrap page mission">
       <p class="note">Notitie: de missie in een paar zinnen. Voorstel van Claude; de woorden kiezen Nikki en Martijn zelf.</p>
-      <h1>Nothing new. Nothing wasted.</h1>
-      <p>Every coat here already exists. The animals it came from lived long ago. Throwing it away would waste them twice.</p>
-      <p>We find these pieces, care for them, and pass them on, so they are worn for decades more instead of new ones being made.</p>
-      <p class="muted">That is what the pin means: guaranteed second-hand.</p>
+      <h1>Niets nieuws. Niets verspild.</h1>
+      <p>Elke jas hier bestaat al. De dieren waar hij van gemaakt is, leefden lang geleden. Hem weggooien zou ze twee keer verspillen.</p>
+      <p>Wij vinden deze stukken, verzorgen ze en geven ze door. Zo worden ze nog tientallen jaren gedragen, en hoeft er niets nieuws gemaakt te worden.</p>
+      <p class="muted">Dat betekent de speld: gegarandeerd tweedehands.</p>
       <svg width="88" height="88" aria-hidden="true"><use href="#pin"></use></svg>
     </div>
   </section>
@@ -245,9 +248,9 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     <div class="wrap product">
       <div class="gallery">
         <div class="hero">
-          <div class="track" id="gal-track" aria-roledescription="carousel" aria-label="Photos"></div>
-          <button type="button" class="icon-btn arrow prev" id="gal-prev" aria-label="Previous photo"><svg><use href="#i-left"></use></svg></button>
-          <button type="button" class="icon-btn arrow next" id="gal-next" aria-label="Next photo"><svg><use href="#i-right"></use></svg></button>
+          <div class="track" id="gal-track" aria-roledescription="carousel" aria-label="Foto's"></div>
+          <button type="button" class="icon-btn arrow prev" id="gal-prev" aria-label="Vorige foto"><svg><use href="#i-left"></use></svg></button>
+          <button type="button" class="icon-btn arrow next" id="gal-next" aria-label="Volgende foto"><svg><use href="#i-right"></use></svg></button>
         </div>
         <div class="dots" id="gal-dots" aria-hidden="true"></div>
       </div>
@@ -258,18 +261,18 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
             <h1 id="p-title"></h1>
             <p class="price" id="p-price">€ [PRICE]</p>
           </div>
-          <button type="button" class="icon-btn" id="p-like" aria-pressed="false" aria-label="Like this piece"><svg><use href="#i-heart"></use></svg></button>
+          <button type="button" class="icon-btn" id="p-like" aria-pressed="false" aria-label="Vind ik mooi"><svg><use href="#i-heart"></use></svg></button>
         </div>
-        <button type="button" class="btn" id="p-buy">Add to bag</button>
-        <p class="muted" id="p-buy-msg">One of one.</p>
+        <button type="button" class="btn" id="p-buy">In winkelmand</button>
+        <p class="muted" id="p-buy-msg">Uniek exemplaar.</p>
         <div>
           <div class="measure" id="p-measure"></div>
-          <p class="muted" style="padding-top: 8px;">Measured flat on the coat, in cm.</p>
+          <p class="muted" style="padding-top: 8px;">Plat gemeten aan de jas, in cm.</p>
         </div>
         <div>
-          <details><summary>Condition</summary><p class="muted">[Grade]. [Wear and repairs, each with a photo.]</p></details>
-          <details><summary>Material and origin</summary><p class="muted" id="p-material"></p></details>
-          <details><summary>How to compare with your own coat</summary><p class="muted">Lay a coat that fits you flat, closed, and measure it the same way. Or let us guide you: <button type="button" class="link" data-open-fit style="background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer;">Perfect fit</button>.</p></details>
+          <details><summary>Staat</summary><p class="muted">[Beoordeling]. [Gebruikssporen en reparaties, elk met foto.]</p></details>
+          <details><summary>Materiaal en herkomst</summary><p class="muted" id="p-material"></p></details>
+          <details><summary>Vergelijken met je eigen jas</summary><p class="muted">Leg een jas die goed zit plat neer, dichtgeknoopt, en meet hem op dezelfde manier. Of laat je helpen: <button type="button" class="link" data-open-fit style="background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer;">Perfect fit</button>.</p></details>
         </div>
       </div>
     </div>
@@ -277,23 +280,23 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 </main>
 
 <footer>
-  <div class="wrap"><span>Skeleton v0.2 · all pieces are examples</span><span>Shipping · Returns · Contact</span></div>
+  <div class="wrap"><span>Skelet v0.3 · alle stukken zijn voorbeelden</span><span>Verzending · Retour · Contact</span></div>
 </footer>
 
 <dialog id="fit" aria-labelledby="fit-title">
   <div class="dlg">
-    <button type="button" class="icon-btn close" id="fit-close" aria-label="Close"><svg><use href="#i-close"></use></svg></button>
+    <button type="button" class="icon-btn close" id="fit-close" aria-label="Sluiten"><svg><use href="#i-close"></use></svg></button>
     <form id="fit-form" style="display: flex; flex-direction: column; gap: 16px;">
-      <h2 id="fit-title">Your perfect piece, by email</h2>
-      <p class="muted">We learn what you like. When the right piece comes in, we send it to you.</p>
-      <label class="field" for="fit-email">Email<input id="fit-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
-      <label class="check" for="fit-consent"><input id="fit-consent" type="checkbox">Email me suggestions based on what I like. Unsubscribe any time.</label>
+      <h2 id="fit-title">Jouw perfecte stuk, per e-mail</h2>
+      <p class="muted">We leren wat je mooi vindt. Komt het juiste stuk binnen, dan sturen we het je.</p>
+      <label class="field" for="fit-email">E-mailadres<input id="fit-email" type="email" autocomplete="email" placeholder="jij@voorbeeld.nl"></label>
+      <label class="check" for="fit-consent"><input id="fit-consent" type="checkbox">Stuur me suggesties op basis van wat ik mooi vind. Afmelden kan altijd.</label>
       <p class="muted" id="fit-msg" role="status"></p>
-      <button type="submit" class="btn">Keep me posted</button>
+      <button type="submit" class="btn">Houd me op de hoogte</button>
     </form>
     <div id="fit-done" hidden style="display: flex; flex-direction: column; gap: 16px;">
-      <h2>Thank you</h2>
-      <p class="muted">Want suggestions that fit, too? Measure one coat you love. We'll guide you.</p>
+      <h2>Dank je</h2>
+      <p class="muted">Wil je ook suggesties die passen? Meet één jas die goed zit. Wij helpen je daarbij.</p>
       <div class="pic ruler" id="fit-ruler"></div>
       <p class="note">Notitie: hier komt de AI-meethulp (foto met liniaal of ander hulpmiddel). Nog uit te werken, zie docs/CONCEPT.md.</p>
       <button type="button" class="btn ghost" id="fit-later">Later</button>
@@ -319,15 +322,15 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     var parts = '<path class="coat-body" d="' + s.body + '" style="fill: url(#tx-' + p.tx + ')"></path>';
     if (!opts.back) parts += '<path class="coat-body" d="' + s.collar + '" style="fill: url(#tx-' + collarTx + ')"></path><path class="coat-line" d="M100 ' + s.top + ' L100 ' + s.hem + '"></path>';
     if (opts.flaw) parts += '<circle cx="164" cy="190" r="16" style="fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 4 3"></circle>';
-    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="' + (opts.label || 'Drawing: ' + p.title) + '">' + parts + '</svg>';
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="' + (opts.label || 'Tekening: ' + p.title) + '">' + parts + '</svg>';
   }
   function labelDrawing() {
-    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="Drawing of a garment label"><rect x="40" y="95" width="120" height="70" style="fill: var(--bg); stroke: var(--coat-ink); stroke-width: 1.5"></rect><text x="100" y="135" text-anchor="middle" font-size="14" style="fill: var(--fg); font-family: var(--font-display)">[LABEL]</text></svg>';
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="Tekening van een label"><rect x="40" y="95" width="120" height="70" style="fill: var(--bg); stroke: var(--coat-ink); stroke-width: 1.5"></rect><text x="100" y="135" text-anchor="middle" font-size="14" style="fill: var(--fg); font-family: var(--font-display)">[LABEL]</text></svg>';
   }
   function rulerDrawing() {
     var ticks = '';
     for (var i = 0; i <= 30; i++) ticks += '<line x1="' + (20 + i * 9) + '" y1="128" x2="' + (20 + i * 9) + '" y2="' + (i % 5 ? 134 : 140) + '"></line>';
-    return '<svg viewBox="0 0 320 180" style="width: 90%; height: auto;" role="img" aria-label="Sketch: a coat laid flat with a ruler next to it, photographed from above">' +
+    return '<svg viewBox="0 0 320 180" style="width: 90%; height: auto;" role="img" aria-label="Schets: jas plat neergelegd met een liniaal ernaast, van bovenaf gefotografeerd">' +
       '<path class="coat-body" d="M120 20 L160 30 L200 20 L230 40 L250 110 L232 114 L222 66 L222 118 L98 118 L98 66 L88 114 L70 110 L90 40 Z" style="fill: var(--coat)"></path>' +
       '<rect x="16" y="124" width="288" height="20" style="fill: var(--bg); stroke: var(--coat-ink)"></rect><g style="stroke: var(--coat-ink); stroke-width: 1">' + ticks + '</g>' +
       '<line x1="98" y1="72" x2="222" y2="72" style="stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 4 3"></line></svg>';
@@ -337,17 +340,17 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   // Tags per piece: model (silhouette), era (only when supported by evidence; null = not shown),
   // material, length, colour, fit. All values are examples.
   var PIECES = [
-    { id: 1, title: 'Long fur coat, shawl collar', mat: 'Fur', shape: 'long', tx: 'fur', m: [56, 44.5, 61, 104], model: 'Shawl collar', era: '1970s', length: 'Long', colour: 'Dark brown', fit: 'Straight' },
-    { id: 2, title: 'Shearling coat, belted', mat: 'Shearling', shape: 'mid', tx: 'shearling', m: [54, 43, 60, 92], model: 'Belted wrap', era: '1980s', length: 'Knee', colour: 'Tan', fit: 'Waisted' },
-    { id: 3, title: 'Leather car coat', mat: 'Leather', shape: 'mid', tx: 'leather', m: [58, 46, 63, 90], model: 'Car coat', era: null, length: 'Knee', colour: 'Black', fit: 'Straight' },
-    { id: 4, title: 'Short fur jacket', mat: 'Fur', shape: 'short', tx: 'fur', m: [52, 41, 58, 62], model: 'Cropped', era: '1980s', length: 'Hip', colour: 'Silver grey', fit: 'Boxy' },
-    { id: 5, title: 'Leather jacket, fur collar', mat: 'Leather', shape: 'short', tx: 'leather', collar: 'fur', m: [55, 44, null, 64], model: 'Fur collar', era: '1990s', length: 'Hip', colour: 'Cognac', fit: 'Straight' },
-    { id: 6, title: 'Shearling aviator jacket', mat: 'Shearling', shape: 'aviator', tx: 'shearling', m: [60, 48, 64, 66], model: 'Aviator', era: null, length: 'Hip', colour: 'Brown', fit: 'Oversized' },
-    { id: 7, title: 'Long leather coat', mat: 'Leather', shape: 'long', tx: 'leather', m: [57, 45, 62, 112], model: 'Trench', era: '1970s', length: 'Long', colour: 'Black', fit: 'Waisted' },
-    { id: 8, title: 'Fur coat, mid length', mat: 'Fur', shape: 'mid', tx: 'fur', m: [55, 43.5, 60, 88], model: 'Notch collar', era: '1960s', length: 'Knee', colour: 'Honey', fit: 'Straight' },
-    { id: 9, title: 'Short shearling jacket', mat: 'Shearling', shape: 'short', tx: 'shearling', m: [53, 42, 59, 60], model: 'Cropped', era: null, length: 'Hip', colour: 'Cream', fit: 'Boxy' }
+    { id: 1, title: 'Lange nertsjas met sjaalkraag', mat: 'Bont', species: 'Nerts', shape: 'long', tx: 'fur', m: [56, 44.5, 61, 104], model: 'Sjaalkraag', era: 'Jaren 70', length: 'Lang', colour: 'Donkerbruin', fit: 'Recht' },
+    { id: 2, title: 'Shearling jas met ceintuur', mat: 'Shearling', shape: 'mid', tx: 'shearling', m: [54, 43, 60, 92], model: 'Overslag met ceintuur', era: 'Jaren 80', length: 'Knielang', colour: 'Camel', fit: 'Getailleerd' },
+    { id: 3, title: 'Leren autojas', mat: 'Leer', shape: 'mid', tx: 'leather', m: [58, 46, 63, 90], model: 'Autojas', era: null, length: 'Knielang', colour: 'Zwart', fit: 'Recht' },
+    { id: 4, title: 'Kort vossenjack', mat: 'Bont', species: 'Vos', shape: 'short', tx: 'fur', m: [52, 41, 58, 62], model: 'Kort jack', era: 'Jaren 80', length: 'Heuplang', colour: 'Zilvergrijs', fit: 'Boxy' },
+    { id: 5, title: 'Leren jack met vossenkraag', mat: 'Leer', species: 'Vos', shape: 'short', tx: 'leather', collar: 'fur', m: [55, 44, null, 64], model: 'Bontkraag', era: 'Jaren 90', length: 'Heuplang', colour: 'Cognac', fit: 'Recht' },
+    { id: 6, title: 'Shearling pilotenjack', mat: 'Shearling', shape: 'aviator', tx: 'shearling', m: [60, 48, 64, 66], model: 'Pilotenjack', era: null, length: 'Heuplang', colour: 'Bruin', fit: 'Oversized' },
+    { id: 7, title: 'Lange leren jas', mat: 'Leer', shape: 'long', tx: 'leather', m: [57, 45, 62, 112], model: 'Trenchcoat', era: 'Jaren 70', length: 'Lang', colour: 'Zwart', fit: 'Getailleerd' },
+    { id: 8, title: 'Halflange persianer jas', mat: 'Bont', species: 'Persianer', shape: 'mid', tx: 'fur', m: [55, 43.5, 60, 88], model: 'Reverskraag', era: 'Jaren 60', length: 'Knielang', colour: 'Zwart', fit: 'Recht' },
+    { id: 9, title: 'Kort shearling jack', mat: 'Shearling', shape: 'short', tx: 'shearling', m: [53, 42, 59, 60], model: 'Kort jack', era: null, length: 'Heuplang', colour: 'Crème', fit: 'Boxy' }
   ];
-  var TAG_FIELDS = [['model', 'Model'], ['era', 'Era'], ['mat', 'Material'], ['length', 'Length'], ['colour', 'Colour'], ['fit', 'Fit']];
+  var TAG_FIELDS = [['species', 'Bontsoort'], ['model', 'Model'], ['era', 'Periode'], ['mat', 'Materiaal'], ['length', 'Lengte'], ['colour', 'Kleur'], ['fit', 'Pasvorm']];
   function tagsOf(p) {
     return TAG_FIELDS.filter(function (f) { return p[f[0]] != null; }).map(function (f) { return { key: f[0] + ':' + p[f[0]], kind: f[1], value: p[f[0]] }; });
   }
@@ -359,11 +362,14 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var likedTags = {};      // 'field:value' -> true
   var popupShown = false;
   var MATERIALS = [
-    { key: 'Fur', tx: 'fur', text: 'Pelt with the hair left on. Warm and light for its volume. Species is only named when there is evidence.', match: function (p) { return p.mat === 'Fur'; } },
-    { key: 'Shearling', tx: 'shearling', text: 'Sheepskin tanned with the wool kept on. Wool inside, suede or leather outside. Very warm.', match: function (p) { return p.mat === 'Shearling'; } },
-    { key: 'Leather', tx: 'leather', text: 'Tanned hide with a smooth outer side. Softens and shapes to the wearer over the years.', match: function (p) { return p.mat === 'Leather'; } },
-    { key: 'Suede', tx: 'shearling', text: 'Leather with a brushed, velvety surface. Softer to the touch, more sensitive to rain.', match: function (p) { return p.mat === 'Leather'; } },
-    { key: 'Fur trim', tx: 'fur', text: 'A fur collar, cuffs or edging on a leather, suede or wool coat.', match: function (p) { return p.collar === 'fur'; } }
+    { key: 'Nerts', group: 'Bontsoorten', tx: 'fur', text: 'Kort, dicht en glanzend haar. Licht en soepel; veel gebruikt in klassieke jassen.', match: function (p) { return p.species === 'Nerts'; } },
+    { key: 'Vos', group: 'Bontsoorten', tx: 'fur', text: 'Lang, zacht en volumineus haar. Opvallend en warm; vaak in kragen en korte jacks.', match: function (p) { return p.species === 'Vos'; } },
+    { key: 'Persianer', group: 'Bontsoorten', tx: 'shearling', text: 'Vacht van het karakoellam met kleine, vaste krullen. Vlak, licht en stevig.', match: function (p) { return p.species === 'Persianer'; } },
+    { key: 'Konijn', group: 'Bontsoorten', tx: 'fur', text: 'Zacht en licht, maar minder slijtvast. Meestal betaalbaarder.', match: function (p) { return p.species === 'Konijn'; } },
+    { key: 'Shearling', group: 'Materialen', tx: 'shearling', text: 'Schapenvacht gelooid met de wol eraan. Wol binnen, suède of leer buiten. Heel warm.', match: function (p) { return p.mat === 'Shearling'; } },
+    { key: 'Leer', group: 'Materialen', tx: 'leather', text: 'Gelooide huid met een gladde buitenkant. Wordt soepeler en vormt zich naar de drager.', match: function (p) { return p.mat === 'Leer'; } },
+    { key: 'Suède', group: 'Materialen', tx: 'shearling', text: 'Leer met een geruwde, fluweelachtige kant. Zachter, gevoeliger voor regen.', match: function (p) { return p.mat === 'Leer'; } },
+    { key: 'Bontrand', group: 'Materialen', tx: 'fur', text: 'Bontkraag, -manchetten of -rand op een jas van leer, suède of wol.', match: function (p) { return p.collar === 'fur'; } }
   ];
   function score(p) {
     var s = 0;
@@ -381,7 +387,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     return list.slice().sort(function (a, b) { return score(b) - score(a) || a.id - b.id; });
   }
   function heartBtn(p) {
-    return '<button type="button" class="icon-btn" data-like="' + p.id + '" aria-pressed="' + !!liked[p.id] + '" aria-label="Like ' + p.title + '"><svg><use href="#i-heart"></use></svg></button>';
+    return '<button type="button" class="icon-btn" data-like="' + p.id + '" aria-pressed="' + !!liked[p.id] + '" aria-label="Vind ik mooi: ' + p.title + '"><svg><use href="#i-heart"></use></svg></button>';
   }
   function toggleLike(id) {
     if (liked[id]) delete liked[id]; else liked[id] = true;
@@ -397,8 +403,8 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     maybeOpenFit();
   }
   function tagChips(p) {
-    return '<div class="tags" role="group" aria-label="What do you like about this piece?">' + tagsOf(p).map(function (t) {
-      return '<button type="button" class="tag" data-like-tag="' + t.key + '" aria-pressed="' + !!likedTags[t.key] + '" aria-label="Like ' + t.kind.toLowerCase() + ': ' + t.value + '">' +
+    return '<div class="tags" role="group" aria-label="Wat vind je mooi aan dit stuk?">' + tagsOf(p).map(function (t) {
+      return '<button type="button" class="tag" data-like-tag="' + t.key + '" aria-pressed="' + !!likedTags[t.key] + '" aria-label="Vind ik mooi, ' + t.kind.toLowerCase() + ': ' + t.value + '">' +
         '<svg aria-hidden="true"><use href="#i-heart"></use></svg>' + t.value + '</button>';
     }).join('') + '</div>';
   }
@@ -439,17 +445,19 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   function renderBrowse() {
     var note = $('rows').querySelector('.note').outerHTML;
     var hasTaste = likeCount() + Object.keys(likedMats).length > 0;
-    var html = note + strip(hasTaste ? 'For you' : 'New in', hasTaste ? ranked(PIECES) : PIECES.slice().reverse());
-    ['Fur', 'Leather', 'Shearling'].forEach(function (m) { html += strip(m, ranked(PIECES.filter(function (p) { return p.mat === m; }))); });
+    var html = note + strip(hasTaste ? 'Voor jou' : 'Nieuw binnen', hasTaste ? ranked(PIECES) : PIECES.slice().reverse());
+    ['Bont', 'Leer', 'Shearling'].forEach(function (m) { html += strip(m, ranked(PIECES.filter(function (p) { return p.mat === m; }))); });
     $('rows').innerHTML = html;
   }
 
   // ---------- materials ----------
   function renderMats() {
-    $('mats').innerHTML = MATERIALS.map(function (m) {
-      return '<div class="mat"><div class="pic"><svg viewBox="0 0 160 120" role="img" aria-label="Texture: ' + m.key + '"><rect width="160" height="120" style="fill: url(#tx-' + m.tx + ')"></rect></svg></div>' +
-        '<div class="mat-head"><h2>' + m.key + '</h2><button type="button" class="icon-btn" data-like-mat="' + m.key + '" aria-pressed="' + !!likedMats[m.key] + '" aria-label="Like ' + m.key + '"><svg><use href="#i-heart"></use></svg></button></div>' +
-        '<p>' + m.text + '</p></div>';
+    $('mats').innerHTML = ['Bontsoorten', 'Materialen'].map(function (g) {
+      return '<div style="display: flex; flex-direction: column; gap: 16px;"><h2>' + g + '</h2><div class="mats">' + MATERIALS.filter(function (m) { return m.group === g; }).map(function (m) {
+        return '<div class="mat"><div class="pic"><svg viewBox="0 0 160 120" role="img" aria-label="Textuur: ' + m.key + '"><rect width="160" height="120" style="fill: url(#tx-' + m.tx + ')"></rect></svg></div>' +
+          '<div class="mat-head"><h3>' + m.key + '</h3><button type="button" class="icon-btn" data-like-mat="' + m.key + '" aria-pressed="' + !!likedMats[m.key] + '" aria-label="Vind ik mooi: ' + m.key + '"><svg><use href="#i-heart"></use></svg></button></div>' +
+          '<p>' + m.text + '</p></div>';
+      }).join('') + '</div></div>';
     }).join('');
   }
 
@@ -460,19 +468,19 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     var p = byId(current);
     $('p-title').textContent = p.title;
     $('p-like').setAttribute('aria-pressed', String(!!liked[p.id]));
-    $('p-like').setAttribute('aria-label', 'Like ' + p.title);
-    $('p-buy-msg').textContent = 'One of one.';
-    var shots = [coat(p, { label: 'Front' }), coat(p, { back: true, label: 'Back' }), labelDrawing(), coat(p, { flaw: true, label: 'Flaw near the left cuff' })];
+    $('p-like').setAttribute('aria-label', 'Vind ik mooi: ' + p.title);
+    $('p-buy-msg').textContent = 'Uniek exemplaar.';
+    var shots = [coat(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
     $('gal-track').innerHTML = shots.map(function (s) { return '<div class="slide"><div class="pic">' + s + '</div></div>'; }).join('');
     gallery.reset();
-    var names = ['Chest, flat', 'Shoulder', 'Sleeve', 'Back length'];
+    var names = ['Borst, plat', 'Schouder', 'Mouw', 'Ruglengte'];
     $('p-measure').innerHTML = names.map(function (n, i) {
       return '<div><span>' + n + '</span><span>' + (p.m[i] == null ? '—' : p.m[i].toFixed(1)) + '</span></div>';
     }).join('');
-    $('p-material').textContent = p.mat + (p.mat === 'Fur' || p.collar ? '. Species: not verified.' : '.') + ' Label: [as seen]. Era: [only if supported].';
+    $('p-material').textContent = p.mat + (p.species ? (p.collar ? ', kraag van ' : ': ') + p.species.toLowerCase() : '') + '. Label: [zoals op het kledingstuk]. Periode: ' + (p.era ? p.era.toLowerCase() : 'onbekend') + '.';
   }
   $('p-like').addEventListener('click', function () { toggleLike(current); });
-  $('p-buy').addEventListener('click', function () { $('p-buy-msg').textContent = 'Skeleton only: no checkout yet.'; });
+  $('p-buy').addEventListener('click', function () { $('p-buy-msg').textContent = 'Dit is een skelet: afrekenen kan nog niet.'; });
 
   // ---------- clicks ----------
   document.addEventListener('click', function (e) {
@@ -505,8 +513,8 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   $('fit-form').addEventListener('submit', function (e) {
     e.preventDefault();
     var email = $('fit-email');
-    if (!email.value.trim() || !email.checkValidity()) { $('fit-msg').textContent = 'Enter a valid email address.'; return; }
-    if (!$('fit-consent').checked) { $('fit-msg').textContent = 'Tick the box so we may email you.'; return; }
+    if (!email.value.trim() || !email.checkValidity()) { $('fit-msg').textContent = 'Vul een geldig e-mailadres in.'; return; }
+    if (!$('fit-consent').checked) { $('fit-msg').textContent = 'Vink het vakje aan, dan mogen we je mailen.'; return; }
     $('fit-form').hidden = true; $('fit-done').hidden = false;
   });
 

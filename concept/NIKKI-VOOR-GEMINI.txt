@@ -1,6 +1,6 @@
-NIKKI'S BOETIEK — OPDRACHT VOOR GEMINI CANVAS
+NIKKI'S BOETIEK EN INVOER — OPDRACHT VOOR GEMINI CANVAS
 
-Maak van de HTML-bron hieronder een werkend, interactief voorbeeld in Canvas. Toon de boetiek; geef niet alleen een samenvatting of code-uitleg. Als Canvas in deze omgeving niet beschikbaar is, zeg dat eerlijk.
+Maak van de TWEE volledige HTML-bronnen hieronder één werkend, interactief voorbeeld in Canvas met twee duidelijk bereikbare onderdelen: ‘Boetiek’ en ‘Nieuw stuk’. Toon beide schermen; geef niet alleen een samenvatting of code-uitleg. Als Canvas in deze omgeving niet beschikbaar is, zeg dat eerlijk.
 
 Dit is uitsluitend een skelet om gevoel bij te krijgen. Er is geen echte winkel, voorraad of betaling nodig. Gebruik de bestaande bron als uitgangspunt en houd alle functies werkend.
 
@@ -14,7 +14,18 @@ Wacht op mijn antwoord. Stel vervolgvragen één voor één, zonder meerdere dee
 
 Pas daarna, als ik erom vraag, één ontwerpkeuze tegelijk aan. Houd de overige functies intact. Maak niets publiek en voeg geen externe diensten toe. De toekomstige keuze voor Airtable of een winkelplatform staat open.
 
-=== BEGIN HTML-BRON ===
+INVOERKANT — NIEUW STUK
+De tweede bron is Nikki's invoerscherm. Behoud foto toevoegen/verwijderen, fotoplek en hoofdfoto kiezen, handmatig invullen, de controlelijst, bontclassificatie en soortcontrole, maten in cm, titel, beschrijving en prijs. Behoud teruggaan naar foto's zonder ingevoerde waarden te verliezen, Publiceren (proef), voorbeeldklantmatches en Volgend stuk.
+Automatische fotoanalyse gebruikt in de bron een Claude-specifieke mogelijkheid. Die is niet beschikbaar in Gemini Canvas. Maak ‘Liever zelf invullen’ direct bruikbaar en leg kort uit dat automatische voorstellen hier niet aangesloten zijn. Verzin geen werkende AI-koppeling.
+Voeg geen ongevraagde strengere publicatievoorwaarden toe: dit is een oefenscherm. Behoud de bestaande controles op positieve eindige prijzen/maten, lege titels en bontsoorten. Maten zijn plat gemeten kledingmaten, geen lichaamsomtrek. Leid geen materiaal- of herkomstclaims af uit foto's.
+Publiceren (proef) toont alleen het resultaat in de invoerkant. Het publiceert niet naar de boetiek, Airtable of een winkelplatform. De voorbeeldmatches versturen geen e-mail.
+
+SAMEN IN ÉÉN VOORBEELD
+Zet bovenaan twee knoppen of tabs: ‘Boetiek’ en ‘Nieuw stuk’. Houd de toestand van beide schermen vast bij wisselen, zodat Nikki haar invoer niet kwijtraakt. De schermen hebben eigen stijlen, scripts en overlappende element-ID's: plak ze niet ongewijzigd in dezelfde DOM. Gebruik bijvoorbeeld twee blijvend gemonteerde, geïsoleerde frames met srcdoc, of zorgvuldig gescheiden componenten. Laat maar één scherm tegelijk zien. Zorg dat dialoogvensters, bestandskeuze, foto-export en mobiel scrollen bruikbaar blijven.
+Leg in gewone taal kort uit: de boetiek is de klantkant, Nieuw stuk is Nikki's werkplek. Later moet een gecontroleerd kledingstuk vanuit die werkplek in de winkel kunnen verschijnen; die verbinding is nu alleen een ontwerpidee.
+Stel nog steeds maar één vraag tegelijk. Begin met de stijlkeuze; bespreek later welk deel van de invoer Nikki makkelijk of onduidelijk vindt. Vraag naar één onderwerp per bericht en wacht op het antwoord.
+
+=== BEGIN HTML-BRON 1: BOETIEK ===
 <!doctype html>
 <html lang="nl">
 <meta charset="utf-8">
@@ -829,4 +840,542 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 
 </html>
 
-=== EINDE HTML-BRON ===
+=== EINDE HTML-BRON 1: BOETIEK ===
+
+=== BEGIN HTML-BRON 2: NIEUW STUK ===
+<!doctype html>
+<html lang="nl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nikki's invoer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  PROTOTYPE: Nikki's phone intake for one garment.
+  Photos -> automatic suggestions (Claude via the artifact's `sample` capability,
+  on the viewer's own Claude account) -> one compact checklist: tap to confirm,
+  type only what is new -> Publiceren -> preview of which EXAMPLE customers
+  would be emailed.
+  Learning: options Nikki adds and corrections she makes are kept in this
+  browser (localStorage) and offered next time. In the real version these
+  corrections become training data for the suggestions, server-side.
+  No garment is saved to a server or Airtable. Using Claude automatic suggestions sends selected photos to Claude; manual entry stays in this page.
+  Rules: suggestions only, Nikki decides. Measurements come from the tape
+  measure, never from photos. Fur species must be confirmed by Nikki.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: phone-first single column (max 560px). Review = one checklist of collapsible steps, publish button at the end. */
+:root {
+  --bg: #F3F1EE;
+  --surface: #E6E2DC;
+  --line: #B8B1A8;
+  --fg: #26231F;
+  --muted: #5C564F;
+  --ok: #2F6B3A;
+  --warn: #8A5A00;
+  --warn-bg: #FFF1CC;
+  --font-display: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --font-body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7; --ok: #8BC79A; --warn: #F2C46B; --warn-bg: #3A2F12; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7; --ok: #8BC79A; --warn: #F2C46B; --warn-bg: #3A2F12; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; }
+p { margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+.app { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+.top { display: flex; align-items: center; gap: 10px; }
+.top .name { font-family: var(--font-display); }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 22px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; width: 100%; font-size: 1rem; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.linkbtn { background: none; border: 0; padding: 8px 0; text-decoration: underline; cursor: pointer; color: var(--muted); align-self: center; }
+.notice { background: var(--warn-bg); padding: 10px 12px; font-size: 0.88rem; border-left: 4px solid var(--warn); }
+
+/* photos */
+.pickers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.picker { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 96px; border: 1px dashed var(--line); background: var(--surface); cursor: pointer; text-align: center; padding: 10px; }
+.picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.picker svg { width: 28px; height: 28px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+.thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.thumb { position: relative; aspect-ratio: 3 / 4; max-width: 100%; background: var(--surface); overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .x { position: absolute; top: 3px; right: 3px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--bg); cursor: pointer; }
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); }
+@media (prefers-reduced-motion: no-preference) { .dot { animation: pulse 1s ease-in-out infinite alternate; } @keyframes pulse { from { opacity: 0.2; } to { opacity: 1; } } }
+
+/* checklist */
+.path { border-top: 1px solid var(--line); }
+.stepx { border-bottom: 1px solid var(--line); }
+.stephead { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; background: none; border: 0; cursor: pointer; text-align: left; }
+.tick { width: 26px; height: 26px; flex: 0 0 auto; border: 1.5px solid var(--line); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.tick svg { width: 14px; height: 14px; stroke: var(--bg); fill: none; stroke-width: 2.5; visibility: hidden; }
+.stepx.done .tick { background: var(--ok); border-color: var(--ok); }
+.stepx.done .tick svg { visibility: visible; }
+.steptitle { font-weight: 500; }
+.stepsum { color: var(--muted); font-size: 0.85rem; margin-left: auto; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.stepbody { padding: 4px 0 16px 38px; display: flex; flex-direction: column; gap: 14px; }
+.group { display: flex; flex-direction: column; gap: 6px; }
+.glabel { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 19px; background: var(--bg); cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip .sug { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.chip.add { border-style: dashed; color: var(--muted); }
+.addrow { display: flex; gap: 6px; }
+.addrow input { flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid var(--line); background: var(--bg); }
+.addrow button { min-height: 40px; padding: 0 12px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; }
+.why { font-size: 0.8rem; color: var(--muted); }
+.ph-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ph { display: flex; flex-direction: column; gap: 4px; }
+.ph .thumb { aspect-ratio: 1 / 1; }
+.ph button.okb { min-height: 34px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.ph button.okb[aria-pressed="true"] { background: var(--ok); color: var(--bg); border-color: var(--ok); }
+.ph .rolesel { min-height: 34px; border: 1px solid var(--line); background: var(--bg); font-size: 0.8rem; padding: 0 4px; width: 100%; }
+.ph.bad .thumb { outline: 2px solid var(--warn); }
+.meas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.meas label { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
+input[type="number"], input[type="text"], textarea { min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); background: var(--bg); width: 100%; }
+textarea { min-height: 72px; resize: vertical; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; }
+.check input { width: 22px; height: 22px; flex: 0 0 auto; margin-top: 1px; }
+.next { align-self: flex-start; min-height: 40px; padding: 0 16px; border: 1px solid var(--fg); background: transparent; cursor: pointer; }
+.learn { font-size: 0.8rem; color: var(--muted); }
+
+/* done */
+.card { border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.preview { display: flex; gap: 12px; align-items: flex-start; }
+.preview img, .preview .phx { width: 96px; height: 128px; object-fit: cover; background: var(--surface); flex: 0 0 auto; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 14px; padding: 2px 10px; }
+.match { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 8px; }
+.err { color: var(--warn); font-size: 0.9rem; }
+.bar { position: sticky; bottom: 0; background: var(--bg); padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 2; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="pin" viewBox="0 0 120 120">
+      <path id="pin-ring" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" fill="none"></path>
+      <circle cx="60" cy="60" r="57" style="fill: var(--fg)"></circle>
+      <circle cx="60" cy="60" r="31" style="fill: none; stroke: var(--bg); stroke-width: 1.5"></circle>
+      <text font-size="11.5" letter-spacing="2.6" style="fill: var(--bg); font-family: var(--font-body)"><textPath href="#pin-ring">GUARANTEED · SECOND-HAND · FUR ·</textPath></text>
+      <text x="60" y="68" text-anchor="middle" font-size="26" font-style="italic" style="fill: var(--bg); font-family: var(--font-display)">GSF</text>
+    </symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="4"></circle></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"></path></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <div class="top">
+    <svg width="32" height="32" aria-hidden="true"><use href="#pin"></use></svg>
+    <span class="name">Nieuw stuk · proef</span>
+  </div>
+
+  <!-- STEP 1: photos -->
+  <section id="step-photos" class="stack">
+    <h1>Fotografeer de items</h1>
+    <p class="muted">Alle kanten, het label en details. Volgorde maakt niet uit.</p><p class="muted">Dit is een oefenscherm. Je kledingstuk wordt niet bewaard of naar de winkel gestuurd. Eigen keuzewoorden worden wel in deze browser onthouden.</p>
+    <div class="pickers">
+      <label class="picker" for="cam"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Foto maken</span><input id="cam" type="file" accept="image/*" capture="environment"></label>
+      <label class="picker" for="gallery"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Uit galerij</span><input id="gallery" type="file" accept="image/*" multiple></label>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <p class="muted" id="photo-count">Voeg eerst een foto toe.</p>
+    <p class="notice" id="ai-off" hidden></p>
+    <button type="button" class="btn" id="analyse" disabled>Verwerken</button>
+    <button type="button" class="linkbtn" id="manual">Liever zelf invullen</button>
+  </section>
+
+  <!-- STEP 2: processing -->
+  <section id="step-thinking" class="stack" hidden>
+    <h1>Bezig met verwerken</h1>
+    <div class="thinking" role="status"><span class="dot"></span><span id="think-msg">Even geduld. Dit kan een halve minuut duren.</span></div>
+    <button type="button" class="linkbtn" id="stop">Stoppen</button>
+  </section>
+
+  <!-- STEP 3: checklist -->
+  <section id="step-review" class="stack" hidden>
+    <h1>Controleren</h1>
+    <p class="muted" id="review-intro">Tik aan wat klopt. Groene stip = voorstel. Typ alleen wat nieuw is.</p>
+    <div id="warnings" class="stack"></div>
+    <div class="path" id="path"></div>
+    <p class="err" id="review-err" role="status"></p>
+    <div class="bar"><button type="button" class="btn" id="publish" disabled>Publiceren (proef)</button></div>
+    <p class="learn" id="learned"></p>
+    <button type="button" class="linkbtn" id="back-photos">Terug naar foto's</button>
+  </section>
+
+  <!-- STEP 4: done -->
+  <section id="step-done" class="stack" hidden>
+    <h1>Zo ziet publicatie eruit</h1>
+    <p class="muted">Proef: er is niets opgeslagen of gepubliceerd.</p>
+    <div class="card"><div class="preview"><div id="pv-img"></div><div class="stack" style="gap: 6px; min-width: 0;"><h2 id="pv-title"></h2><p id="pv-price" class="muted"></p><div class="tags" id="pv-tags"></div></div></div></div>
+    <h2>Voorbeeld van passende klanten</h2>
+    <p class="muted">Verzonnen voorbeeldklanten. In deze proef wordt niets verstuurd.</p>
+    <div class="card" id="matches"></div>
+    <p class="learn" id="learned-done"></p>
+    <button type="button" class="btn" id="again">Volgend stuk</button>
+  </section>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---------- learned options (per browser; stands in for server-side learning) ----------
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem('gsf-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem('gsf-' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  var BASE = {
+    bont: ['Ja', 'Alleen kraag of rand', 'Nee'],
+    materiaal: ['Bont', 'Leer', 'Suède', 'Shearling', 'Wol', 'Anders'],
+    model: ['Sjaalkraag', 'Reverskraag', 'Opstaande kraag', 'Capuchon', 'Pilotenjack', 'Autojas', 'Trenchcoat', 'Cape', 'Bolero', 'Kort jack', 'Overslag met ceintuur'],
+    kleur: ['Zwart', 'Donkerbruin', 'Bruin', 'Cognac', 'Camel', 'Honing', 'Crème', 'Wit', 'Zilvergrijs', 'Grijs'],
+    lengte: ['Kort', 'Heuplang', 'Knielang', 'Lang'],
+    pasvorm: ['Recht', 'Getailleerd', 'Boxy', 'Oversized'],
+    periode: ['Jaren 50', 'Jaren 60', 'Jaren 70', 'Jaren 80', 'Jaren 90', 'Onbekend'],
+    bontsoort: ['Nerts', 'Vos', 'Persianer', 'Konijn', 'Bisam', 'Wasbeer', 'Lam'],
+    bijzonderheden: ['Bontkraag', 'Bontmanchetten', 'Ceintuur', 'Opgestikte zakken', 'Origineel label', 'Monogram', 'Zijden voering', 'Voering vernieuwd', 'Reparatie', 'Kale plek', 'Vlek', 'Ontbrekende knoop', 'Geen']
+  };
+  var learned = store.get('learned', {});
+  function options(key) {
+    var list = BASE[key].concat(learned[key] || []);
+    var s = sug[key] && sug[key].waarde;
+    (Array.isArray(s) ? s : s ? [s] : []).forEach(function (v) { if (list.indexOf(v) < 0) list.push(v); });
+    return list;
+  }
+  function learn(key, value) {
+    learned[key] = learned[key] || [];
+    if (BASE[key].indexOf(value) < 0 && learned[key].indexOf(value) < 0) { learned[key].push(value); store.set('learned', learned); }
+  }
+
+  // ---------- state ----------
+  var ROLES = ['Voorkant', 'Achterkant', 'Label', 'Detail', 'Gebrek', 'Voering', 'Sluiting', 'Overig'];
+  var photos = [];      // {file, url, rol, toelichting, ok, bruikbaar}
+  var sug = {};         // key -> {waarde, zekerheid, waarom}
+  var sel = {};         // key -> value (string) or array for bijzonderheden
+  var m = { chest: '', shoulder: '', sleeve: '', length: '' };
+  var text = { titel: '', beschrijving: '', prijs: '' };
+  var speciesChecked = false;
+  var open = 'fotos';
+  var adding = null;    // key with open "+ nieuw" input
+  var sample = null, limits = null, ctl = null;
+
+  var PROFILES = [
+    { name: 'Voorbeeldklant A', likes: ['nerts', 'lang', 'jaren 70', 'sjaalkraag'], chest: 56 },
+    { name: 'Voorbeeldklant B', likes: ['vos', 'kort', 'heuplang', 'zilvergrijs'], chest: 52 },
+    { name: 'Voorbeeldklant C', likes: ['shearling', 'oversized', 'pilotenjack', 'bruin'], chest: 60 },
+    { name: 'Voorbeeldklant D', likes: ['leer', 'zwart', 'getailleerd', 'trenchcoat'], chest: 57 },
+    { name: 'Voorbeeldklant E', likes: ['bont', 'knielang', 'camel', 'persianer', 'capuchon'], chest: 55 }
+  ];
+
+  function step(n) {
+    ['step-photos', 'step-thinking', 'step-review', 'step-done'].forEach(function (id, i) { $(id).hidden = i !== n - 1; });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- photos ----------
+  function addFiles(list) {
+    Array.from(list || []).forEach(function (f) { photos.push({ file: f, url: URL.createObjectURL(f), rol: '', rolByUser: false, main: false, toelichting: '', ok: false, bruikbaar: true }); });
+    renderThumbs();
+  }
+  function renderThumbs() {
+    $('thumbs').innerHTML = photos.map(function (p, i) {
+      return '<div class="thumb"><img alt="Foto ' + (i + 1) + '" src="' + p.url + '"><button type="button" class="x" data-del="' + i + '" aria-label="Foto ' + (i + 1) + ' verwijderen">×</button></div>';
+    }).join('');
+    var n = photos.length;
+    $('photo-count').textContent = n ? n + (n === 1 ? ' foto' : " foto's") + ' klaar.' : 'Voeg eerst een foto toe.';
+    $('analyse').disabled = !n || !sample;
+  }
+  $('cam').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  $('gallery').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  $('thumbs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del]'); if (!b) return;
+    URL.revokeObjectURL(photos[Number(b.getAttribute('data-del'))].url); photos.splice(Number(b.getAttribute('data-del')), 1); renderThumbs();
+  });
+
+  // ---------- processing ----------
+  function prompt() {
+    var lists = Object.keys(BASE).map(function (k) { return '- ' + k + ': ' + options(k).join(', '); }).join('\n');
+    return [
+      'Je helpt Nikki, die een tweedehandswinkel heeft in vintage bont, leer en shearling, met het invoeren van één kledingstuk.',
+      'De foto\'s tonen hetzelfde stuk in willekeurige volgorde. Geef elke foto (nr 1, 2, 3 ... in de volgorde waarin je ze krijgt) een plek: ' + ROLES.join(', ') + ', en zeg of hij bruikbaar is (scherp, goed belicht).',
+      'Kies per kenmerk bij voorkeur uit deze lijsten. Past niets, geef dan een korte nieuwe waarde:',
+      lists,
+      'Regels: gok niet; onzeker = waarde null en zekerheid "laag". Bontsoort alleen met zichtbare kenmerken en leg uit waarom. Mogelijk honden- of kattenbont of een beschermde soort: zet het in "waarschuwingen". Labeltekst en merk alleen als letterlijk leesbaar. Geen maten. Geen echtheids- of herkomstclaims. Periode alleen als die echt af te leiden is.',
+      'Schrijf in het Nederlands. Titel kort, bijvoorbeeld "Lange nertsjas met sjaalkraag". Beschrijving: twee rustige zinnen, alleen wat zichtbaar is.',
+      'Antwoord met alleen dit JSON-object:',
+      '{"titel": string, "beschrijving": string, "labeltekst": string|null,',
+      ' "materiaal": {"waarde": string|null, "zekerheid": "hoog"|"middel"|"laag", "waarom": string}, "model": {...}, "kleur": {...}, "lengte": {...}, "pasvorm": {...}, "periode": {...}, "bontsoort": {...},',
+      ' "bijzonderheden": {"waarde": [string], "zekerheid": ..., "waarom": string}, "bont": {"waarde": "Ja"|"Alleen kraag of rand"|"Nee"|null, "zekerheid": ..., "waarom": string},',
+      ' "waarschuwingen": [string], "fotos": [{"nr": number, "rol": string, "toelichting": string, "bruikbaar": boolean}]}'
+    ].join('\n');
+  }
+  $('analyse').addEventListener('click', function () {
+    if (!sample) return;
+    var max = (limits && limits.images && limits.images.maxCount) || 4;
+    var files = photos.slice(0, max).map(function (p) { return p.file; });
+    ctl = new AbortController();
+    step(2);
+    $('think-msg').textContent = files.length + (files.length === 1 ? ' foto wordt' : " foto's worden") + ' verwerkt. Dit kan een halve minuut duren.';
+    sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })
+      .then(function (d) { startReview(d || {}, files.length, ''); })
+      .catch(function (e) {
+        if (e && e.code === 'cancelled') { step(1); return; }
+        var msg = {
+          not_granted: 'Geen toestemming gegeven. Vul zelf in.',
+          sampling_disabled: 'Automatisch invullen werkt niet voor dit account. Vul zelf in.',
+          images_unavailable: 'Foto\'s verwerken kan hier niet. Vul zelf in.',
+          image_rejected: 'Een foto werd niet geaccepteerd. Probeer een andere.',
+          rate_limited: 'Even te veel tegelijk. Probeer het over een paar minuten opnieuw.',
+          invalid_json: 'Er kwam een onleesbaar resultaat terug. Probeer het opnieuw.'
+        }[e && e.code] || 'Er ging iets mis. Probeer het opnieuw of vul zelf in.';
+        startReview({}, 0, msg);
+      });
+  });
+  $('stop').addEventListener('click', function () { if (ctl) ctl.abort(); });
+  $('manual').addEventListener('click', function () { startReview({}, 0, ''); });
+  $('back-photos').addEventListener('click', function () { step(1); });
+
+  // A new item starts empty; returning to the checklist (or processing again) keeps what Nikki already entered.
+  function resetItem() {
+    sug = {}; sel = { bijzonderheden: [] }; speciesChecked = false; adding = null;
+    m = { chest: '', shoulder: '', sleeve: '', length: '' };
+    text = { titel: '', beschrijving: '', prijs: '' };
+  }
+  function startReview(d, seen, msg) {
+    adding = null;
+    ['bont', 'materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort', 'bijzonderheden'].forEach(function (k) {
+      var o = d[k];
+      if (k === 'bont' && o && BASE.bont.indexOf(o.waarde) < 0) return;
+      if (o && typeof o === 'object' && !Array.isArray(o)) {
+        sug[k] = { waarde: o.waarde, zekerheid: o.zekerheid, waarom: o.waarom };
+        if (k === 'bijzonderheden') { if (!sel[k].length && Array.isArray(o.waarde)) sel[k] = o.waarde.slice(); }
+        else if (!sel[k] && o.waarde) sel[k] = String(o.waarde);
+      }
+    });
+    if (!sel.bont && sel.materiaal === 'Bont') sel.bont = 'Ja';
+    if (!text.titel && d.titel) text.titel = String(d.titel);
+    if (!text.beschrijving && d.beschrijving) text.beschrijving = String(d.beschrijving);
+    photos.forEach(function (p, i) {
+      var f = Array.isArray(d.fotos) ? d.fotos.filter(function (x) { return Number(x.nr) === i + 1; })[0] : null;
+      if (f) { if (!p.rolByUser) p.rol = ROLES.indexOf(f.rol) >= 0 ? f.rol : 'Overig'; p.toelichting = f.toelichting ? String(f.toelichting) : ''; p.bruikbaar = f.bruikbaar !== false; }
+      else if (seen && i >= seen && !p.rol) { p.toelichting = 'Niet bekeken (te veel foto\'s in één keer).'; }
+    });
+    var warns = Array.isArray(d.waarschuwingen) ? d.waarschuwingen : [];
+    $('warnings').innerHTML = (msg ? '<p class="notice">' + esc(msg) + '</p>' : '') + warns.map(function (w) { return '<p class="notice">' + esc(w) + '</p>'; }).join('');
+    $('review-intro').textContent = Object.keys(sug).length ? 'Tik aan wat klopt. Groene stip = voorstel. Typ alleen wat nieuw is.' : 'Tik aan wat klopt. Typ alleen wat nieuw is.';
+    $('review-err').textContent = '';
+    open = photos.length ? 'fotos' : 'wat';
+    renderPath(); step(3);
+  }
+
+  // ---------- checklist ----------
+  // Fur is decided by a fixed classification, never by the free display name of the material.
+  function positiveDecimal(value, places) {
+    var raw = String(value).trim();
+    return new RegExp('^\\d+(?:\\.\\d{1,' + places + '})?$').test(raw) && Number.isFinite(Number(raw)) && Number(raw) > 0;
+  }
+  function needsSpecies() { return sel.bont === 'Ja' || sel.bont === 'Alleen kraag of rand'; }
+  // Main photo: an explicit choice wins, otherwise the first photo marked Voorkant. Upload order never decides.
+  function mainPhoto() { return photos.filter(function (p) { return p.main; })[0] || photos.filter(function (p) { return p.rol === 'Voorkant'; })[0] || null; }
+  var STEPS = [
+    { id: 'fotos', title: "Foto's",
+      done: function () { return photos.length > 0 && photos.every(function (p) { return p.ok; }) && !!mainPhoto(); },
+      sum: function () { var n = photos.filter(function (p) { return p.ok; }).length; return photos.length ? n + ' van ' + photos.length + ' goed' + (mainPhoto() ? '' : ' · kies hoofdfoto') : 'geen foto\'s'; } },
+    { id: 'wat', title: 'Wat is het',
+      done: function () { return !!(BASE.bont.indexOf(sel.bont) >= 0 && sel.materiaal && sel.model && sel.kleur && sel.lengte); },
+      sum: function () { return [sel.materiaal, sel.model, sel.kleur, sel.lengte].filter(Boolean).join(' · ') || (sel.bont ? '' : 'bevat het bont?'); } },
+    { id: 'soort', title: 'Bontsoort',
+      done: function () { if (BASE.bont.indexOf(sel.bont) < 0) return false; return needsSpecies() ? (!!sel.bontsoort && speciesChecked) : !sel.bontsoort; },
+      sum: function () { if (!sel.bont) return 'eerst: bevat het bont?'; if (!needsSpecies()) return sel.bontsoort ? 'soort ' + sel.bontsoort + ' gekozen, maar geen bont' : 'niet van toepassing'; return (sel.bontsoort || 'nog kiezen') + (sel.bontsoort && speciesChecked ? ' · gecontroleerd' : ''); } },
+    { id: 'maten', title: 'Maten',
+      done: function () { return positiveDecimal(m.chest, 1) && positiveDecimal(m.length, 1) && ['shoulder', 'sleeve'].every(function (k) { return m[k] === '' || positiveDecimal(m[k], 1); }); },
+      sum: function () { return m.chest !== '' ? 'borst ' + m.chest + ' · rug ' + (m.length || '?') + ' cm' : 'borst en ruglengte nodig'; } },
+    { id: 'bijz', title: 'Bijzonderheden',
+      done: function () { return sel.bijzonderheden.length > 0; },
+      sum: function () { return sel.bijzonderheden.join(', ') || 'kies of tik "Geen"'; } },
+    { id: 'tekst', title: 'Titel en prijs',
+      done: function () { return !!text.titel.trim() && positiveDecimal(text.prijs, 2); },
+      sum: function () { return text.titel ? text.titel + (text.prijs ? ' · € ' + text.prijs : '') : 'nog invullen'; } }
+  ];
+  function chipGroup(key, label, multi, fixed) {
+    var opts = options(key), s = sug[key], sv = s && s.waarde;
+    var sugList = Array.isArray(sv) ? sv : sv ? [sv] : [];
+    var html = '<div class="group">' + (label ? '<span class="glabel">' + label + '</span>' : '') + '<div class="chips" role="group" aria-label="' + label + '">' +
+      opts.map(function (o) {
+        var on = multi ? sel[key].indexOf(o) >= 0 : sel[key] === o;
+        return '<button type="button" class="chip" data-k="' + key + '" data-v="' + esc(o) + '" aria-pressed="' + on + '">' + (sugList.indexOf(o) >= 0 ? '<span class="sug" aria-label="voorstel"></span>' : '') + esc(o) + '</button>';
+      }).join('') +
+      (fixed ? '' : '<button type="button" class="chip add" data-add="' + key + '">+ nieuw</button>') + '</div>';
+    if (adding === key) html += '<div class="addrow"><input type="text" id="add-' + key + '" aria-label="Nieuwe waarde voor ' + label + '" placeholder="Typ en voeg toe"><button type="button" data-addok="' + key + '">Toevoegen</button></div>';
+    if (s && s.waarom) html += '<span class="why">' + esc(s.waarom) + '</span>';
+    return html + '</div>';
+  }
+  function body(id) {
+    if (id === 'fotos') {
+      return '<button type="button" class="chip" data-allok aria-pressed="' + STEPS[0].done() + '">Alle foto\'s goed</button><div class="ph-grid">' + photos.map(function (p, i) {
+        return '<div class="ph' + (p.bruikbaar ? '' : ' bad') + '"><div class="thumb"><img alt="Foto ' + (i + 1) + (p.rol ? ', ' + p.rol : '') + '" src="' + p.url + '"></div>' +
+          '<select class="rolesel" id="rol-' + i + '" data-rol="' + i + '" aria-label="Plek van foto ' + (i + 1) + '">' + ['<option value="">Plek?</option>'].concat(ROLES.map(function (r) { return '<option' + (r === p.rol ? ' selected' : '') + '>' + r + '</option>'; })).join('') + '</select>' +
+          '<button type="button" class="okb" data-main="' + i + '" aria-pressed="' + (mainPhoto() === p) + '">' + (mainPhoto() === p ? '★ Hoofdfoto' : '☆ Hoofdfoto') + '</button>' +
+          '<button type="button" class="okb" data-ok="' + i + '" aria-pressed="' + p.ok + '">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +
+          (!p.bruikbaar ? '<span class="why">Onscherp of donker</span>' : p.toelichting ? '<span class="why">' + esc(p.toelichting) + '</span>' : '') + '</div>';
+      }).join('') + '</div>';
+    }
+    if (id === 'wat') return chipGroup('bont', 'Bevat het bont?', false, true) + chipGroup('materiaal', 'Materiaal') + chipGroup('model', 'Model') + chipGroup('kleur', 'Kleur') + chipGroup('lengte', 'Lengte') + chipGroup('pasvorm', 'Pasvorm') + chipGroup('periode', 'Periode');
+    if (id === 'soort') {
+      if (!sel.bont) return '<p class="muted">Kies eerst bij Wat is het of het bont bevat.</p>';
+      if (!needsSpecies()) return sel.bontsoort ? '<p class="notice">Je koos ' + esc(sel.bontsoort) + ', maar het stuk bevat volgens jou geen bont. Wis de soort of pas Bevat het bont aan.</p><button type="button" class="chip" data-clearsp>Soort wissen</button>' : '<p class="muted">Niet nodig: het stuk bevat geen bont.</p>';
+      return chipGroup('bontsoort', 'Soort') + '<label class="check" for="sp-ok"><input id="sp-ok" type="checkbox"' + (speciesChecked ? ' checked' : '') + '>Zelf gecontroleerd (label, herkomst of kenmerken)</label>';
+    }
+    if (id === 'maten') {
+      var f = function (k, l) { return '<label for="m-' + k + '">' + l + '<input id="m-' + k + '" data-m="' + k + '" type="text" inputmode="decimal" autocomplete="off" value="' + esc(m[k]) + '"></label>'; };
+      return '<p class="muted">Meetlint, plat gemeten, in cm (maximaal één decimaal). Borst en ruglengte zijn nodig; laat andere maten leeg als ze niet van toepassing zijn. Gebruik positieve getallen.</p><div class="meas">' + f('chest', 'Borst, plat') + f('length', 'Ruglengte') + f('shoulder', 'Schouder') + f('sleeve', 'Mouw') + '</div>';
+    }
+    if (id === 'bijz') return chipGroup('bijzonderheden', '', true);
+    if (id === 'tekst') {
+      return '<label for="t-titel" class="group"><span class="glabel">Titel</span><input id="t-titel" data-t="titel" type="text" value="' + esc(text.titel) + '"></label>' +
+        '<label for="t-beschrijving" class="group"><span class="glabel">Beschrijving</span><textarea id="t-beschrijving" data-t="beschrijving">' + esc(text.beschrijving) + '</textarea></label>' +
+        '<label for="t-prijs" class="group"><span class="glabel">Prijs (€ · maximaal twee decimalen)</span><input id="t-prijs" data-t="prijs" type="text" inputmode="decimal" autocomplete="off" value="' + esc(text.prijs) + '"></label>';
+    }
+    return '';
+  }
+  function renderPath() {
+    $('path').innerHTML = STEPS.map(function (s) {
+      var isOpen = open === s.id;
+      return '<div class="stepx' + (s.done() ? ' done' : '') + '" data-step="' + s.id + '">' +
+        '<button type="button" class="stephead" data-open="' + s.id + '" aria-expanded="' + isOpen + '"><span class="tick"><svg aria-hidden="true"><use href="#i-check"></use></svg></span><span class="steptitle">' + s.title + '</span><span class="stepsum">' + esc(s.sum()) + '</span></button>' +
+        (isOpen ? '<div class="stepbody">' + body(s.id) + '<button type="button" class="next" data-next="' + s.id + '">Volgende</button></div>' : '') + '</div>';
+    }).join('');
+    refresh();
+  }
+  function refresh() {
+    STEPS.forEach(function (s) {
+      var el = document.querySelector('[data-step="' + s.id + '"]'); if (!el) return;
+      el.classList.toggle('done', s.done());
+      el.querySelector('.stepsum').textContent = s.sum();
+    });
+    var all = STEPS.every(function (s) { return s.done(); });
+    $('publish').disabled = !all;
+    var n = Object.keys(learned).reduce(function (a, k) { return a + learned[k].length; }, 0);
+    $('learned').textContent = n ? n + ' eigen keuze' + (n === 1 ? '' : 's') + ' onthouden; die staan de volgende keer klaar.' : '';
+  }
+  function nextOpen(from) {
+    var i = STEPS.map(function (s) { return s.id; }).indexOf(from);
+    var rest = STEPS.slice(i + 1).concat(STEPS.slice(0, i + 1)).filter(function (s) { return !s.done(); });
+    open = rest.length ? rest[0].id : null;
+    renderPath();
+    if (open) { var el = document.querySelector('[data-step="' + open + '"]'); if (el) el.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  $('path').addEventListener('click', function (e) {
+    var t;
+    if ((t = e.target.closest('[data-open]'))) { var id = t.getAttribute('data-open'); open = open === id ? null : id; adding = null; renderPath(); return; }
+    if ((t = e.target.closest('[data-next]'))) { adding = null; nextOpen(t.getAttribute('data-next')); return; }
+    if ((t = e.target.closest('[data-allok]'))) { var on = !STEPS[0].done(); photos.forEach(function (p) { p.ok = on; }); renderPath(); return; }
+    if ((t = e.target.closest('[data-ok]'))) { var p = photos[Number(t.getAttribute('data-ok'))]; p.ok = !p.ok; renderPath(); return; }
+    if ((t = e.target.closest('[data-add]'))) { adding = adding === t.getAttribute('data-add') ? null : t.getAttribute('data-add'); renderPath(); var inp = $('add-' + adding); if (inp) inp.focus(); return; }
+    if ((t = e.target.closest('[data-addok]'))) { addValue(t.getAttribute('data-addok')); return; }
+    if ((t = e.target.closest('[data-clearsp]'))) { sel.bontsoort = ''; speciesChecked = false; renderPath(); return; }
+    if ((t = e.target.closest('[data-main]'))) { var mi = Number(t.getAttribute('data-main')); photos.forEach(function (x, j) { x.main = j === mi ? !x.main : false; }); renderPath(); return; }
+    if ((t = e.target.closest('[data-k]'))) {
+      var k = t.getAttribute('data-k'), v = t.getAttribute('data-v');
+      if (k === 'bijzonderheden') {
+        var list = sel[k];
+        if (v === 'Geen') sel[k] = list.indexOf('Geen') >= 0 ? [] : ['Geen'];
+        else { list = list.filter(function (x) { return x !== 'Geen'; }); var at = list.indexOf(v); if (at >= 0) list.splice(at, 1); else list.push(v); sel[k] = list; }
+      } else sel[k] = sel[k] === v ? '' : v;
+      if (k === 'bontsoort') speciesChecked = false;
+      renderPath();
+    }
+  });
+  $('path').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.id && e.target.id.indexOf('add-') === 0) { e.preventDefault(); addValue(e.target.id.slice(4)); }
+  });
+  function addValue(key) {
+    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';
+    if (!v) return;
+    v = v.charAt(0).toUpperCase() + v.slice(1);
+    learn(key, v);
+    if (key === 'bijzonderheden') { sel[key] = sel[key].filter(function (x) { return x !== 'Geen'; }); if (sel[key].indexOf(v) < 0) sel[key].push(v); }
+    else sel[key] = v;
+    if (key === 'bontsoort') speciesChecked = false;
+    adding = null; renderPath();
+  }
+  $('path').addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.getAttribute('data-m')) m[el.getAttribute('data-m')] = el.value.replace(',', '.').trim();
+    if (el.getAttribute('data-t')) text[el.getAttribute('data-t')] = el.getAttribute('data-t') === 'prijs' ? el.value.replace(',', '.').trim() : el.value;
+    if (el.id === 'sp-ok') speciesChecked = el.checked;
+    refresh();
+  });
+  $('path').addEventListener('change', function (e) {
+    if (e.target.id === 'sp-ok') { speciesChecked = e.target.checked; refresh(); }
+    var r = e.target.getAttribute('data-rol');
+    if (r != null) { var ph = photos[Number(r)]; ph.rol = e.target.value; ph.rolByUser = true; renderPath(); }
+  });
+
+  // ---------- publish + matching (demo) ----------
+  $('publish').addEventListener('click', function () {
+    if (!STEPS.every(function (s) { return s.done(); })) { $('review-err').textContent = 'Nog niet alles is afgevinkt.'; return; }
+    var corrections = ['materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort'].filter(function (k) { return sug[k] && sug[k].waarde && sel[k] && sug[k].waarde !== sel[k]; }).length;
+    var total = store.get('corrections', 0) + corrections; store.set('corrections', total);
+    var front = mainPhoto();
+    $('pv-img').innerHTML = front ? '<img alt="" src="' + front.url + '">' : '<div class="phx"></div>';
+    $('pv-title').textContent = text.titel;
+    $('pv-price').textContent = '€ ' + Number(text.prijs).toLocaleString('nl-NL');
+    var tags = [needsSpecies() ? sel.bontsoort : '', sel.model, sel.periode, sel.materiaal, sel.lengte, sel.kleur, sel.pasvorm]
+      .concat(sel.bijzonderheden.filter(function (b) { return b !== 'Geen'; }))
+      .filter(function (t) { return t && t !== 'Onbekend'; });
+    $('pv-tags').innerHTML = tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+    var lower = tags.map(function (t) { return t.toLowerCase(); });
+    var chest = m.chest === '' ? null : Number(m.chest);
+    var rows = PROFILES.map(function (c) {
+      var hits = c.likes.filter(function (l) { return lower.some(function (t) { return t.indexOf(l) >= 0 || l.indexOf(t) >= 0; }); });
+      return { c: c, hits: hits, fit: chest == null ? null : Math.abs(chest - c.chest) <= 2 };
+    }).filter(function (r) { return r.hits.length && r.fit !== false; }).sort(function (a, b) { return b.hits.length - a.hits.length; });
+    $('matches').innerHTML = rows.length ? rows.map(function (r) {
+      return '<div class="match"><span>' + r.c.name + '</span><span class="muted">' + r.hits.join(', ') + (r.fit ? ' · borstmaat komt in de buurt' : '') + '</span></div>';
+    }).join('') : '<p class="muted">Geen van de voorbeeldklanten past bij dit stuk.</p>';
+    $('learned-done').textContent = corrections ? corrections + ' aanpassing' + (corrections === 1 ? '' : 'en') + ' op de voorstellen onthouden (' + total + ' in totaal). In de echte versie maken die de voorstellen beter.' : '';
+    step(4);
+  });
+  $('again').addEventListener('click', function () { photos.forEach(function (p) { URL.revokeObjectURL(p.url); }); photos = []; resetItem(); renderThumbs(); step(1); });
+
+  // ---------- start ----------
+  function off(msg) { sample = null; $('ai-off').textContent = msg; $('ai-off').hidden = false; renderThumbs(); }
+  resetItem(); renderThumbs(); step(1);
+  if (!(window.claude && window.claude.use)) {
+    off('Automatisch invullen werkt alleen als je deze pagina opent via claude.ai, ingelogd met je Claude-account. Nu kun je zelf invullen.');
+  } else {
+    $('ai-off').textContent = 'Even laden…'; $('ai-off').hidden = false;
+    Promise.resolve(window.claude.use('sample')).then(function (s) {
+      if (!s) { off('Deze weergave ondersteunt automatisch invullen niet. Open de link in je browser op claude.ai, ingelogd met je Claude-account.'); return; }
+      sample = s;
+      return sample.limits().then(function (l) {
+        limits = l;
+        if (!l || !l.images) { off('Foto\'s verwerken wordt in deze weergave niet ondersteund. Open de link in je browser op claude.ai.'); return; }
+        $('ai-off').hidden = true; renderThumbs();
+      }, function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
+    }).catch(function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
+  }
+})();
+</script>
+
+
+</html>
+
+=== EINDE HTML-BRON 2: NIEUW STUK ===

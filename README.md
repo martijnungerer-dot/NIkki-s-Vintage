@@ -22,6 +22,7 @@ Projectstart voor Nikki's gecureerde webshop met unieke vintage kledingstukken v
 6. [Toegang en vervolg](docs/ACCESS.md): bewezen verbindingen versus ontbrekende stappen.
 7. [Verkoopconcept](docs/CONCEPT.md): brainstorm over pasprofiel, matching en meldingen.
 8. [Voortgang](docs/STATUS.md): gecontroleerde stand en logboek.
+9. [Websiteskelet](concept/README.md): klikbaar HTML-concept en werken in Gemini.
 
 ## Lokaal controleren
 

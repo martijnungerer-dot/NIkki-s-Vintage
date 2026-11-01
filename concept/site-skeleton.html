@@ -541,8 +541,16 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
   function renderAlsoNew() {
     $('alsonew').innerHTML = PIECES.slice(1, 7).map(function (p) {
-      return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + picture(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
+      return '<div class="card"><a href="#home" data-goto="' + p.id + '"><div class="pic">' + picture(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
     }).join('');
+  }
+  // "Ook nieuw" opens the piece in the start carousel, so you keep swiping from there.
+  function goToSlide(id) {
+    var track = $('hero-track');
+    var i = Array.prototype.findIndex.call(track.children, function (sl) { return !!sl.querySelector('[data-press="' + id + '"]'); });
+    if (i < 0) return;
+    track.scrollTo({ left: i * track.clientWidth });
+    window.scrollTo({ top: 0 });
   }
   function renderHero() {
     $('hero-track').innerHTML = PIECES.map(function (p) {
@@ -649,6 +657,8 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
       likeMat.setAttribute('aria-pressed', String(!!likedMats[k]));
       return;
     }
+    var go = e.target.closest('[data-goto]');
+    if (go) { e.preventDefault(); goToSlide(Number(go.getAttribute('data-goto'))); return; }
     var open = e.target.closest('[data-open]');
     if (open) { current = Number(open.getAttribute('data-open')); renderProduct(); }
     if (e.target.closest('[data-open-fit]')) openFit();

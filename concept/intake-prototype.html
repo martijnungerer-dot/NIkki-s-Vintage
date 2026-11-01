@@ -241,7 +241,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
       return '<div class="thumb"><img alt="Foto ' + (i + 1) + '" src="' + p.url + '"><button type="button" class="x" data-del="' + i + '" aria-label="Foto ' + (i + 1) + ' verwijderen">×</button></div>';
     }).join('');
     var n = photos.length;
-    $('photo-count').textContent = n ? n + (n === 1 ? ' foto' : " foto's") + ' klaar.' : '';
+    $('photo-count').textContent = n ? n + (n === 1 ? ' foto' : " foto's") + ' klaar.' : 'Voeg eerst een foto toe.';
     $('analyse').disabled = !n || !sample;
   }
   function allPhotos() { return photos.map(function (p) { return p.file; }); }
@@ -410,15 +410,21 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
 
   // ---------- start ----------
   renderThumbs(); step(1);
-  var use = window.claude && window.claude.use ? window.claude.use('sample') : Promise.resolve(null);
-  Promise.resolve(use).then(function (s) {
-    sample = s || null;
-    if (!sample) { $('ai-off').hidden = false; renderThumbs(); return; }
-    return sample.limits().then(function (l) {
-      limits = l;
-      if (!l || !l.images) { sample = null; $('ai-off').hidden = false; }
-      renderThumbs();
-    }, function () { sample = null; $('ai-off').hidden = false; renderThumbs(); });
-  }).catch(function () { $('ai-off').hidden = false; });
+  function off(msg) { sample = null; $('ai-off').textContent = msg; $('ai-off').hidden = false; renderThumbs(); }
+  var hasClaude = !!(window.claude && window.claude.use);
+  $('photo-count').textContent = 'Voeg eerst een foto toe.';
+  if (!hasClaude) { off('Automatisch invullen werkt alleen als je deze pagina opent via claude.ai, ingelogd met je Claude-account. Nu kun je de velden zelf invullen.'); }
+  else {
+    $('ai-off').textContent = 'Even laden…'; $('ai-off').hidden = false;
+    Promise.resolve(window.claude.use('sample')).then(function (s) {
+      if (!s) { off('Deze weergave ondersteunt automatisch invullen niet. Open de link in je browser op claude.ai, ingelogd met je Claude-account.'); return; }
+      sample = s;
+      return sample.limits().then(function (l) {
+        limits = l;
+        if (!l || !l.images) { off('Foto\'s verwerken wordt in deze weergave niet ondersteund. Open de link in je browser op claude.ai.'); return; }
+        $('ai-off').hidden = true; renderThumbs();
+      }, function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
+    }).catch(function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
+  }
 })();
 </script>

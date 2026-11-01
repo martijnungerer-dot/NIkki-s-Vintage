@@ -91,7 +91,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .ph .thumb { aspect-ratio: 1 / 1; }
 .ph button.okb { min-height: 34px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .ph button.okb[aria-pressed="true"] { background: var(--ok); color: var(--bg); border-color: var(--ok); }
-.ph .role { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.ph .rolesel { min-height: 34px; border: 1px solid var(--line); background: var(--bg); font-size: 0.8rem; padding: 0 4px; width: 100%; }
 .ph.bad .thumb { outline: 2px solid var(--warn); }
 .meas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .meas label { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
@@ -191,6 +191,7 @@ textarea { min-height: 72px; resize: vertical; }
     set: function (k, v) { try { localStorage.setItem('gsf-' + k, JSON.stringify(v)); } catch (e) {} }
   };
   var BASE = {
+    bont: ['Ja', 'Alleen kraag of rand', 'Nee'],
     materiaal: ['Bont', 'Leer', 'Suède', 'Shearling', 'Wol', 'Anders'],
     model: ['Sjaalkraag', 'Reverskraag', 'Opstaande kraag', 'Capuchon', 'Pilotenjack', 'Autojas', 'Trenchcoat', 'Cape', 'Bolero', 'Kort jack', 'Overslag met ceintuur'],
     kleur: ['Zwart', 'Donkerbruin', 'Bruin', 'Cognac', 'Camel', 'Honing', 'Crème', 'Wit', 'Zilvergrijs', 'Grijs'],
@@ -239,7 +240,7 @@ textarea { min-height: 72px; resize: vertical; }
 
   // ---------- photos ----------
   function addFiles(list) {
-    Array.from(list || []).forEach(function (f) { photos.push({ file: f, url: URL.createObjectURL(f), rol: '', toelichting: '', ok: false, bruikbaar: true }); });
+    Array.from(list || []).forEach(function (f) { photos.push({ file: f, url: URL.createObjectURL(f), rol: '', rolByUser: false, main: false, toelichting: '', ok: false, bruikbaar: true }); });
     renderThumbs();
   }
   function renderThumbs() {
@@ -270,7 +271,7 @@ textarea { min-height: 72px; resize: vertical; }
       'Antwoord met alleen dit JSON-object:',
       '{"titel": string, "beschrijving": string, "labeltekst": string|null,',
       ' "materiaal": {"waarde": string|null, "zekerheid": "hoog"|"middel"|"laag", "waarom": string}, "model": {...}, "kleur": {...}, "lengte": {...}, "pasvorm": {...}, "periode": {...}, "bontsoort": {...},',
-      ' "bijzonderheden": {"waarde": [string], "zekerheid": ..., "waarom": string},',
+      ' "bijzonderheden": {"waarde": [string], "zekerheid": ..., "waarom": string}, "bont": {"waarde": "Ja"|"Alleen kraag of rand"|"Nee"|null, "zekerheid": ..., "waarom": string},',
       ' "waarschuwingen": [string], "fotos": [{"nr": number, "rol": string, "toelichting": string, "bruikbaar": boolean}]}'
     ].join('\n');
   }
@@ -300,24 +301,29 @@ textarea { min-height: 72px; resize: vertical; }
   $('manual').addEventListener('click', function () { startReview({}, 0, ''); });
   $('back-photos').addEventListener('click', function () { step(1); });
 
-  function startReview(d, seen, msg) {
-    sug = {}; sel = {}; speciesChecked = false; adding = null;
+  // A new item starts empty; returning to the checklist (or processing again) keeps what Nikki already entered.
+  function resetItem() {
+    sug = {}; sel = { bijzonderheden: [] }; speciesChecked = false; adding = null;
     m = { chest: '', shoulder: '', sleeve: '', length: '' };
-    ['materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort', 'bijzonderheden'].forEach(function (k) {
+    text = { titel: '', beschrijving: '', prijs: '' };
+  }
+  function startReview(d, seen, msg) {
+    adding = null;
+    ['bont', 'materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort', 'bijzonderheden'].forEach(function (k) {
       var o = d[k];
       if (o && typeof o === 'object' && !Array.isArray(o)) {
         sug[k] = { waarde: o.waarde, zekerheid: o.zekerheid, waarom: o.waarom };
-        if (k === 'bijzonderheden') sel[k] = Array.isArray(o.waarde) ? o.waarde.slice() : [];
-        else if (o.waarde) sel[k] = String(o.waarde);
+        if (k === 'bijzonderheden') { if (!sel[k].length && Array.isArray(o.waarde)) sel[k] = o.waarde.slice(); }
+        else if (!sel[k] && o.waarde) sel[k] = String(o.waarde);
       }
     });
-    if (!sel.bijzonderheden) sel.bijzonderheden = [];
-    text = { titel: d.titel ? String(d.titel) : '', beschrijving: d.beschrijving ? String(d.beschrijving) : '', prijs: '' };
+    if (!sel.bont && sel.materiaal === 'Bont') sel.bont = 'Ja';
+    if (!text.titel && d.titel) text.titel = String(d.titel);
+    if (!text.beschrijving && d.beschrijving) text.beschrijving = String(d.beschrijving);
     photos.forEach(function (p, i) {
-      p.ok = false;
       var f = Array.isArray(d.fotos) ? d.fotos.filter(function (x) { return Number(x.nr) === i + 1; })[0] : null;
-      if (f) { p.rol = ROLES.indexOf(f.rol) >= 0 ? f.rol : 'Overig'; p.toelichting = f.toelichting ? String(f.toelichting) : ''; p.bruikbaar = f.bruikbaar !== false; }
-      else if (seen && i >= seen) { p.toelichting = 'Niet bekeken (te veel foto\'s in één keer).'; }
+      if (f) { if (!p.rolByUser) p.rol = ROLES.indexOf(f.rol) >= 0 ? f.rol : 'Overig'; p.toelichting = f.toelichting ? String(f.toelichting) : ''; p.bruikbaar = f.bruikbaar !== false; }
+      else if (seen && i >= seen && !p.rol) { p.toelichting = 'Niet bekeken (te veel foto\'s in één keer).'; }
     });
     var warns = Array.isArray(d.waarschuwingen) ? d.waarschuwingen : [];
     $('warnings').innerHTML = (msg ? '<p class="notice">' + esc(msg) + '</p>' : '') + warns.map(function (w) { return '<p class="notice">' + esc(w) + '</p>'; }).join('');
@@ -328,17 +334,20 @@ textarea { min-height: 72px; resize: vertical; }
   }
 
   // ---------- checklist ----------
-  function needsSpecies() { return sel.materiaal === 'Bont' || sel.bijzonderheden.some(function (b) { return /bont/i.test(b); }); }
+  // Fur is decided by a fixed classification, never by the free display name of the material.
+  function needsSpecies() { return sel.bont === 'Ja' || sel.bont === 'Alleen kraag of rand'; }
+  // Main photo: an explicit choice wins, otherwise the first photo marked Voorkant. Upload order never decides.
+  function mainPhoto() { return photos.filter(function (p) { return p.main; })[0] || photos.filter(function (p) { return p.rol === 'Voorkant'; })[0] || null; }
   var STEPS = [
     { id: 'fotos', title: "Foto's",
-      done: function () { return photos.length > 0 && photos.every(function (p) { return p.ok; }); },
-      sum: function () { var n = photos.filter(function (p) { return p.ok; }).length; return photos.length ? n + ' van ' + photos.length + ' goed' : 'geen foto\'s'; } },
+      done: function () { return photos.length > 0 && photos.every(function (p) { return p.ok; }) && !!mainPhoto(); },
+      sum: function () { var n = photos.filter(function (p) { return p.ok; }).length; return photos.length ? n + ' van ' + photos.length + ' goed' + (mainPhoto() ? '' : ' · kies hoofdfoto') : 'geen foto\'s'; } },
     { id: 'wat', title: 'Wat is het',
-      done: function () { return !!(sel.materiaal && sel.model && sel.kleur && sel.lengte); },
-      sum: function () { return [sel.materiaal, sel.model, sel.kleur, sel.lengte].filter(Boolean).join(' · '); } },
+      done: function () { return !!(sel.bont && sel.materiaal && sel.model && sel.kleur && sel.lengte); },
+      sum: function () { return [sel.materiaal, sel.model, sel.kleur, sel.lengte].filter(Boolean).join(' · ') || (sel.bont ? '' : 'bevat het bont?'); } },
     { id: 'soort', title: 'Bontsoort',
-      done: function () { return !needsSpecies() || (!!sel.bontsoort && speciesChecked); },
-      sum: function () { return needsSpecies() ? (sel.bontsoort || 'nog kiezen') + (sel.bontsoort && speciesChecked ? ' · gecontroleerd' : '') : 'niet van toepassing'; } },
+      done: function () { if (!sel.bont) return false; return needsSpecies() ? (!!sel.bontsoort && speciesChecked) : !sel.bontsoort; },
+      sum: function () { if (!sel.bont) return 'eerst: bevat het bont?'; if (!needsSpecies()) return sel.bontsoort ? 'soort ' + sel.bontsoort + ' gekozen, maar geen bont' : 'niet van toepassing'; return (sel.bontsoort || 'nog kiezen') + (sel.bontsoort && speciesChecked ? ' · gecontroleerd' : ''); } },
     { id: 'maten', title: 'Maten',
       done: function () { return Number(m.chest) > 0 && Number(m.length) > 0; },
       sum: function () { return m.chest !== '' ? 'borst ' + m.chest + ' · rug ' + (m.length || '?') + ' cm' : 'borst en ruglengte nodig'; } },
@@ -349,7 +358,7 @@ textarea { min-height: 72px; resize: vertical; }
       done: function () { return !!text.titel && Number(text.prijs) > 0; },
       sum: function () { return text.titel ? text.titel + (text.prijs ? ' · € ' + text.prijs : '') : 'nog invullen'; } }
   ];
-  function chipGroup(key, label, multi) {
+  function chipGroup(key, label, multi, fixed) {
     var opts = options(key), s = sug[key], sv = s && s.waarde;
     var sugList = Array.isArray(sv) ? sv : sv ? [sv] : [];
     var html = '<div class="group">' + (label ? '<span class="glabel">' + label + '</span>' : '') + '<div class="chips" role="group" aria-label="' + label + '">' +
@@ -357,7 +366,7 @@ textarea { min-height: 72px; resize: vertical; }
         var on = multi ? sel[key].indexOf(o) >= 0 : sel[key] === o;
         return '<button type="button" class="chip" data-k="' + key + '" data-v="' + esc(o) + '" aria-pressed="' + on + '">' + (sugList.indexOf(o) >= 0 ? '<span class="sug" aria-label="voorstel"></span>' : '') + esc(o) + '</button>';
       }).join('') +
-      '<button type="button" class="chip add" data-add="' + key + '">+ nieuw</button></div>';
+      (fixed ? '' : '<button type="button" class="chip add" data-add="' + key + '">+ nieuw</button>') + '</div>';
     if (adding === key) html += '<div class="addrow"><input type="text" id="add-' + key + '" aria-label="Nieuwe waarde voor ' + label + '" placeholder="Typ en voeg toe"><button type="button" data-addok="' + key + '">Toevoegen</button></div>';
     if (s && s.waarom) html += '<span class="why">' + esc(s.waarom) + '</span>';
     return html + '</div>';
@@ -366,14 +375,16 @@ textarea { min-height: 72px; resize: vertical; }
     if (id === 'fotos') {
       return '<button type="button" class="chip" data-allok aria-pressed="' + STEPS[0].done() + '">Alle foto\'s goed</button><div class="ph-grid">' + photos.map(function (p, i) {
         return '<div class="ph' + (p.bruikbaar ? '' : ' bad') + '"><div class="thumb"><img alt="Foto ' + (i + 1) + (p.rol ? ', ' + p.rol : '') + '" src="' + p.url + '"></div>' +
-          '<span class="role">' + esc(p.rol || 'Plek?') + '</span>' +
+          '<select class="rolesel" id="rol-' + i + '" data-rol="' + i + '" aria-label="Plek van foto ' + (i + 1) + '">' + ['<option value="">Plek?</option>'].concat(ROLES.map(function (r) { return '<option' + (r === p.rol ? ' selected' : '') + '>' + r + '</option>'; })).join('') + '</select>' +
+          '<button type="button" class="okb" data-main="' + i + '" aria-pressed="' + (mainPhoto() === p) + '">' + (mainPhoto() === p ? '★ Hoofdfoto' : '☆ Hoofdfoto') + '</button>' +
           '<button type="button" class="okb" data-ok="' + i + '" aria-pressed="' + p.ok + '">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +
           (!p.bruikbaar ? '<span class="why">Onscherp of donker</span>' : p.toelichting ? '<span class="why">' + esc(p.toelichting) + '</span>' : '') + '</div>';
       }).join('') + '</div>';
     }
-    if (id === 'wat') return chipGroup('materiaal', 'Materiaal') + chipGroup('model', 'Model') + chipGroup('kleur', 'Kleur') + chipGroup('lengte', 'Lengte') + chipGroup('pasvorm', 'Pasvorm') + chipGroup('periode', 'Periode');
+    if (id === 'wat') return chipGroup('bont', 'Bevat het bont?', false, true) + chipGroup('materiaal', 'Materiaal') + chipGroup('model', 'Model') + chipGroup('kleur', 'Kleur') + chipGroup('lengte', 'Lengte') + chipGroup('pasvorm', 'Pasvorm') + chipGroup('periode', 'Periode');
     if (id === 'soort') {
-      if (!needsSpecies()) return '<p class="muted">Alleen nodig bij bont of een bontrand.</p>';
+      if (!sel.bont) return '<p class="muted">Kies eerst bij Wat is het of het bont bevat.</p>';
+      if (!needsSpecies()) return sel.bontsoort ? '<p class="notice">Je koos ' + esc(sel.bontsoort) + ', maar het stuk bevat volgens jou geen bont. Wis de soort of pas Bevat het bont aan.</p><button type="button" class="chip" data-clearsp>Soort wissen</button>' : '<p class="muted">Niet nodig: het stuk bevat geen bont.</p>';
       return chipGroup('bontsoort', 'Soort') + '<label class="check" for="sp-ok"><input id="sp-ok" type="checkbox"' + (speciesChecked ? ' checked' : '') + '>Zelf gecontroleerd (label, herkomst of kenmerken)</label>';
     }
     if (id === 'maten') {
@@ -424,6 +435,8 @@ textarea { min-height: 72px; resize: vertical; }
     if ((t = e.target.closest('[data-ok]'))) { var p = photos[Number(t.getAttribute('data-ok'))]; p.ok = !p.ok; renderPath(); return; }
     if ((t = e.target.closest('[data-add]'))) { adding = adding === t.getAttribute('data-add') ? null : t.getAttribute('data-add'); renderPath(); var inp = $('add-' + adding); if (inp) inp.focus(); return; }
     if ((t = e.target.closest('[data-addok]'))) { addValue(t.getAttribute('data-addok')); return; }
+    if ((t = e.target.closest('[data-clearsp]'))) { sel.bontsoort = ''; speciesChecked = false; renderPath(); return; }
+    if ((t = e.target.closest('[data-main]'))) { var mi = Number(t.getAttribute('data-main')); photos.forEach(function (x, j) { x.main = j === mi ? !x.main : false; }); renderPath(); return; }
     if ((t = e.target.closest('[data-k]'))) {
       var k = t.getAttribute('data-k'), v = t.getAttribute('data-v');
       if (k === 'bijzonderheden') {
@@ -455,14 +468,18 @@ textarea { min-height: 72px; resize: vertical; }
     if (el.id === 'sp-ok') speciesChecked = el.checked;
     refresh();
   });
-  $('path').addEventListener('change', function (e) { if (e.target.id === 'sp-ok') { speciesChecked = e.target.checked; refresh(); } });
+  $('path').addEventListener('change', function (e) {
+    if (e.target.id === 'sp-ok') { speciesChecked = e.target.checked; refresh(); }
+    var r = e.target.getAttribute('data-rol');
+    if (r != null) { var ph = photos[Number(r)]; ph.rol = e.target.value; ph.rolByUser = true; renderPath(); }
+  });
 
   // ---------- publish + matching (demo) ----------
   $('publish').addEventListener('click', function () {
     if (!STEPS.every(function (s) { return s.done(); })) { $('review-err').textContent = 'Nog niet alles is afgevinkt.'; return; }
     var corrections = ['materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort'].filter(function (k) { return sug[k] && sug[k].waarde && sel[k] && sug[k].waarde !== sel[k]; }).length;
     var total = store.get('corrections', 0) + corrections; store.set('corrections', total);
-    var front = photos.filter(function (x) { return x.rol === 'Voorkant'; })[0] || photos[0];
+    var front = mainPhoto();
     $('pv-img').innerHTML = front ? '<img alt="" src="' + front.url + '">' : '<div class="phx"></div>';
     $('pv-title').textContent = text.titel;
     $('pv-price').textContent = '€ ' + Number(text.prijs).toLocaleString('nl-NL');
@@ -482,11 +499,11 @@ textarea { min-height: 72px; resize: vertical; }
     $('learned-done').textContent = corrections ? corrections + ' aanpassing' + (corrections === 1 ? '' : 'en') + ' op de voorstellen onthouden (' + total + ' in totaal). In de echte versie maken die de voorstellen beter.' : '';
     step(4);
   });
-  $('again').addEventListener('click', function () { photos = []; renderThumbs(); step(1); });
+  $('again').addEventListener('click', function () { photos = []; resetItem(); renderThumbs(); step(1); });
 
   // ---------- start ----------
   function off(msg) { sample = null; $('ai-off').textContent = msg; $('ai-off').hidden = false; renderThumbs(); }
-  renderThumbs(); step(1);
+  resetItem(); renderThumbs(); step(1);
   if (!(window.claude && window.claude.use)) {
     off('Automatisch invullen werkt alleen als je deze pagina opent via claude.ai, ingelogd met je Claude-account. Nu kun je zelf invullen.');
   } else {

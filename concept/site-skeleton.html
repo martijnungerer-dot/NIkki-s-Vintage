@@ -99,7 +99,8 @@ body:not(.show-notes) .note { display: none; }
 .slide .pic { height: var(--hero-h); }
 .slide-info { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
 #hero-track ~ .arrow { top: calc(var(--hero-h) / 2); }
-.slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 0 0 auto; max-width: 34%; }
+.slide-info a { text-decoration: none; display: grid; grid-template-rows: 36px 36px; row-gap: 6px; align-items: center; padding-block: 4px; min-width: 0; flex: 0 1 auto; max-width: 34%; }
+.slide-info a > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .slide-info > .icon-btn { flex: 0 0 auto; }
 .slide-info .tags { flex: 1 1 0; min-width: 0; display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: max-content; justify-content: start; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; padding-block: 4px; }
 .slide-info .tag { flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; }

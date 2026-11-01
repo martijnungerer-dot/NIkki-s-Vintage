@@ -133,16 +133,15 @@ body:not(.show-notes) .note { display: none; }
 .slide-info a { text-decoration: none; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; padding-block: 4px; min-width: 0; flex: 0 0 min(34%, 12rem); max-width: min(34%, 12rem); }
 .slide-info .slide-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
 .slide .pic { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-.overlay { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; flex-direction: column; gap: 8px; padding: 48px max(12px, env(safe-area-inset-right, 0px)) 12px max(12px, env(safe-area-inset-left, 0px)); background: linear-gradient(to top, rgba(20, 18, 16, 0.6), rgba(20, 18, 16, 0)); }
-.overlay .tags { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: max-content; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.overlay { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(calc(100% - 24px), 420px); box-sizing: border-box; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 18px; background: color-mix(in srgb, var(--bg) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--fg); }
+.overlay .tags { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: max-content; justify-content: safe center; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .overlay .tags::-webkit-scrollbar { display: none; }
-.overlay .tag { min-height: 32px; background: rgba(255, 255, 255, 0.88); color: #26231F; border-color: transparent; white-space: nowrap; }
-.overlay .tag svg { stroke: #26231F; }
-.overlay .tag[aria-pressed="true"] { background: #26231F; color: #FFFFFF; }
-.overlay .tag[aria-pressed="true"] svg { fill: #FFFFFF; stroke: #FFFFFF; }
-.ov-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.ov-title { color: #FFFFFF; text-decoration: none; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
-.overlay .likebox { position: static; flex: 0 0 auto; }
+.overlay .tag { min-height: 32px; background: color-mix(in srgb, var(--bg) 85%, transparent); color: var(--fg); border-color: var(--line); white-space: nowrap; }
+.overlay .tag[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.overlay .tag[aria-pressed="true"] svg { fill: var(--bg); stroke: var(--bg); }
+.ov-row { display: flex; align-items: center; justify-content: center; gap: 4px; max-width: 100%; }
+.ov-title { color: var(--fg); text-decoration: none; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.overlay .likebox { position: static; flex: 0 0 auto; background: transparent; border: 0; padding: 0; }
 .likebox { position: absolute; bottom: 12px; right: max(12px, env(safe-area-inset-right, 0px)); z-index: 1; display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 26px; padding: 0 12px 0 0; }
 .likebox .icon-btn { border: 0; background: transparent; }
 .likes { font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 2ch; }

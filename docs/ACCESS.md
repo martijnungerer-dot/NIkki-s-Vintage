@@ -5,10 +5,11 @@ Gecontroleerd op 1 november 2026. Deze lijst beschrijft feitelijke checks, geen 
 | Onderdeel | Vastgesteld | Nog nodig |
 |---|---|---|
 | Lokale projectmap | Documentatiefundering in deze map aangemaakt | Als project toevoegen aan de Codex-zijbalk |
-| Git | Git 2.52.0 aanwezig; lokale repository op main; origin wijst naar NIkki-s-Vintage | Eerste commit en remote verifiëren |
-| GitHub | Gebruiker maakte NIkki-s-Vintage aan; na expliciete keuze privé gemaakt; browserbeheer werkt | Projectbestanden uploaden en remote commit/CI teruglezen |
+| Git | Git 2.52.0; main volgt origin/main; eerste commit succesvol geüpload | Dagelijks branches en PR's gebruiken |
+| GitHub | NIkki-s-Vintage is privé; 18 projectbestanden geüpload en zichtbaar op main | Geen repository-aanmaak meer nodig |
 | GitHub-connector voor nieuwe privé-repo | Profielverbinding werkt; na privé maken geeft deze repo via connector 404 | Deze repository expliciet aan de gekoppelde GitHub-app toestaan voor toekomstige connectoracties |
-| Lokale GitHub-aanmelding | Git Credential Manager bevestigt account martijnungerer-dot | Push/pull op de nieuwe privé-repository controleren |
+| Lokale GitHub-aanmelding | Git Credential Manager bevestigt account martijnungerer-dot; push naar de privé-repository geslaagd | Pull/clone bij nieuwe checkout opnieuw controleren |
+| Automatische controle | Eerste GitHub Actions-run geslaagd op commit dabf7675f368dbf2b66e633956192db52809252c | Functionele webshopchecks toevoegen zodra de app bestaat |
 | GitHub browser | Gebruiker is ingelogd; repository-instellingen leesbaar | Geen loginactie meer nodig |
 | Branchregels | GitHub meldt dat rulesets voor deze privé-repository niet worden afgedwongen met de huidige accountinstellingen | Voorlopig menselijke PR/reviewprocedure; accountopties later beoordelen |
 | GitHub CLI | gh niet gevonden in PATH; GH_TOKEN/GITHUB_TOKEN niet aanwezig in deze procesomgeving | Alleen indien CLI-route nodig is: normale accountlogin inrichten |
@@ -34,7 +35,9 @@ Een geslaagde runtimecheck moet de verwachte base en drie tabelschema's lezen, f
 
 Bestemming: [martijnungerer-dot/NIkki-s-Vintage](https://github.com/martijnungerer-dot/NIkki-s-Vintage). De gebruiker heeft deze repository gemaakt. De aanvankelijke openbare zichtbaarheid is op zijn expliciete verzoek gewijzigd naar privé, vóór upload van de bestanden. Clone-URL: `https://github.com/martijnungerer-dot/NIkki-s-Vintage.git`. De connector bevestigde eerst admin- en schrijfrechten, maar na de privéwijziging gaf hij 404. De browser heeft nog beheertoegang en lokale Git heeft een eigen bestaande aanmelding. Deze afzonderlijke verbindingen niet verwarren.
 
-Vervolgcontrole: upload uitsluitend deze projectbestanden; vergelijk commit en bestandslijst. De eerste commit gebruikt de geverifieerde GitHub-identiteit en de bestaande lokale Git-aanmelding. Controleer de CI-run. Op de Rulesets-pagina meldt GitHub expliciet dat regels niet worden afgedwongen voor deze private repository zonder accountwijziging. Er zijn daarom geen niet-werkende regels als bescherming gepresenteerd en geen upgrades aangeschaft. Werk voorlopig met eigen branches, PR's en menselijke beoordeling.
+De eerste upload is geverifieerd in de GitHub-bestandsweergave. [De eerste automatische controle](https://github.com/martijnungerer-dot/NIkki-s-Vintage/actions/runs/41305223584) slaagde op de bovengenoemde commit. Lokaal zijn JSON, documentlinks, schemarelaties, lege voorbeeldsecrets en diff-whitespace gecontroleerd. De drie Airtable-tabellen zijn opnieuw uitgelezen en hebben ieder nul voorraadrecords. Dit bewijst de projectfundering, niet een werkende webshop.
+
+Op de Rulesets-pagina meldt GitHub expliciet dat regels niet worden afgedwongen voor deze private repository zonder accountwijziging. Er zijn daarom geen niet-werkende regels als bescherming gepresenteerd en geen upgrades aangeschaft. Werk voorlopig met eigen branches, PR's en menselijke beoordeling.
 
 ## Codex-project toevoegen
 

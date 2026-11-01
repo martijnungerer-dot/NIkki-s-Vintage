@@ -4,7 +4,7 @@
 
 Opgeleverd: projectbrief, architectuurvoorstel, Airtable-schema met lege base en relaties, meetprotocol, gedeelde agentregels, toegangsverslag, PR-template en lokale documentatiecontrole.
 
-Remote GitHub-repository: NIkki-s-Vintage, privé. Nog afronden bij P0: eerste upload/commit en CI-run verifiëren; map toevoegen aan Codex-projecten. GitHub meldt dat branchregels met het huidige account niet worden afgedwongen voor deze private repository; voorlopig menselijke PR-review. Runtime-toegang voor de toekomstige shop is afzonderlijk werk in P2.
+Remote GitHub-repository: NIkki-s-Vintage, privé. Eerste upload/commit en CI-run zijn geverifieerd. Resterende app-aansluiting: map toevoegen aan Codex-projecten en desgewenst de nieuwe privé-repository aan de GitHub-connector toestaan. Lokale Git-toegang werkt. GitHub meldt dat branchregels met het huidige account niet worden afgedwongen voor deze private repository; voorlopig menselijke PR-review. Runtime-toegang voor de toekomstige shop is afzonderlijk werk in P2.
 
 ## P1 — Productkeuzes en proefinvoer
 

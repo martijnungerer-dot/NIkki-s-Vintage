@@ -8,6 +8,7 @@ Projectstart voor Nikki's gecureerde webshop met unieke vintage kledingstukken v
 - Airtable is aangemaakt in **My First Workspace**: [Nikki Vintage — Inventory](https://airtable.com/appcR1TGKaoc4XAU4).
 - Drie tabellen: **Garments**, **Measurements**, **Media**. Metingen en foto's zijn gekoppeld aan kledingstukken. Er zijn geen fictieve voorraadartikelen toegevoegd.
 - De privé-repository is [NIkki-s-Vintage](https://github.com/martijnungerer-dot/NIkki-s-Vintage), onder `martijnungerer-dot`. GitHub meldt dat branchregels met de huidige accountinstellingen voor deze privé-repository niet worden afgedwongen; zie [toegang](docs/ACCESS.md).
+- Alle 18 projectbestanden zijn geüpload; de eerste automatische GitHub-controle is geslaagd. Lokale Git-toegang werkt. De afzonderlijke GitHub-connector heeft nog geen toegang tot deze nieuwe privé-repository en de map is nog niet als sidebarproject geregistreerd.
 - Claude Code is lokaal aanwezig en meldt een ingelogde sessie. Er is nog geen Claude-werksessie op dit project gestart.
 - Een werkende Airtable-verbinding in deze chat is geen toegangssleutel voor de toekomstige website of voor Claude. Die verbindingen worden afzonderlijk ingericht.
 

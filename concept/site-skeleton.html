@@ -110,6 +110,17 @@ body:not(.show-notes) .note { display: none; }
 .card .pic { aspect-ratio: 3 / 4; }
 .card-title { font-size: 0.95rem; }
 
+/* materials and mission */
+.page { display: flex; flex-direction: column; gap: 24px; padding-block: 32px 64px; }
+.mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+.mat { display: flex; flex-direction: column; gap: 10px; }
+.mat .pic { aspect-ratio: 4 / 3; }
+.mat .pic svg { width: 100%; height: 100%; }
+.mat-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.mat p { color: var(--muted); font-size: 0.95rem; }
+.mission { max-width: 640px; }
+.mission p { font-size: 1.15rem; }
+
 /* product */
 .product { display: flex; flex-wrap: wrap; gap: 32px; padding-block: 24px 56px; }
 .product > * { flex: 1 1 340px; min-width: 0; }
@@ -173,6 +184,8 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     </a>
     <nav class="nav" aria-label="Main">
       <a href="#browse" data-view="browse">Browse</a>
+      <a href="#materials" data-view="materials">Materials</a>
+      <a href="#mission" data-view="mission">Mission</a>
       <button type="button" class="link" data-open-fit>Perfect fit</button>
       <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notes</button>
     </nav>
@@ -196,6 +209,27 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   <section data-view-panel="browse" hidden>
     <div class="wrap rows" id="rows">
       <p class="note">Notitie: bladeren gebeurt ook in carrousels. De bovenste rij is persoonlijk en wordt beter naarmate iemand meer hartjes geeft.</p>
+    </div>
+  </section>
+
+  <!-- MATERIALS: grid, not a carousel, so materials can be compared side by side -->
+  <section data-view-panel="materials" hidden>
+    <div class="wrap page">
+      <p class="note">Notitie: uitleg per materiaal, naast elkaar zodat je kunt vergelijken. Een hartje bij een materiaal telt mee voor wat iemand te zien krijgt. Teksten zijn algemene uitleg; Nikki controleert ze.</p>
+      <h1>Materials</h1>
+      <div class="mats" id="mats"></div>
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section data-view-panel="mission" hidden>
+    <div class="wrap page mission">
+      <p class="note">Notitie: de missie in een paar zinnen. Voorstel van Claude; de woorden kiezen Nikki en Martijn zelf.</p>
+      <h1>Nothing new. Nothing wasted.</h1>
+      <p>Every coat here already exists. The animals it came from lived long ago. Throwing it away would waste them twice.</p>
+      <p>We find these pieces, care for them, and pass them on, so they are worn for decades more instead of new ones being made.</p>
+      <p class="muted">That is what the pin means: guaranteed second-hand.</p>
+      <svg width="88" height="88" aria-hidden="true"><use href="#pin"></use></svg>
     </div>
   </section>
 
@@ -308,9 +342,18 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
 
   // ---------- taste (DEMO, not real machine learning) ----------
   var liked = {};          // id -> true
+  var likedMats = {};      // material key -> true
   var popupShown = false;
+  var MATERIALS = [
+    { key: 'Fur', tx: 'fur', text: 'Pelt with the hair left on. Warm and light for its volume. Species is only named when there is evidence.', match: function (p) { return p.mat === 'Fur'; } },
+    { key: 'Shearling', tx: 'shearling', text: 'Sheepskin tanned with the wool kept on. Wool inside, suede or leather outside. Very warm.', match: function (p) { return p.mat === 'Shearling'; } },
+    { key: 'Leather', tx: 'leather', text: 'Tanned hide with a smooth outer side. Softens and shapes to the wearer over the years.', match: function (p) { return p.mat === 'Leather'; } },
+    { key: 'Suede', tx: 'shearling', text: 'Leather with a brushed, velvety surface. Softer to the touch, more sensitive to rain.', match: function (p) { return p.mat === 'Leather'; } },
+    { key: 'Fur trim', tx: 'fur', text: 'A fur collar, cuffs or edging on a leather, suede or wool coat.', match: function (p) { return p.collar === 'fur'; } }
+  ];
   function score(p) {
     var s = 0;
+    MATERIALS.forEach(function (m) { if (likedMats[m.key] && m.match(p)) s += 3; });
     Object.keys(liked).forEach(function (id) {
       var q = byId(Number(id));
       if (q.mat === p.mat) s += 2;
@@ -367,10 +410,19 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   }
   function renderBrowse() {
     var note = $('rows').querySelector('.note').outerHTML;
-    var hasTaste = Object.keys(liked).length > 0;
+    var hasTaste = Object.keys(liked).length + Object.keys(likedMats).length > 0;
     var html = note + strip(hasTaste ? 'For you' : 'New in', hasTaste ? ranked(PIECES) : PIECES.slice().reverse());
     ['Fur', 'Leather', 'Shearling'].forEach(function (m) { html += strip(m, ranked(PIECES.filter(function (p) { return p.mat === m; }))); });
     $('rows').innerHTML = html;
+  }
+
+  // ---------- materials ----------
+  function renderMats() {
+    $('mats').innerHTML = MATERIALS.map(function (m) {
+      return '<div class="mat"><div class="pic"><svg viewBox="0 0 160 120" role="img" aria-label="Texture: ' + m.key + '"><rect width="160" height="120" style="fill: url(#tx-' + m.tx + ')"></rect></svg></div>' +
+        '<div class="mat-head"><h2>' + m.key + '</h2><button type="button" class="icon-btn" data-like-mat="' + m.key + '" aria-pressed="' + !!likedMats[m.key] + '" aria-label="Like ' + m.key + '"><svg><use href="#i-heart"></use></svg></button></div>' +
+        '<p>' + m.text + '</p></div>';
+    }).join('');
   }
 
   // ---------- product ----------
@@ -398,6 +450,13 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   document.addEventListener('click', function (e) {
     var like = e.target.closest('[data-like]');
     if (like) { e.preventDefault(); toggleLike(Number(like.getAttribute('data-like'))); return; }
+    var likeMat = e.target.closest('[data-like-mat]');
+    if (likeMat) {
+      var k = likeMat.getAttribute('data-like-mat');
+      if (likedMats[k]) delete likedMats[k]; else likedMats[k] = true;
+      likeMat.setAttribute('aria-pressed', String(!!likedMats[k]));
+      return;
+    }
     var open = e.target.closest('[data-open]');
     if (open) { current = Number(open.getAttribute('data-open')); renderProduct(); }
     if (e.target.closest('[data-open-fit]')) openFit();
@@ -441,6 +500,6 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route);
-  renderHero(); renderProduct(); route();
+  renderHero(); renderProduct(); renderMats(); route();
 })();
 </script>

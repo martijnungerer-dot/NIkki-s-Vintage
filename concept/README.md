@@ -13,7 +13,7 @@
 
 ## Invoerprototype voor Nikki
 
-[intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met AI gaat: foto's van een jas maken of kiezen, AI-voorstellen krijgen (titel, materiaal, bontsoort, model, periode, kleur, lengte, pasvorm, staat, beschrijving), controleren en de maten met het meetlint invullen. Daarna ziet ze welke voorbeeldklanten een mail zouden krijgen.
+[intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met AI gaat: foto's van een jas maken of kiezen in willekeurige volgorde, de AI sorteert ze (voorkant, achterkant, label, detail, gebrek, voering, sluiting) en doet voorstellen (titel, materiaal, bontsoort, model, periode, kleur, lengte, pasvorm, staat, beschrijving), goedkeuren met een vinkje per foto of één vinkje voor alle foto's, en de maten met het meetlint invullen. AI is de eerste keuze; zelf invullen is de uitwijkroute. Daarna ziet ze welke voorbeeldklanten een mail zouden krijgen.
 
 - De AI werkt alleen in de gepubliceerde Claude-versie (artifact), op het Claude-account van wie het opent. Als los bestand of in Gemini zit er geen AI in; dan vult ze alles zelf in.
 - Er wordt niets opgeslagen, niets verstuurd en niets naar Airtable geschreven. De klanten zijn verzonnen voorbeelden.

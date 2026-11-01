@@ -55,7 +55,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .shot .lbl { position: absolute; left: 6px; bottom: 6px; background: var(--bg); padding: 2px 8px; font-size: 0.75rem; }
 .shot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .shot svg { width: 28px; height: 28px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
-.extra { font-size: 0.85rem; }
+.pickers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.picker { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 96px; border: 1px dashed var(--line); background: var(--surface); cursor: pointer; text-align: center; padding: 10px; }
+.picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.picker svg { width: 28px; height: 28px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+.thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.thumb { position: relative; aspect-ratio: 3 / 4; max-width: 100%; background: var(--surface); overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .x { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--bg); cursor: pointer; }
+.photo-review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pr { display: flex; flex-direction: column; gap: 6px; }
+.pr .thumb { aspect-ratio: 1 / 1; }
+.pr .note { font-size: 0.78rem; color: var(--muted); }
+.pr.bad .thumb { outline: 2px solid var(--warn); }
+.linkbtn { background: none; border: 0; padding: 8px 0; text-decoration: underline; cursor: pointer; color: var(--muted); align-self: center; }
 .notice { background: var(--warn-bg); color: var(--fg); padding: 12px 14px; font-size: 0.9rem; border-left: 4px solid var(--warn); }
 .thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); }
@@ -101,20 +114,21 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     <svg width="32" height="32" aria-hidden="true"><use href="#pin"></use></svg>
     <span class="name">Nieuw stuk invoeren</span>
   </div>
-  <div class="steps" aria-hidden="true"><span id="s1">Foto's</span><span id="s2">AI kijkt</span><span id="s3">Controle</span><span id="s4">Klaar</span></div>
+  <div class="steps" aria-hidden="true"><span id="s1">Foto's</span><span id="s2">AI</span><span id="s3">Goedkeuren</span><span id="s4">Klaar</span></div>
 
   <!-- STEP 1: photos -->
   <section id="step-photos" class="stack">
     <h1>Fotografeer de jas</h1>
-    <p class="muted">Tik op een vak om een foto te maken of te kiezen. Hoe meer kanten, hoe beter het voorstel.</p>
-    <div class="shots" id="shots"></div>
-    <label class="extra muted" for="more">Meer foto's toevoegen (details, voering, sluiting)
-      <input id="more" type="file" accept="image/*" multiple>
-    </label>
+    <p class="muted">Maak foto's van alle kanten, het label en details. Volgorde maakt niet uit: de AI sorteert ze.</p>
+    <div class="pickers">
+      <label class="picker" for="cam"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Foto maken</span><input id="cam" type="file" accept="image/*" capture="environment"></label>
+      <label class="picker" for="gallery"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Uit galerij kiezen</span><input id="gallery" type="file" accept="image/*" multiple></label>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
     <p class="muted" id="photo-count"></p>
     <p class="notice" id="ai-off" hidden>AI is in deze weergave niet beschikbaar. Je kunt de velden zelf invullen.</p>
-    <button type="button" class="btn" id="analyse" disabled>Laat AI kijken</button>
-    <button type="button" class="btn ghost" id="manual">Zelf invullen, zonder AI</button>
+    <button type="button" class="btn" id="analyse" disabled>AI sorteert en vult in</button>
+    <button type="button" class="linkbtn" id="manual">Liever zelf invullen</button>
   </section>
 
   <!-- STEP 2: thinking -->
@@ -126,9 +140,16 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
 
   <!-- STEP 3: review -->
   <form id="step-review" class="stack" hidden novalidate>
-    <h1>Klopt dit?</h1>
+    <h1>Goedkeuren</h1>
     <p class="muted" id="review-intro">Dit zijn voorstellen. Pas aan wat niet klopt. Niets gaat online zonder jouw akkoord.</p>
     <div id="warnings" class="stack"></div>
+
+    <fieldset>
+      <legend>Foto's</legend>
+      <p class="muted">De AI heeft elke foto een plek gegeven. Klopt het? Vink af.</p>
+      <label class="check" for="all-ok"><input id="all-ok" type="checkbox">Alle foto's goedkeuren</label>
+      <div class="photo-review" id="photo-review"></div>
+    </fieldset>
 
     <fieldset>
       <legend>Wat is het?</legend>
@@ -153,7 +174,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     </fieldset>
 
     <p class="err" id="review-err" role="status"></p>
-    <button type="submit" class="btn">Goedkeuren</button>
+    <button type="submit" class="btn">Alles goedkeuren</button>
     <button type="button" class="btn ghost" id="back-photos">Terug naar foto's</button>
   </form>
 
@@ -174,16 +195,15 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var SLOTS = [['front', 'Voorkant'], ['back', 'Achterkant'], ['label', 'Label'], ['detail', 'Detail of gebrek']];
-  var photos = {};       // slot -> File
-  var extras = [];       // File[]
+  var ROLES = ['Voorkant', 'Achterkant', 'Label', 'Detail', 'Gebrek', 'Voering', 'Sluiting', 'Overig'];
+  var photos = [];       // [{file, url, rol, toelichting, ok, bruikbaar}]
   var sample = null, limits = null, ctl = null;
   var suggestion = null;
 
   // Fields Nikki reviews. kind: select options or text.
   var FIELDS = [
     { key: 'titel', label: 'Titel', type: 'text', plain: true },
-    { key: 'materiaal', label: 'Materiaal', type: 'select', options: ['Bont', 'Leer', 'Suède', 'Shearling', 'Anders', 'Onbekend'] },
+    { key: 'materiaal', label: 'Materiaal', type: 'select', options: ['', 'Bont', 'Leer', 'Suède', 'Shearling', 'Anders', 'Onbekend'] },
     { key: 'bontsoort', label: 'Bontsoort', type: 'text' },
     { key: 'model', label: 'Model', type: 'text' },
     { key: 'periode', label: 'Periode', type: 'text' },
@@ -212,29 +232,52 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
   }
 
   // ---------- photos ----------
-  function renderShots() {
-    $('shots').innerHTML = SLOTS.map(function (s) {
-      var f = photos[s[0]];
-      return '<label class="shot' + (f ? ' has' : '') + '" for="ph-' + s[0] + '">' +
-        (f ? '<img alt="' + s[1] + '" src="' + URL.createObjectURL(f) + '"><span class="lbl">' + s[1] + '</span>'
-           : '<svg aria-hidden="true"><use href="#i-cam"></use></svg><span>' + s[1] + '</span>') +
-        '<input id="ph-' + s[0] + '" data-slot="' + s[0] + '" type="file" accept="image/*" capture="environment"></label>';
+  function addFiles(list) {
+    Array.from(list || []).forEach(function (f) { photos.push({ file: f, url: URL.createObjectURL(f), rol: '', toelichting: '', ok: false, bruikbaar: true }); });
+    renderThumbs();
+  }
+  function renderThumbs() {
+    $('thumbs').innerHTML = photos.map(function (p, i) {
+      return '<div class="thumb"><img alt="Foto ' + (i + 1) + '" src="' + p.url + '"><button type="button" class="x" data-del="' + i + '" aria-label="Foto ' + (i + 1) + ' verwijderen">×</button></div>';
     }).join('');
-    var n = allPhotos().length;
+    var n = photos.length;
     $('photo-count').textContent = n ? n + (n === 1 ? ' foto' : " foto's") + ' klaar.' : '';
     $('analyse').disabled = !n || !sample;
   }
-  function allPhotos() { return SLOTS.map(function (s) { return photos[s[0]]; }).filter(Boolean).concat(extras); }
-  $('shots').addEventListener('change', function (e) {
-    var inp = e.target.closest('input[data-slot]'); if (!inp || !inp.files[0]) return;
-    photos[inp.getAttribute('data-slot')] = inp.files[0]; renderShots();
+  function allPhotos() { return photos.map(function (p) { return p.file; }); }
+  $('cam').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  $('gallery').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  $('thumbs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del]'); if (!b) return;
+    photos.splice(Number(b.getAttribute('data-del')), 1); renderThumbs();
   });
-  $('more').addEventListener('change', function () { extras = extras.concat(Array.from(this.files)); this.value = ''; renderShots(); });
+
+  function renderPhotoReview() {
+    $('photo-review').innerHTML = photos.map(function (p, i) {
+      var opts = [''].concat(ROLES).map(function (r) { return '<option' + (r === p.rol ? ' selected' : '') + '>' + r + '</option>'; }).join('');
+      return '<div class="pr' + (p.bruikbaar ? '' : ' bad') + '"><div class="thumb"><img alt="Foto ' + (i + 1) + '" src="' + p.url + '"></div>' +
+        '<label class="field" for="role-' + i + '"><span class="row">Plek</span><select id="role-' + i + '" data-role="' + i + '">' + opts + '</select></label>' +
+        (p.toelichting ? '<span class="note">' + esc(p.toelichting) + '</span>' : '') +
+        (p.bruikbaar ? '' : '<span class="note">AI: onscherp of slecht belicht, liever opnieuw.</span>') +
+        '<label class="check" for="ok-' + i + '"><input id="ok-' + i + '" type="checkbox" data-ok="' + i + '"' + (p.ok ? ' checked' : '') + '>Goed</label></div>';
+    }).join('');
+    syncAll();
+  }
+  function syncAll() { $('all-ok').checked = photos.length > 0 && photos.every(function (p) { return p.ok; }); }
+  $('photo-review').addEventListener('change', function (e) {
+    var r = e.target.getAttribute('data-role'), o = e.target.getAttribute('data-ok');
+    if (r != null) photos[Number(r)].rol = e.target.value;
+    if (o != null) { photos[Number(o)].ok = e.target.checked; syncAll(); }
+  });
+  $('all-ok').addEventListener('change', function () {
+    var on = this.checked; photos.forEach(function (p) { p.ok = on; });
+    document.querySelectorAll('[data-ok]').forEach(function (c) { c.checked = on; });
+  });
 
   // ---------- AI ----------
   var PROMPT = [
     'Je helpt Nikki, die een tweedehandswinkel heeft in vintage bont, leer en shearling, met het invoeren van één kledingstuk.',
-    'De foto\'s tonen hetzelfde stuk van verschillende kanten (voorkant, achterkant, label, details).',
+    'De foto\'s tonen hetzelfde stuk, in willekeurige volgorde. Geef elke foto (nummer 1, 2, 3 ... in de volgorde waarin je ze krijgt) een plek: Voorkant, Achterkant, Label, Detail, Gebrek, Voering, Sluiting of Overig, en zeg of hij bruikbaar is (scherp, goed belicht).',
     'Doe voorstellen, Nikki controleert alles. Regels:',
     '- Gok niet. Als iets niet zichtbaar of niet zeker is: waarde null en zekerheid "laag".',
     '- Bontsoort alleen voorstellen met zichtbare kenmerken (haarlengte, glans, krul, tekening) en leg uit waarom. Noem twijfel.',
@@ -247,7 +290,8 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     '{"titel": string, "materiaal": {"waarde": "Bont"|"Leer"|"Suède"|"Shearling"|"Anders"|"Onbekend", "zekerheid": "hoog"|"middel"|"laag", "waarom": string},',
     ' "bontsoort": {"waarde": string|null, "zekerheid": ..., "waarom": string}, "model": {...zelfde vorm, bijv. "Sjaalkraag", "Pilotenjack"},',
     ' "periode": {...zelfde vorm, bijv. "Jaren 70"}, "kleur": {...}, "lengte": {"waarde": "Lang"|"Knielang"|"Heuplang"|"Kort"|null, ...},',
-    ' "pasvorm": {"waarde": "Recht"|"Getailleerd"|"Boxy"|"Oversized"|null, ...}, "labeltekst": string|null, "staat": string, "beschrijving": string, "waarschuwingen": [string]}'
+    ' "pasvorm": {"waarde": "Recht"|"Getailleerd"|"Boxy"|"Oversized"|null, ...}, "labeltekst": string|null, "staat": string, "beschrijving": string, "waarschuwingen": [string],',
+    ' "fotos": [{"nr": number, "rol": string, "toelichting": string, "bruikbaar": boolean}]}'
   ].join('\n');
 
   $('analyse').addEventListener('click', function () {
@@ -258,7 +302,17 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     step(2);
     $('think-msg').textContent = 'Bezig met kijken naar ' + files.length + (files.length === 1 ? ' foto' : " foto's") + '. Dit kan een halve minuut duren.';
     sample.json(PROMPT, { images: files, modelTier: 'default', signal: ctl.signal })
-      .then(function (data) { suggestion = data || {}; fillReview(suggestion); step(3); })
+      .then(function (data) {
+        suggestion = data || {};
+        (Array.isArray(suggestion.fotos) ? suggestion.fotos : []).forEach(function (f) {
+          var p = photos[Number(f.nr) - 1]; if (!p) return;
+          p.rol = ROLES.indexOf(f.rol) >= 0 ? f.rol : 'Overig';
+          p.toelichting = f.toelichting ? String(f.toelichting) : '';
+          p.bruikbaar = f.bruikbaar !== false;
+        });
+        photos.forEach(function (p, i) { if (i >= files.length && !p.toelichting) p.toelichting = 'Niet door de AI bekeken (te veel foto\'s voor één keer).'; });
+        fillReview(suggestion); step(3);
+      })
       .catch(function (e) {
         if (e && e.code === 'cancelled') { step(1); return; }
         var msg = {
@@ -299,6 +353,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
       }
       return '<label class="field" for="f-' + f.key + '"><span class="row"><span>' + f.label + '</span>' + chip + '</span>' + input + why + '</label>';
     }).join('');
+    renderPhotoReview();
     $('species-ok').checked = false;
     syncSpecies();
     ['m-chest', 'm-shoulder', 'm-sleeve', 'm-length', 'price'].forEach(function (id) { $(id).value = ''; });
@@ -315,6 +370,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
   $('step-review').addEventListener('submit', function (e) {
     e.preventDefault();
     var g = function (k) { var el = $('f-' + k); return el ? el.value.trim() : ''; };
+    if (photos.length && !photos.every(function (p) { return p.ok; })) { $('review-err').textContent = 'Keur eerst alle foto\'s goed, of verwijder er een.'; return; }
     if (!g('titel')) { $('review-err').textContent = 'Geef het stuk een titel.'; return; }
     if (g('materiaal') === 'Bont' && !g('bontsoort')) { $('review-err').textContent = 'Vul de bontsoort in. Bij bont noemen we altijd de soort.'; return; }
     if (!$('species-ok-wrap').hidden && !$('species-ok').checked) { $('review-err').textContent = 'Vink aan dat je de bontsoort zelf hebt gecontroleerd.'; return; }
@@ -329,7 +385,8 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
 
   // ---------- done + matching (demo) ----------
   function showDone(p) {
-    var first = allPhotos()[0];
+    var front = photos.filter(function (x) { return x.rol === 'Voorkant'; })[0] || photos[0];
+    var first = front && front.file;
     $('pv-img').innerHTML = first ? '<img alt="" src="' + URL.createObjectURL(first) + '" style="width:96px;height:128px;object-fit:cover">' : '<div class="ph"></div>';
     $('pv-title').textContent = p.titel;
     $('pv-price').textContent = '€ ' + p.price.toLocaleString('nl-NL');
@@ -347,21 +404,21 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     }).join('') : '<p class="muted">Geen van de voorbeeldklanten past bij dit stuk.</p>';
     step(4);
   }
-  $('again').addEventListener('click', function () { photos = {}; extras = []; suggestion = null; renderShots(); step(1); });
+  $('again').addEventListener('click', function () { photos = []; suggestion = null; renderThumbs(); step(1); });
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // ---------- start ----------
-  renderShots(); step(1);
+  renderThumbs(); step(1);
   var use = window.claude && window.claude.use ? window.claude.use('sample') : Promise.resolve(null);
   Promise.resolve(use).then(function (s) {
     sample = s || null;
-    if (!sample) { $('ai-off').hidden = false; renderShots(); return; }
+    if (!sample) { $('ai-off').hidden = false; renderThumbs(); return; }
     return sample.limits().then(function (l) {
       limits = l;
       if (!l || !l.images) { sample = null; $('ai-off').hidden = false; }
-      renderShots();
-    }, function () { sample = null; $('ai-off').hidden = false; renderShots(); });
+      renderThumbs();
+    }, function () { sample = null; $('ai-off').hidden = false; renderThumbs(); });
   }).catch(function () { $('ai-off').hidden = false; });
 })();
 </script>

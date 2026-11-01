@@ -2,7 +2,7 @@
 
 [site-skeleton.html](site-skeleton.html) is een werkend skelet van de winkel, geen eindontwerp. Eén HTML-bestand zonder build of externe afbeeldingen. Openen in een browser is genoeg.
 
-- Binnenkomen (`#home`): meteen een carrousel met stukken, nauwelijks tekst. Hartjes op het hele stuk of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm) leren de site wat iemand mooi vindt; na drie hartjes verschijnt de Perfect fit-popup.
+- Binnenkomen (`#home`): meteen een carrousel met stukken, nauwelijks tekst. Hartjes op het hele stuk (knop rechtsonder in de foto met teller, of lang drukken op de foto) of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm) leren de site wat iemand mooi vindt; de tellers zijn voorbeeldgetallen; na drie hartjes verschijnt de Perfect fit-popup.
 - Bladeren (`#browse`): carrousels per groep, bovenaan een persoonlijke rij.
 - Productpagina (`#product`): fotocarrousel, prijs, platte maten; conditie en herkomst achter uitklapkopjes.
 - Materialen (`#materials`): bontsoorten en materialen in een raster, met hartjes. Missie (`#mission`): korte missietekst (voorstel).

@@ -114,27 +114,27 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     <svg width="32" height="32" aria-hidden="true"><use href="#pin"></use></svg>
     <span class="name">Nieuw stuk invoeren</span>
   </div>
-  <div class="steps" aria-hidden="true"><span id="s1">Foto's</span><span id="s2">AI</span><span id="s3">Goedkeuren</span><span id="s4">Klaar</span></div>
+  <div class="steps" aria-hidden="true"><span id="s1">Foto's</span><span id="s2">Verwerken</span><span id="s3">Goedkeuren</span><span id="s4">Klaar</span></div>
 
   <!-- STEP 1: photos -->
   <section id="step-photos" class="stack">
     <h1>Fotografeer de jas</h1>
-    <p class="muted">Maak foto's van alle kanten, het label en details. Volgorde maakt niet uit: de AI sorteert ze.</p>
+    <p class="muted">Maak foto's van alle kanten, het label en details. Volgorde maakt niet uit.</p>
     <div class="pickers">
       <label class="picker" for="cam"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Foto maken</span><input id="cam" type="file" accept="image/*" capture="environment"></label>
       <label class="picker" for="gallery"><svg aria-hidden="true"><use href="#i-cam"></use></svg><span>Uit galerij kiezen</span><input id="gallery" type="file" accept="image/*" multiple></label>
     </div>
     <div class="thumbs" id="thumbs"></div>
     <p class="muted" id="photo-count"></p>
-    <p class="notice" id="ai-off" hidden>AI is in deze weergave niet beschikbaar. Je kunt de velden zelf invullen.</p>
-    <button type="button" class="btn" id="analyse" disabled>AI sorteert en vult in</button>
+    <p class="notice" id="ai-off" hidden>Automatisch invullen werkt hier niet. Je kunt de velden zelf invullen.</p>
+    <button type="button" class="btn" id="analyse" disabled>Invoeren</button>
     <button type="button" class="linkbtn" id="manual">Liever zelf invullen</button>
   </section>
 
   <!-- STEP 2: thinking -->
   <section id="step-thinking" class="stack" hidden>
-    <h1>AI bekijkt de foto's</h1>
-    <div class="thinking" role="status"><span class="dot"></span><span id="think-msg">Bezig met kijken. Dit kan een halve minuut duren.</span></div>
+    <h1>Bezig met invoeren</h1>
+    <div class="thinking" role="status"><span class="dot"></span><span id="think-msg">Even geduld. Dit kan een halve minuut duren.</span></div>
     <button type="button" class="btn ghost" id="stop">Stoppen</button>
   </section>
 
@@ -146,7 +146,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
 
     <fieldset>
       <legend>Foto's</legend>
-      <p class="muted">De AI heeft elke foto een plek gegeven. Klopt het? Vink af.</p>
+      <p class="muted">Elke foto heeft een plek gekregen. Klopt het? Vink af.</p>
       <label class="check" for="all-ok"><input id="all-ok" type="checkbox">Alle foto's goedkeuren</label>
       <div class="photo-review" id="photo-review"></div>
     </fieldset>
@@ -214,7 +214,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     { key: 'staat', label: 'Staat en gebreken', type: 'textarea', plain: true },
     { key: 'beschrijving', label: 'Beschrijving voor de site', type: 'textarea', plain: true }
   ];
-  var CONF = { hoog: 'AI: zeker', middel: 'AI: waarschijnlijk', laag: 'AI: twijfel' };
+  var CONF = { hoog: 'zeker', middel: 'waarschijnlijk', laag: 'twijfel' };
 
   // Example customers (invented for this test, not real people).
   var PROFILES = [
@@ -258,7 +258,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
       return '<div class="pr' + (p.bruikbaar ? '' : ' bad') + '"><div class="thumb"><img alt="Foto ' + (i + 1) + '" src="' + p.url + '"></div>' +
         '<label class="field" for="role-' + i + '"><span class="row">Plek</span><select id="role-' + i + '" data-role="' + i + '">' + opts + '</select></label>' +
         (p.toelichting ? '<span class="note">' + esc(p.toelichting) + '</span>' : '') +
-        (p.bruikbaar ? '' : '<span class="note">AI: onscherp of slecht belicht, liever opnieuw.</span>') +
+        (p.bruikbaar ? '' : '<span class="note">Onscherp of slecht belicht, liever opnieuw.</span>') +
         '<label class="check" for="ok-' + i + '"><input id="ok-' + i + '" type="checkbox" data-ok="' + i + '"' + (p.ok ? ' checked' : '') + '>Goed</label></div>';
     }).join('');
     syncAll();
@@ -300,7 +300,7 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
     var files = allPhotos().slice(0, max);
     ctl = new AbortController();
     step(2);
-    $('think-msg').textContent = 'Bezig met kijken naar ' + files.length + (files.length === 1 ? ' foto' : " foto's") + '. Dit kan een halve minuut duren.';
+    $('think-msg').textContent = files.length + (files.length === 1 ? ' foto' : " foto's") + ' worden verwerkt. Dit kan een halve minuut duren.';
     sample.json(PROMPT, { images: files, modelTier: 'default', signal: ctl.signal })
       .then(function (data) {
         suggestion = data || {};
@@ -310,19 +310,19 @@ legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margi
           p.toelichting = f.toelichting ? String(f.toelichting) : '';
           p.bruikbaar = f.bruikbaar !== false;
         });
-        photos.forEach(function (p, i) { if (i >= files.length && !p.toelichting) p.toelichting = 'Niet door de AI bekeken (te veel foto\'s voor één keer).'; });
+        photos.forEach(function (p, i) { if (i >= files.length && !p.toelichting) p.toelichting = 'Niet bekeken (te veel foto\'s in één keer).'; });
         fillReview(suggestion); step(3);
       })
       .catch(function (e) {
         if (e && e.code === 'cancelled') { step(1); return; }
         var msg = {
-          not_granted: 'Je hebt de AI geen toestemming gegeven. Vul de velden zelf in.',
-          sampling_disabled: 'AI is niet beschikbaar voor dit account. Vul de velden zelf in.',
-          images_unavailable: 'Foto\'s sturen naar de AI kan hier niet. Vul de velden zelf in.',
+          not_granted: 'Geen toestemming gegeven. Vul de velden zelf in.',
+          sampling_disabled: 'Automatisch invullen werkt niet voor dit account. Vul de velden zelf in.',
+          images_unavailable: 'Foto\'s verwerken kan hier niet. Vul de velden zelf in.',
           image_rejected: 'Een foto werd niet geaccepteerd. Probeer een andere foto.',
           rate_limited: 'Even te veel tegelijk. Probeer het over een paar minuten opnieuw.',
-          invalid_json: 'Het antwoord van de AI was onleesbaar. Probeer het opnieuw.'
-        }[e && e.code] || 'Er ging iets mis bij de AI. Probeer het opnieuw of vul zelf in.';
+          invalid_json: 'Er kwam een onleesbaar resultaat terug. Probeer het opnieuw.'
+        }[e && e.code] || 'Er ging iets mis. Probeer het opnieuw of vul zelf in.';
         fillReview({}); step(3); $('review-intro').textContent = msg;
       });
   });

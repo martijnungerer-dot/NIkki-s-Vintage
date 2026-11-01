@@ -8,6 +8,16 @@ Status: **brainstorm**. Niets in dit document is een bouwopdracht of definitief 
 - Inkoop: Nikki koopt zelf in op markten en via connecties en houdt eigen voorraad. Geen marketplace van andere verkopers, voor nu.
 - Focus: de website en de verkoopervaring. De meet-/verstelbare paspop staat **on hold** (zie onderaan).
 
+## Richting voor de website (Martijn, 1 november 2026)
+
+- **Minimalisme.** Beeld draagt de site; tekst alleen waar een bezoeker die nodig heeft om te beslissen (titel, prijs, maten, conditie). Overige uitleg achter uitklapkopjes.
+- **Binnenkomen = carrousel** met verschillende stukken, zonder tekstblokken. Bladeren door de collectie komt daarna, ook in carrouselvorm.
+- **Smaak leren met machine learning.** Hartjes en kijkgedrag vormen het signaal; de site toont daarop eerst wat iemand waarschijnlijk mooi vindt en mailt het perfecte stuk als suggestie.
+- **Perfect fit = popup** die om een e-mailadres vraagt.
+- **AI-meethulp** begeleidt klanten bij het opmeten van hun eigen kleding. Nog uit te werken (zie hieronder).
+
+Het skelet in [concept/](../concept/README.md) volgt deze richting. Het smaak-leren is daar een eenvoudige demoregel, geen echte machine learning.
+
 ## Het probleem
 
 Bij een gewone webshop kies je een model en daarna een maat. Bij Nikki is er één jas met één pasvorm, vaak uit een ander modetijdperk, met labelmaten die niet overeenkomen met moderne maten. De vraag is niet "heb je mijn maat?" maar "past dít ene stuk mij, en vind ik het mooi?". De verkoopervaring moet die onzekerheid op afstand verkleinen.
@@ -48,6 +58,20 @@ Idee van Martijn voor de smaakkant: een **swipe-systeem** (à la Tinder) om snel
 ### Materiaal en herkomst
 - Diersoort, zekerheid van identificatie, herkomst en bewijs per stuk vastleggen (velden bestaan grotendeels: Species, Material evidence, Provenance notes, Sale eligibility).
 - Voor sommige soorten gelden handelsregels (onder andere CITES) en de EU verbiedt handel in honden- en kattenbont. Dit moet voor de lancering inhoudelijk worden geverifieerd; deze projectdocumenten zijn geen juridische beoordeling. AI mag diersoort of legaliteit nooit zelfstandig bevestigen.
+
+### Smaak leren (machine learning)
+- Begin eenvoudig: kenmerken per stuk (materiaal, lengte, silhouet, kleur) plus hartjes geven een score. Pas met genoeg gebruikers en verkopen loont een echt lerend model.
+- Koude start: een nieuwe bezoeker heeft nog geen hartjes; toon dan een gevarieerde mix, geen "populair"-lijst die steeds dezelfde stukken laat zien.
+- Profilering voor gepersonaliseerde e-mails vraagt onder de AVG duidelijke uitleg en toestemming. Het gedrag van bezoekers zonder account niet langer bewaren dan nodig.
+- Een gesuggereerd stuk kan al verkocht zijn als de mail wordt geopend; de mail linkt naar de actuele beschikbaarheid in het winkelplatform.
+
+### AI-meethulp (nog uit te werken)
+Doel: de klant meet een eigen jas die goed zit, zo nauwkeurig dat we die met Nikki's platte maten kunnen vergelijken. Opties om te bespreken:
+- **Stap-voor-stap met meetlint**: AI legt per maat uit waar je meet, met een tekening, en controleert of de waarden logisch zijn (bijvoorbeeld mouw korter dan ruglengte).
+- **Foto met referentievoorwerp**: jas plat op de grond, van bovenaf gefotografeerd, met een liniaal, een A4-vel of een bankpas ernaast als schaal. AI schat de maten uit de foto en laat de klant ze bevestigen.
+- **Meetmat of meetkaart van de winkel**: een geprint vel of een pakketje met vaste markeringen, zodat foto's betrouwbaarder zijn.
+- **AR-meten met de telefoon**: bestaat, maar is bij zachte en dikke stof waarschijnlijk te onnauwkeurig voor de eerste versie.
+Open vragen: welke nauwkeurigheid is nodig (±1 cm?), hoe ga je om met perspectief en een niet helemaal plat liggende jas, worden klantfoto's bewaard (liever niet), en hoe meten we of de hulp werkt? Eerst testen met een paar mensen en hun echte jassen, de uitkomst vergelijken met handmatig meten.
 
 ## Eerst testen, dan bouwen
 

@@ -1,25 +1,29 @@
 <title>Guaranteed Second-hand Fur skeleton</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <!--
-  WORKING SKELETON, NOT A FINAL DESIGN.
+  WORKING SKELETON v0.2, NOT A FINAL DESIGN.
   One self-contained HTML file: no build step, no external images.
-  Views: #home, #product, #perfect-find (hash links).
-  Purpose: show the structure of the shop so Nikki can react to it and
-  continue designing (e.g. in Gemini). Look and feel are deliberately neutral.
+  Views: #home (carousel on arrival), #browse (carousels per group), #product.
+  "Perfect fit" is a popup that asks for an email address.
+
+  Principle: minimalism. Images carry the page; text only where a visitor
+  needs it to decide (title, price, measurements, condition).
+
+  Taste learning in this file is a DEMO: hearts score a few tags and reorder
+  the pieces. Real machine learning comes later, behind a server.
 
   Rules to keep when editing (from the project's AGENTS.md):
   - Every piece is one of one (one SKU = one physical garment).
   - Measurements are flat, in cm, measured on the garment. Flat chest width
     is NOT a body circumference. Missing measurements stay empty, never 0.
   - No invented material, species, age, brand or authenticity claims.
-    Species is only named with evidence; otherwise "not verified".
   - All pieces, prices and measurements below are examples, not real stock.
-  - No customer data, keys or private fields (cost, storage location) in this file.
+  - No customer data, keys or private fields in this file. Nothing is stored.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&display=swap">
 <style>
-/* Layout: wireframe skeleton, one centred column (max 1120px), views switched by hash. */
+/* Layout: image-first. Full-width carousel on arrival, carousel rows to browse, one column max 1120px elsewhere. */
 :root {
   --bg: #F3F1EE;
   --surface: #E6E2DC;
@@ -30,95 +34,106 @@
   --note-fg: #3D3300;
   --coat: #9C9389;
   --coat-ink: #4A453F;
+  --scrim: rgba(20, 18, 16, 0.55);
   --font-display: "Libre Caslon Text", Georgia, "Times New Roman", serif;
   --font-body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7;
-    --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; color-scheme: dark;
+    --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; --scrim: rgba(0, 0, 0, 0.65); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7;
-  --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; color-scheme: dark;
+  --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; --scrim: rgba(0, 0, 0, 0.65); color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
 a { color: var(--fg); }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.15; }
-h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
-h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
-h3 { font-size: 1.25rem; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { font-size: 1.3rem; }
 p { margin: 0; }
+button { font: inherit; color: inherit; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.band { padding-block: 56px; }
-.band.alt { background: var(--surface); }
-.stack { display: flex; flex-direction: column; gap: 16px; }
-.row { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
-.row > * { flex: 1 1 320px; min-width: 0; }
-.eyebrow { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.lead { font-size: 1.1rem; color: var(--muted); max-width: 60ch; }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); text-decoration: none; font: inherit; font-size: 0.95rem; cursor: pointer; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.price { font-variant-numeric: tabular-nums; }
+.note { background: var(--note-bg); color: var(--note-fg); font-size: 0.85rem; padding: 8px 12px; max-width: 70ch; }
+body:not(.show-notes) .note { display: none; }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); text-decoration: none; font-size: 0.95rem; cursor: pointer; }
 .btn.ghost { background: transparent; color: var(--fg); }
-.btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
-.btns { display: flex; flex-wrap: wrap; gap: 12px; }
-.note { background: var(--note-bg); color: var(--note-fg); font-size: 0.85rem; padding: 8px 12px; border-left: 0; max-width: 70ch; }
-body.hide-notes .note { display: none; }
+.icon-btn { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--bg); cursor: pointer; border-radius: 50%; }
+.icon-btn svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 1.6; }
+.icon-btn[aria-pressed="true"] svg { fill: var(--fg); }
 
 /* header */
-.topbar { border-bottom: 1px solid var(--line); }
-.topbar .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
-.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.brand-name { font-family: var(--font-display); font-size: 1.25rem; }
-.nav { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
-.nav a { text-decoration: none; padding: 10px 0; }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
+.brand-name { font-family: var(--font-display); font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav { display: flex; align-items: center; gap: 4px 16px; flex-wrap: wrap; justify-content: flex-end; }
+.nav a, .nav button.link { text-decoration: none; padding: 10px 0; background: none; border: 0; cursor: pointer; font-size: 0.95rem; }
 .nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
-.tool { min-height: 40px; padding: 0 12px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.nav .tool { color: var(--muted); font-size: 0.8rem; }
 
-/* coat drawings */
-.pic { position: relative; background: var(--surface); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4; max-width: 100%; overflow: hidden; }
-.band.alt .pic { background: var(--bg); }
-.pic svg { width: 78%; height: auto; }
-.pic .tag { position: absolute; left: 10px; top: 10px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; color: var(--muted); }
+/* drawings */
+.pic { position: relative; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 100%; }
+.pic svg.coat { height: 82%; width: auto; max-width: 86%; }
 .coat-body { stroke: var(--coat-ink); stroke-width: 1.5; }
 .coat-line { stroke: var(--coat-ink); stroke-width: 1.2; fill: none; }
 
-/* grid of pieces */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { min-height: 44px; padding: 0 16px; border: 1px solid var(--fg); background: transparent; color: var(--fg); font: inherit; font-size: 0.9rem; cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 28px 20px; }
-.card { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
-.card-title { font-family: var(--font-display); font-size: 1.1rem; }
-.card-meta { font-size: 0.85rem; color: var(--muted); }
-.price { font-variant-numeric: tabular-nums; }
+/* hero carousel */
+.hero { position: relative; }
+.track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.track::-webkit-scrollbar { display: none; }
+.slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; }
+.slide .pic { height: clamp(420px, 72vh, 760px); }
+.slide-info { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 20px max(16px, env(safe-area-inset-left, 0px)); }
+.slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.slide-title { font-family: var(--font-display); font-size: 1.15rem; }
+.arrow { position: absolute; top: 50%; transform: translateY(-50%); }
+.arrow.prev { left: max(12px, env(safe-area-inset-left, 0px)); }
+.arrow.next { right: max(12px, env(safe-area-inset-right, 0px)); }
+.dots { display: flex; justify-content: center; gap: 6px; padding-block: 14px; }
+.dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.dots span.on { background: var(--fg); }
+.foryou { display: flex; justify-content: center; padding-bottom: 32px; }
+
+/* browse rows */
+.rows { display: flex; flex-direction: column; gap: 36px; padding-block: 28px 56px; }
+.row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.strip { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+.card { flex: 0 0 clamp(180px, 42vw, 240px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; text-decoration: none; }
+.card .pic { aspect-ratio: 3 / 4; }
+.card-title { font-size: 0.95rem; }
 
 /* product */
-.thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.thumb { padding: 0; border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--muted); font: inherit; font-size: 0.75rem; }
-.thumb[aria-pressed="true"] { outline: 2px solid var(--fg); outline-offset: 1px; }
-.thumb .pic { border: 0; aspect-ratio: 1 / 1; }
+.product { display: flex; flex-wrap: wrap; gap: 32px; padding-block: 24px 56px; }
+.product > * { flex: 1 1 340px; min-width: 0; }
+.gallery .track .pic { aspect-ratio: 4 / 5; }
+.gallery .slide { flex-basis: 100%; }
+.facts { display: flex; flex-direction: column; gap: 20px; }
 .measure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
 .measure div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-.box { border: 1px solid var(--line); padding: 20px; }
-.cmp { display: flex; justify-content: space-between; gap: 12px; }
-.cmp span:last-child { color: var(--muted); text-align: right; }
+details { border-top: 1px solid var(--line); padding-block: 12px; }
+summary { cursor: pointer; min-height: 32px; }
 
-/* perfect find */
-.swipe { max-width: 340px; width: 100%; }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
-label.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
-input[type="number"], input[type="email"] { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; }
-.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; }
-.check input { width: 20px; height: 20px; margin-top: 2px; }
-.dots { display: flex; gap: 6px; }
-.dots span { width: 10px; height: 10px; border: 1px solid var(--fg); border-radius: 50%; }
-.dots span.on { background: var(--fg); }
+/* popup */
+dialog { border: 0; padding: 0; max-width: min(440px, calc(100% - 32px)); width: 100%; background: var(--bg); color: var(--fg); }
+dialog::backdrop { background: var(--scrim); }
+.dlg { padding: 28px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.dlg .close { position: absolute; top: 8px; right: 8px; border: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+input[type="email"] { min-height: 48px; padding: 0 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
+.check input { width: 20px; height: 20px; margin-top: 1px; flex: 0 0 auto; }
+.ruler { aspect-ratio: 16 / 9; }
 
-footer { border-top: 1px solid var(--line); }
-footer .wrap { padding-block: 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; font-size: 0.9rem; color: var(--muted); }
-@media (prefers-reduced-motion: no-preference) { .swipe .pic { transition: transform 160ms ease; } }
+footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) { .track { scroll-behavior: smooth; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -143,195 +158,77 @@ footer .wrap { padding-block: 28px; display: flex; flex-wrap: wrap; justify-cont
       <text font-size="11.5" letter-spacing="2.6" style="fill: var(--bg); font-family: var(--font-body)"><textPath href="#pin-ring">GUARANTEED · SECOND-HAND · FUR ·</textPath></text>
       <text x="60" y="68" text-anchor="middle" font-size="26" font-style="italic" style="fill: var(--bg); font-family: var(--font-display)">GSF</text>
     </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></symbol>
   </defs>
 </svg>
 
 <header class="topbar">
   <div class="wrap">
     <a class="brand" href="#home" aria-label="Guaranteed Second-hand Fur, home">
-      <svg width="44" height="44" aria-hidden="true"><use href="#pin"></use></svg>
+      <svg width="36" height="36" aria-hidden="true"><use href="#pin"></use></svg>
       <span class="brand-name">Guaranteed Second-hand Fur</span>
     </a>
     <nav class="nav" aria-label="Main">
-      <a href="#home" data-view="home">Collection</a>
-      <a href="#product" data-view="product">Product page</a>
-      <a href="#perfect-find" data-view="perfect-find">The Perfect Find</a>
-      <button type="button" class="tool" id="toggle-notes">Hide notes</button>
+      <a href="#browse" data-view="browse">Browse</a>
+      <button type="button" class="link" data-open-fit>Perfect fit</button>
+      <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notes</button>
     </nav>
   </div>
 </header>
 
 <main>
-  <!-- ============ HOME ============ -->
-  <section id="view-home" data-view-panel="home">
-    <div class="band">
-      <div class="wrap row" style="align-items: center;">
-        <div class="stack">
-          <p class="note">Notitie: openingsblok. Eén zin over wat de winkel is en twee knoppen. Tekst, foto en sfeer bepaalt Nikki.</p>
-          <p class="eyebrow">One of one, every time</p>
-          <h1>Vintage fur, leather and shearling. Every piece already existed.</h1>
-          <p class="lead">Each coat is a single piece, found at markets and through people we know. Photographed in detail, measured by hand, described honestly.</p>
-          <div class="btns">
-            <a class="btn" href="#collection">View the collection</a>
-            <a class="btn ghost" href="#perfect-find">Find what fits me</a>
-          </div>
-        </div>
-        <div class="pic" id="hero-pic"><span class="tag">Photo: coat on a person</span></div>
-      </div>
+  <!-- HOME: carousel straight away -->
+  <section data-view-panel="home">
+    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes; een hartje leert de site wat iemand mooi vindt. Na drie hartjes verschijnt de Perfect fit-popup.</p></div>
+    <div class="hero">
+      <div class="track" id="hero-track" aria-roledescription="carousel" aria-label="Pieces"></div>
+      <button type="button" class="icon-btn arrow prev" id="hero-prev" aria-label="Previous piece"><svg><use href="#i-left"></use></svg></button>
+      <button type="button" class="icon-btn arrow next" id="hero-next" aria-label="Next piece"><svg><use href="#i-right"></use></svg></button>
     </div>
+    <div class="dots" id="hero-dots" aria-hidden="true"></div>
+    <div class="foryou"><a class="btn ghost" href="#browse">Browse all</a></div>
+  </section>
 
-    <div class="band alt">
-      <div class="wrap stack">
-        <p class="note">Notitie: de drie beloftes van de winkel. Dit is waar het merk "Guaranteed Second-hand" om draait.</p>
-        <div class="row">
-          <div class="stack"><h3>Only second-hand</h3><p class="lead">Nothing new is produced for this shop. Every coat gets a next owner.</p></div>
-          <div class="stack"><h3>Measured, not guessed</h3><p class="lead">Old size labels don't match today's sizes. Every coat is measured flat, in centimetres.</p></div>
-          <div class="stack"><h3>Honest about each piece</h3><p class="lead">Wear and repairs are photographed. Species is only named when there is evidence.</p></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="band" id="collection">
-      <div class="wrap stack" style="gap: 24px;">
-        <p class="note">Notitie: de collectie. Filters werken al. Alle stukken hieronder zijn voorbeelden, geen echte voorraad.</p>
-        <div class="row" style="align-items: flex-end;">
-          <div class="stack"><p class="eyebrow">The collection</p><h2>Currently available</h2></div>
-          <div class="filters" role="group" aria-label="Filter by material" id="filters"></div>
-        </div>
-        <div class="grid" id="grid"></div>
-      </div>
-    </div>
-
-    <div class="band alt">
-      <div class="wrap row" style="align-items: center;">
-        <div class="stack">
-          <p class="note">Notitie: The Perfect Find. Klanten maken een profiel en krijgen een bericht als er iets binnenkomt dat bij hun smaak en maten past.</p>
-          <p class="eyebrow">The Perfect Find</p>
-          <h2>Don't search. We'll let you know when it arrives.</h2>
-          <p class="lead">Show us what you like and measure one coat that fits you well. When a matching piece comes in, you hear about it.</p>
-          <div class="btns"><a class="btn" href="#perfect-find">Create my fit profile</a></div>
-        </div>
-        <div class="stack">
-          <div class="box"><strong>Step 1.</strong> Swipe through a few styles.</div>
-          <div class="box"><strong>Step 2.</strong> Lay your favourite coat flat and note four measurements.</div>
-          <div class="box"><strong>Step 3.</strong> Get an email when a one-of-one piece comes close.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="band">
-      <div class="wrap row" style="align-items: center;">
-        <div class="pic" id="measure-pic" style="aspect-ratio: 1 / 1;"><span class="tag">Measuring guide</span></div>
-        <div class="stack">
-          <p class="note">Notitie: uitleg over meten. Dit maakt online kopen van een unieke jas betrouwbaarder.</p>
-          <p class="eyebrow">How we measure</p>
-          <h2>A size 40 from 1985 is not a size 40 today.</h2>
-          <p class="lead">Each coat is laid flat, closed and unstretched, and measured in centimetres: chest, shoulders, sleeve and back length. Thick fur and shearling take up room inside, so the lining is noted too. Compare with a coat you own, measured the same way.</p>
-        </div>
-      </div>
+  <!-- BROWSE: carousel rows -->
+  <section data-view-panel="browse" hidden>
+    <div class="wrap rows" id="rows">
+      <p class="note">Notitie: bladeren gebeurt ook in carrousels. De bovenste rij is persoonlijk en wordt beter naarmate iemand meer hartjes geeft.</p>
     </div>
   </section>
 
-  <!-- ============ PRODUCT ============ -->
-  <section id="view-product" data-view-panel="product" hidden>
-    <div class="band">
-      <div class="wrap stack" style="gap: 28px;">
-        <p class="note">Notitie: productpagina van één uniek stuk. Foto's, maten, vergelijking met je eigen jas, conditie en herkomst.</p>
-        <div class="row">
-          <div class="stack">
-            <div class="pic" id="main-pic"></div>
-            <div class="thumbs" role="group" aria-label="Photos" id="thumbs"></div>
-          </div>
-          <div class="stack" style="gap: 20px;">
-            <p class="eyebrow">Example piece · one of one</p>
-            <h1 id="p-title">Long fur coat, shawl collar</h1>
-            <p class="price" style="font-size: 1.3rem;">€ [PRICE]</p>
-            <button type="button" class="btn" id="add">Add to bag</button>
-            <p class="card-meta" id="add-msg">Only one exists. Adding to your bag does not reserve it; it's yours once payment is confirmed.</p>
-            <div class="box stack">
-              <div class="row" style="gap: 8px; align-items: baseline;"><h3>Measured flat</h3><span class="card-meta" style="flex: 0 0 auto;">cm · ±1.0 cm</span></div>
-              <div class="measure">
-                <div><span>Chest, flat</span><span>56.0</span></div>
-                <div><span>Shoulder</span><span>44.5</span></div>
-                <div><span>Sleeve</span><span>61.0</span></div>
-                <div><span>Back length</span><span>104.0</span></div>
-                <div><span>Waist, flat</span><span>—</span></div>
-                <div><span>Hem, flat</span><span>68.0</span></div>
-              </div>
-              <p class="card-meta">Measured on the coat, not on a body. Chest is the flat width from armpit to armpit.</p>
-            </div>
-            <div class="box stack">
-              <p class="note">Notitie: verschijnt alleen als de klant een pasprofiel heeft. Geen pasgarantie, alleen een vergelijking.</p>
-              <h3>Compared with your coat</h3>
-              <div class="cmp"><span>Chest</span><span>2 cm roomier</span></div>
-              <div class="cmp"><span>Shoulder</span><span>about the same</span></div>
-              <div class="cmp"><span>Sleeve</span><span>1.5 cm shorter</span></div>
-              <div class="cmp"><span>Back length</span><span>12 cm longer</span></div>
-            </div>
-          </div>
+  <!-- PRODUCT -->
+  <section data-view-panel="product" hidden>
+    <div class="wrap product">
+      <div class="gallery">
+        <div class="hero">
+          <div class="track" id="gal-track" aria-roledescription="carousel" aria-label="Photos"></div>
+          <button type="button" class="icon-btn arrow prev" id="gal-prev" aria-label="Previous photo"><svg><use href="#i-left"></use></svg></button>
+          <button type="button" class="icon-btn arrow next" id="gal-next" aria-label="Next photo"><svg><use href="#i-right"></use></svg></button>
         </div>
-        <div class="row" style="border-top: 1px solid var(--line); padding-top: 28px;">
-          <div class="stack"><h3>Condition</h3><p class="lead">[Condition grade]. [Wear, repairs and flaws, each with a photo.]</p></div>
-          <div class="stack"><h3>Material and origin</h3><p class="lead">Fur. Species: not verified. Label: [label text as seen]. Era: [estimate, only if supported].</p></div>
-          <div class="stack"><h3>Nikki's notes</h3><p class="lead">[How it falls, its weight, the lining. Observations, not a fit guarantee.]</p></div>
-        </div>
+        <div class="dots" id="gal-dots" aria-hidden="true"></div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ PERFECT FIND ============ -->
-  <section id="view-perfect-find" data-view-panel="perfect-find" hidden>
-    <div class="band">
-      <div class="wrap stack" style="gap: 28px;">
-        <p class="note">Notitie: het swipe-idee. Stap 1 smaak, stap 2 maten van een eigen jas, stap 3 bevestiging. Er wordt nog niets opgeslagen of verstuurd.</p>
-        <div class="dots" aria-hidden="true"><span id="d1"></span><span id="d2"></span><span id="d3"></span></div>
-
-        <div id="step-swipe" class="row" style="align-items: center;">
-          <div class="stack">
-            <p class="eyebrow">Step 1 of 3</p>
-            <h1>Which styles do you like?</h1>
-            <p class="lead">Six quick choices. This only tells us which pieces to send your way.</p>
-            <p class="card-meta" id="swipe-count"></p>
+      <div class="facts">
+        <p class="note">Notitie: alleen tekst die nodig is om te beslissen. De rest zit achter uitklapbare kopjes.</p>
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+          <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+            <h1 id="p-title"></h1>
+            <p class="price" id="p-price">€ [PRICE]</p>
           </div>
-          <div class="stack" style="align-items: center;">
-            <div class="swipe stack">
-              <div class="pic" id="swipe-pic"></div>
-              <div><h3 id="swipe-title"></h3><p class="card-meta" id="swipe-sub"></p></div>
-            </div>
-            <div class="btns">
-              <button type="button" class="btn ghost" id="pass">Not for me</button>
-              <button type="button" class="btn" id="love">I like this</button>
-            </div>
-          </div>
+          <button type="button" class="icon-btn" id="p-like" aria-pressed="false" aria-label="Like this piece"><svg><use href="#i-heart"></use></svg></button>
         </div>
-
-        <form id="step-measure" class="row" hidden>
-          <div class="stack">
-            <p class="eyebrow">Step 2 of 3</p>
-            <h1>Measure a coat that fits you</h1>
-            <p class="lead">Lay it flat, closed, without stretching. Measure in centimetres. Leave a field empty if you can't measure it.</p>
-            <p class="card-meta" id="liked-summary"></p>
-          </div>
-          <div class="box stack">
-            <div class="form-grid">
-              <label class="field" for="m-chest">Chest, flat (cm)<input id="m-chest" type="number" inputmode="decimal" step="0.5" min="20" max="120" placeholder="e.g. 54"></label>
-              <label class="field" for="m-shoulder">Shoulder (cm)<input id="m-shoulder" type="number" inputmode="decimal" step="0.5" min="20" max="80" placeholder="e.g. 43"></label>
-              <label class="field" for="m-sleeve">Sleeve (cm)<input id="m-sleeve" type="number" inputmode="decimal" step="0.5" min="20" max="100" placeholder="e.g. 62"></label>
-              <label class="field" for="m-length">Back length (cm)<input id="m-length" type="number" inputmode="decimal" step="0.5" min="30" max="160" placeholder="e.g. 92"></label>
-            </div>
-            <label class="field" for="m-email">Email<input id="m-email" type="email" placeholder="you@example.com"></label>
-            <label class="check" for="m-consent"><input id="m-consent" type="checkbox">Email me when a matching piece arrives. I can unsubscribe or delete my profile at any time.</label>
-            <p class="card-meta" id="form-msg" role="status"></p>
-            <button type="submit" class="btn">Save my fit profile</button>
-          </div>
-        </form>
-
-        <div id="step-done" class="stack" hidden>
-          <p class="eyebrow">Step 3 of 3</p>
-          <h1>We'll keep an eye out for you.</h1>
-          <p class="lead">When a piece comes in that is close to your taste and measurements, you'll get an email. Each piece is one of one, so it's first come, first served.</p>
-          <div class="box stack"><p class="eyebrow">Your profile (example, not saved)</p><p id="done-summary"></p></div>
-          <div class="btns"><a class="btn" href="#home">Browse the collection</a><button type="button" class="btn ghost" id="restart">Start again</button></div>
+        <button type="button" class="btn" id="p-buy">Add to bag</button>
+        <p class="muted" id="p-buy-msg">One of one.</p>
+        <div>
+          <div class="measure" id="p-measure"></div>
+          <p class="muted" style="padding-top: 8px;">Measured flat on the coat, in cm.</p>
+        </div>
+        <div>
+          <details><summary>Condition</summary><p class="muted">[Grade]. [Wear and repairs, each with a photo.]</p></details>
+          <details><summary>Material and origin</summary><p class="muted" id="p-material"></p></details>
+          <details><summary>How to compare with your own coat</summary><p class="muted">Lay a coat that fits you flat, closed, and measure it the same way. Or let us guide you: <button type="button" class="link" data-open-fit style="background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer;">Perfect fit</button>.</p></details>
         </div>
       </div>
     </div>
@@ -339,164 +236,211 @@ footer .wrap { padding-block: 28px; display: flex; flex-wrap: wrap; justify-cont
 </main>
 
 <footer>
-  <div class="wrap">
-    <span>Guaranteed Second-hand Fur · skeleton v0.1 · all pieces are examples</span>
-    <span>Shipping and returns · Contact · Measuring guide</span>
-  </div>
+  <div class="wrap"><span>Skeleton v0.2 · all pieces are examples</span><span>Shipping · Returns · Contact</span></div>
 </footer>
+
+<dialog id="fit" aria-labelledby="fit-title">
+  <div class="dlg">
+    <button type="button" class="icon-btn close" id="fit-close" aria-label="Close"><svg><use href="#i-close"></use></svg></button>
+    <form id="fit-form" style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 id="fit-title">Your perfect piece, by email</h2>
+      <p class="muted">We learn what you like. When the right piece comes in, we send it to you.</p>
+      <label class="field" for="fit-email">Email<input id="fit-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+      <label class="check" for="fit-consent"><input id="fit-consent" type="checkbox">Email me suggestions based on what I like. Unsubscribe any time.</label>
+      <p class="muted" id="fit-msg" role="status"></p>
+      <button type="submit" class="btn">Keep me posted</button>
+    </form>
+    <div id="fit-done" hidden style="display: flex; flex-direction: column; gap: 16px;">
+      <h2>Thank you</h2>
+      <p class="muted">Want suggestions that fit, too? Measure one coat you love. We'll guide you.</p>
+      <div class="pic ruler" id="fit-ruler"></div>
+      <p class="note">Notitie: hier komt de AI-meethulp (foto met liniaal of ander hulpmiddel). Nog uit te werken, zie docs/CONCEPT.md.</p>
+      <button type="button" class="btn ghost" id="fit-later">Later</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 (function () {
+  var $ = function (id) { return document.getElementById(id); };
+
   // ---------- drawings ----------
   var SHAPES = {
-    long:    { body: 'M70 20 L100 34 L130 20 L160 40 L182 200 L162 204 L150 90 L152 248 L48 248 L50 90 L38 204 L18 200 L40 40 Z', hem: 248, collar: 'M66 22 L100 80 L134 22 L146 34 L100 104 L54 34 Z' },
-    mid:     { body: 'M70 24 L100 36 L130 24 L160 44 L182 200 L162 204 L150 94 L150 214 L50 214 L50 94 L38 204 L18 200 L40 44 Z', hem: 214, collar: 'M70 26 L100 56 L130 26 L138 34 L100 70 L62 34 Z' },
-    short:   { body: 'M70 30 L100 42 L130 30 L160 50 L182 190 L162 194 L150 100 L150 162 L50 162 L50 100 L38 194 L18 190 L40 50 Z', hem: 162, collar: 'M68 32 L100 70 L132 32 L142 44 L100 86 L58 44 Z' },
-    aviator: { body: 'M70 30 L100 42 L130 30 L162 50 L184 186 L162 190 L150 100 L150 166 L50 166 L50 100 L38 190 L16 186 L38 50 Z', hem: 166, collar: 'M56 22 L100 76 L144 22 L162 46 L100 100 L38 46 Z' }
+    long:    { body: 'M70 20 L100 34 L130 20 L160 40 L182 200 L162 204 L150 90 L152 248 L48 248 L50 90 L38 204 L18 200 L40 40 Z', hem: 248, top: 104, collar: 'M66 22 L100 80 L134 22 L146 34 L100 104 L54 34 Z' },
+    mid:     { body: 'M70 24 L100 36 L130 24 L160 44 L182 200 L162 204 L150 94 L150 214 L50 214 L50 94 L38 204 L18 200 L40 44 Z', hem: 214, top: 70, collar: 'M70 26 L100 56 L130 26 L138 34 L100 70 L62 34 Z' },
+    short:   { body: 'M70 30 L100 42 L130 30 L160 50 L182 190 L162 194 L150 100 L150 162 L50 162 L50 100 L38 194 L18 190 L40 50 Z', hem: 162, top: 86, collar: 'M68 32 L100 70 L132 32 L142 44 L100 86 L58 44 Z' },
+    aviator: { body: 'M70 30 L100 42 L130 30 L162 50 L184 186 L162 190 L150 100 L150 166 L50 166 L50 100 L38 190 L16 186 L38 50 Z', hem: 166, top: 100, collar: 'M56 22 L100 76 L144 22 L162 46 L100 100 L38 46 Z' }
   };
-  function coat(shape, texture, opts) {
+  function coat(p, opts) {
     opts = opts || {};
-    var s = SHAPES[shape];
-    var front = opts.back ? '' : '<path class="coat-line" d="M100 ' + (shape === 'long' ? 104 : 80) + ' L100 ' + s.hem + '"></path>';
-    var collar = opts.back ? '' : '<path class="coat-body" d="' + s.collar + '" style="fill: url(#tx-' + (texture === 'leather' ? 'fur' : texture) + ')"></path>';
-    var flaw = opts.flaw ? '<circle cx="164" cy="190" r="16" style="fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 4 3"></circle>' : '';
-    return '<svg viewBox="0 0 200 260" role="img" aria-label="' + (opts.label || 'Drawing of a coat') + '">' +
-      '<path class="coat-body" d="' + s.body + '" style="fill: url(#tx-' + texture + ')"></path>' + collar + front + flaw + '</svg>';
+    var s = SHAPES[p.shape];
+    var collarTx = p.collar || p.tx;
+    var parts = '<path class="coat-body" d="' + s.body + '" style="fill: url(#tx-' + p.tx + ')"></path>';
+    if (!opts.back) parts += '<path class="coat-body" d="' + s.collar + '" style="fill: url(#tx-' + collarTx + ')"></path><path class="coat-line" d="M100 ' + s.top + ' L100 ' + s.hem + '"></path>';
+    if (opts.flaw) parts += '<circle cx="164" cy="190" r="16" style="fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 4 3"></circle>';
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="' + (opts.label || 'Drawing: ' + p.title) + '">' + parts + '</svg>';
   }
   function labelDrawing() {
-    return '<svg viewBox="0 0 200 260" role="img" aria-label="Drawing of a garment label">' +
-      '<rect x="40" y="90" width="120" height="70" style="fill: var(--bg); stroke: var(--coat-ink); stroke-width: 1.5"></rect>' +
-      '<text x="100" y="122" text-anchor="middle" font-size="14" style="fill: var(--fg); font-family: var(--font-display)">[LABEL]</text>' +
-      '<text x="100" y="142" text-anchor="middle" font-size="10" style="fill: var(--muted); font-family: var(--font-body)">as seen on the garment</text></svg>';
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="Drawing of a garment label"><rect x="40" y="95" width="120" height="70" style="fill: var(--bg); stroke: var(--coat-ink); stroke-width: 1.5"></rect><text x="100" y="135" text-anchor="middle" font-size="14" style="fill: var(--fg); font-family: var(--font-display)">[LABEL]</text></svg>';
   }
-  function measureDrawing() {
-    return '<svg viewBox="0 0 200 260" role="img" aria-label="Coat laid flat with measurement lines for chest, shoulder, sleeve and back length">' +
-      '<path class="coat-body" d="' + SHAPES.mid.body + '" style="fill: var(--coat)"></path>' +
-      '<g style="stroke: var(--fg); stroke-width: 1.6"><line x1="50" y1="98" x2="150" y2="98"></line><line x1="70" y1="28" x2="130" y2="28" stroke-dasharray="4 3"></line><line x1="100" y1="40" x2="100" y2="214" stroke-dasharray="2 3"></line><line x1="134" y1="30" x2="178" y2="198"></line></g>' +
-      '<g font-size="9" style="fill: var(--fg); font-family: var(--font-body)"><text x="100" y="92" text-anchor="middle">chest, flat</text><text x="100" y="20" text-anchor="middle">shoulder</text><text x="104" y="170">back length</text><text x="164" y="120">sleeve</text></g></svg>';
+  function rulerDrawing() {
+    var ticks = '';
+    for (var i = 0; i <= 30; i++) ticks += '<line x1="' + (20 + i * 9) + '" y1="128" x2="' + (20 + i * 9) + '" y2="' + (i % 5 ? 134 : 140) + '"></line>';
+    return '<svg viewBox="0 0 320 180" style="width: 90%; height: auto;" role="img" aria-label="Sketch: a coat laid flat with a ruler next to it, photographed from above">' +
+      '<path class="coat-body" d="M120 20 L160 30 L200 20 L230 40 L250 110 L232 114 L222 66 L222 118 L98 118 L98 66 L88 114 L70 110 L90 40 Z" style="fill: var(--coat)"></path>' +
+      '<rect x="16" y="124" width="288" height="20" style="fill: var(--bg); stroke: var(--coat-ink)"></rect><g style="stroke: var(--coat-ink); stroke-width: 1">' + ticks + '</g>' +
+      '<line x1="98" y1="72" x2="222" y2="72" style="stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 4 3"></line></svg>';
   }
 
   // ---------- example data (NOT real stock) ----------
   var PIECES = [
-    { title: 'Long fur coat, shawl collar', mat: 'Fur', shape: 'long', tx: 'fur', meta: 'Fur · species not verified · chest 56 cm flat' },
-    { title: 'Shearling coat, belted', mat: 'Shearling', shape: 'mid', tx: 'shearling', meta: 'Shearling · chest 54 cm flat' },
-    { title: 'Leather car coat', mat: 'Leather', shape: 'mid', tx: 'leather', meta: 'Leather · chest 58 cm flat' },
-    { title: 'Short fur jacket', mat: 'Fur', shape: 'short', tx: 'fur', meta: 'Fur · species not verified · chest 52 cm flat' },
-    { title: 'Leather jacket, fur collar', mat: 'Leather', shape: 'short', tx: 'leather', meta: 'Leather, fur collar · chest 55 cm flat' },
-    { title: 'Shearling aviator jacket', mat: 'Shearling', shape: 'aviator', tx: 'shearling', meta: 'Shearling · chest 60 cm flat' }
+    { id: 1, title: 'Long fur coat, shawl collar', mat: 'Fur', shape: 'long', tx: 'fur', m: [56, 44.5, 61, 104] },
+    { id: 2, title: 'Shearling coat, belted', mat: 'Shearling', shape: 'mid', tx: 'shearling', m: [54, 43, 60, 92] },
+    { id: 3, title: 'Leather car coat', mat: 'Leather', shape: 'mid', tx: 'leather', m: [58, 46, 63, 90] },
+    { id: 4, title: 'Short fur jacket', mat: 'Fur', shape: 'short', tx: 'fur', m: [52, 41, 58, 62] },
+    { id: 5, title: 'Leather jacket, fur collar', mat: 'Leather', shape: 'short', tx: 'leather', collar: 'fur', m: [55, 44, null, 64] },
+    { id: 6, title: 'Shearling aviator jacket', mat: 'Shearling', shape: 'aviator', tx: 'shearling', m: [60, 48, 64, 66] },
+    { id: 7, title: 'Long leather coat', mat: 'Leather', shape: 'long', tx: 'leather', m: [57, 45, 62, 112] },
+    { id: 8, title: 'Fur coat, mid length', mat: 'Fur', shape: 'mid', tx: 'fur', m: [55, 43.5, 60, 88] },
+    { id: 9, title: 'Short shearling jacket', mat: 'Shearling', shape: 'short', tx: 'shearling', m: [53, 42, 59, 60] }
   ];
-  var STYLES = [
-    { title: 'Long and dramatic', sub: 'Full length, big collar', shape: 'long', tx: 'fur' },
-    { title: 'Short and playful', sub: 'Hip length jacket', shape: 'short', tx: 'fur' },
-    { title: 'Rugged shearling', sub: 'Aviator, worn-in', shape: 'aviator', tx: 'shearling' },
-    { title: 'Sleek leather', sub: 'Clean lines, car coat', shape: 'mid', tx: 'leather' },
-    { title: 'Soft and roomy', sub: 'Oversized, cocoon shape', shape: 'mid', tx: 'shearling' },
-    { title: 'Fur details', sub: 'Leather or wool with a fur collar', shape: 'short', tx: 'leather' }
-  ];
+  var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };
 
-  var $ = function (id) { return document.getElementById(id); };
+  // ---------- taste (DEMO, not real machine learning) ----------
+  var liked = {};          // id -> true
+  var popupShown = false;
+  function score(p) {
+    var s = 0;
+    Object.keys(liked).forEach(function (id) {
+      var q = byId(Number(id));
+      if (q.mat === p.mat) s += 2;
+      if (q.shape === p.shape) s += 1;
+      if (q.tx === p.tx || q.collar === p.tx) s += 1;
+    });
+    return s;
+  }
+  function ranked(list) {
+    return list.slice().sort(function (a, b) { return score(b) - score(a) || a.id - b.id; });
+  }
+  function heartBtn(p) {
+    return '<button type="button" class="icon-btn" data-like="' + p.id + '" aria-pressed="' + !!liked[p.id] + '" aria-label="Like ' + p.title + '"><svg><use href="#i-heart"></use></svg></button>';
+  }
+  function toggleLike(id) {
+    if (liked[id]) delete liked[id]; else liked[id] = true;
+    document.querySelectorAll('[data-like="' + id + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(!!liked[id])); });
+    $('p-like').setAttribute('aria-pressed', String(!!liked[current]));
+    if (!popupShown && Object.keys(liked).length >= 3) { popupShown = true; openFit(); }
+  }
+
+  // ---------- carousel helper ----------
+  function carousel(track, prev, next, dotsEl) {
+    function idx() { return Math.round(track.scrollLeft / track.clientWidth); }
+    function paint() {
+      var n = track.children.length, i = idx();
+      dotsEl.innerHTML = Array.from({ length: n }, function (_, k) { return '<span class="' + (k === i ? 'on' : '') + '"></span>'; }).join('');
+    }
+    prev.addEventListener('click', function () { track.scrollTo({ left: Math.max(0, idx() - 1) * track.clientWidth }); });
+    next.addEventListener('click', function () {
+      var i = idx() + 1; if (i >= track.children.length) i = 0;
+      track.scrollTo({ left: i * track.clientWidth });
+    });
+    track.addEventListener('scroll', function () { window.requestAnimationFrame(paint); }, { passive: true });
+    return { paint: paint, reset: function () { track.scrollLeft = 0; paint(); } };
+  }
 
   // ---------- home ----------
-  $('hero-pic').insertAdjacentHTML('beforeend', coat('long', 'fur', { label: 'Drawing of a long fur coat' }));
-  $('measure-pic').insertAdjacentHTML('beforeend', measureDrawing());
-  var filter = 'All';
-  function renderFilters() {
-    $('filters').innerHTML = ['All', 'Fur', 'Leather', 'Shearling'].map(function (f) {
-      return '<button type="button" class="chip" data-f="' + f + '" aria-pressed="' + (f === filter) + '">' + f + '</button>';
+  var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
+  function renderHero() {
+    $('hero-track').innerHTML = PIECES.map(function (p) {
+      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic">' + coat(p) + '</div>' +
+        '<div class="slide-info"><a href="#product" data-open="' + p.id + '"><span class="slide-title">' + p.title + '</span><span class="price muted">€ [PRICE]</span></a>' + heartBtn(p) + '</div></div>';
     }).join('');
+    hero.paint();
   }
-  function renderGrid() {
-    $('grid').innerHTML = PIECES.filter(function (p) { return filter === 'All' || p.mat === filter; }).map(function (p) {
-      return '<a class="card" href="#product"><div class="pic"><span class="tag">Example</span>' + coat(p.shape, p.tx, { label: 'Drawing: ' + p.title }) + '</div>' +
-        '<div class="row" style="gap: 8px; align-items: baseline;"><span class="card-title">' + p.title + '</span><span class="price" style="flex: 0 0 auto;">€ [PRICE]</span></div>' +
-        '<span class="card-meta">' + p.meta + '</span></a>';
-    }).join('');
+
+  // ---------- browse ----------
+  function strip(title, list) {
+    return '<div><div class="row-head"><h2>' + title + '</h2><span class="muted">' + list.length + '</span></div><div class="strip">' +
+      list.map(function (p) {
+        return '<a class="card" href="#product" data-open="' + p.id + '"><div class="pic">' + coat(p) + '</div><span class="card-title">' + p.title + '</span><span class="price muted">€ [PRICE]</span></a>';
+      }).join('') + '</div></div>';
   }
-  $('filters').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-f]'); if (!b) return;
-    filter = b.getAttribute('data-f'); renderFilters(); renderGrid();
-  });
-  renderFilters(); renderGrid();
+  function renderBrowse() {
+    var note = $('rows').querySelector('.note').outerHTML;
+    var hasTaste = Object.keys(liked).length > 0;
+    var html = note + strip(hasTaste ? 'For you' : 'New in', hasTaste ? ranked(PIECES) : PIECES.slice().reverse());
+    ['Fur', 'Leather', 'Shearling'].forEach(function (m) { html += strip(m, ranked(PIECES.filter(function (p) { return p.mat === m; }))); });
+    $('rows').innerHTML = html;
+  }
 
   // ---------- product ----------
-  var VIEWS = [
-    { name: 'Front', html: function () { return coat('long', 'fur', { label: 'Front of the coat' }); } },
-    { name: 'Back', html: function () { return coat('long', 'fur', { back: true, label: 'Back of the coat' }); } },
-    { name: 'Label', html: labelDrawing },
-    { name: 'Flaw', html: function () { return coat('long', 'fur', { flaw: true, label: 'Coat with a marked flaw near the left cuff' }); } }
-  ];
-  var view = 0;
+  var current = 1;
+  var gallery = carousel($('gal-track'), $('gal-prev'), $('gal-next'), $('gal-dots'));
   function renderProduct() {
-    $('main-pic').innerHTML = '<span class="tag">Photo: ' + VIEWS[view].name.toLowerCase() + '</span>' + VIEWS[view].html();
-    $('thumbs').innerHTML = VIEWS.map(function (v, i) {
-      return '<button type="button" class="thumb" data-v="' + i + '" aria-pressed="' + (i === view) + '" aria-label="Show photo: ' + v.name + '"><div class="pic">' + v.html() + '</div>' + v.name + '</button>';
+    var p = byId(current);
+    $('p-title').textContent = p.title;
+    $('p-like').setAttribute('aria-pressed', String(!!liked[p.id]));
+    $('p-like').setAttribute('aria-label', 'Like ' + p.title);
+    $('p-buy-msg').textContent = 'One of one.';
+    var shots = [coat(p, { label: 'Front' }), coat(p, { back: true, label: 'Back' }), labelDrawing(), coat(p, { flaw: true, label: 'Flaw near the left cuff' })];
+    $('gal-track').innerHTML = shots.map(function (s) { return '<div class="slide"><div class="pic">' + s + '</div></div>'; }).join('');
+    gallery.reset();
+    var names = ['Chest, flat', 'Shoulder', 'Sleeve', 'Back length'];
+    $('p-measure').innerHTML = names.map(function (n, i) {
+      return '<div><span>' + n + '</span><span>' + (p.m[i] == null ? '—' : p.m[i].toFixed(1)) + '</span></div>';
     }).join('');
+    $('p-material').textContent = p.mat + (p.mat === 'Fur' || p.collar ? '. Species: not verified.' : '.') + ' Label: [as seen]. Era: [only if supported].';
   }
-  $('thumbs').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-v]'); if (!b) return;
-    view = Number(b.getAttribute('data-v')); renderProduct();
-  });
-  $('add').addEventListener('click', function () {
-    $('add-msg').textContent = 'Skeleton only: there is no checkout yet. In the real shop the shop platform decides whether the piece is still available.';
-  });
-  renderProduct();
+  $('p-like').addEventListener('click', function () { toggleLike(current); });
+  $('p-buy').addEventListener('click', function () { $('p-buy-msg').textContent = 'Skeleton only: no checkout yet.'; });
 
-  // ---------- perfect find ----------
-  var idx = 0, liked = [];
-  function dots(n) { ['d1', 'd2', 'd3'].forEach(function (d, i) { $(d).className = i < n ? 'on' : ''; }); }
-  function renderSwipe() {
-    var s = STYLES[idx];
-    $('swipe-pic').innerHTML = '<span class="tag">Style photo</span>' + coat(s.shape, s.tx, { label: 'Drawing: ' + s.title });
-    $('swipe-title').textContent = s.title;
-    $('swipe-sub').textContent = s.sub;
-    $('swipe-count').textContent = 'Style ' + (idx + 1) + ' of ' + STYLES.length;
+  // ---------- clicks ----------
+  document.addEventListener('click', function (e) {
+    var like = e.target.closest('[data-like]');
+    if (like) { e.preventDefault(); toggleLike(Number(like.getAttribute('data-like'))); return; }
+    var open = e.target.closest('[data-open]');
+    if (open) { current = Number(open.getAttribute('data-open')); renderProduct(); }
+    if (e.target.closest('[data-open-fit]')) openFit();
+  });
+
+  // ---------- perfect fit popup ----------
+  var dlg = $('fit');
+  $('fit-ruler').innerHTML = rulerDrawing();
+  function openFit() {
+    $('fit-form').hidden = false; $('fit-done').hidden = true; $('fit-msg').textContent = '';
+    if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); } else dlg.setAttribute('open', '');
   }
-  function show(step) {
-    $('step-swipe').hidden = step !== 1; $('step-measure').hidden = step !== 2; $('step-done').hidden = step !== 3; dots(step);
-  }
-  function next(like) {
-    if (like) liked.push(STYLES[idx].title);
-    idx += 1;
-    if (idx >= STYLES.length) {
-      $('liked-summary').textContent = liked.length ? 'You liked: ' + liked.join(', ') + '.' : 'You did not pick a style yet. That is fine.';
-      show(2);
-    } else renderSwipe();
-  }
-  $('love').addEventListener('click', function () { next(true); });
-  $('pass').addEventListener('click', function () { next(false); });
-  $('step-measure').addEventListener('submit', function (e) {
+  function closeFit() { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); }
+  $('fit-close').addEventListener('click', closeFit);
+  $('fit-later').addEventListener('click', closeFit);
+  $('fit-form').addEventListener('submit', function (e) {
     e.preventDefault();
-    var email = $('m-email').value.trim();
-    if (!email || !$('m-email').checkValidity()) { $('form-msg').textContent = 'Enter a valid email address so we can reach you.'; return; }
-    if (!$('m-consent').checked) { $('form-msg').textContent = 'Tick the box to agree to receive emails about matching pieces.'; return; }
-    var parts = [['Chest', 'm-chest'], ['Shoulder', 'm-shoulder'], ['Sleeve', 'm-sleeve'], ['Back length', 'm-length']].map(function (m) {
-      var v = $(m[1]).value; return m[0] + ': ' + (v === '' ? 'not given' : v + ' cm');
-    });
-    $('done-summary').textContent = (liked.length ? 'Styles: ' + liked.join(', ') + '. ' : '') + parts.join(' · ');
-    $('form-msg').textContent = '';
-    show(3);
+    var email = $('fit-email');
+    if (!email.value.trim() || !email.checkValidity()) { $('fit-msg').textContent = 'Enter a valid email address.'; return; }
+    if (!$('fit-consent').checked) { $('fit-msg').textContent = 'Tick the box so we may email you.'; return; }
+    $('fit-form').hidden = true; $('fit-done').hidden = false;
   });
-  $('restart').addEventListener('click', function () { idx = 0; liked = []; $('step-measure').reset(); renderSwipe(); show(1); });
-  renderSwipe(); show(1);
 
-  // ---------- notes toggle ----------
+  // ---------- notes ----------
   $('toggle-notes').addEventListener('click', function () {
-    var hidden = document.body.classList.toggle('hide-notes');
-    this.textContent = hidden ? 'Show notes' : 'Hide notes';
+    var on = document.body.classList.toggle('show-notes');
+    this.setAttribute('aria-pressed', String(on));
   });
 
   // ---------- routing ----------
   function route() {
     var h = (location.hash || '#home').slice(1);
-    var target = h === 'collection' ? 'home' : h;
-    if (!document.querySelector('[data-view-panel="' + target + '"]')) target = 'home';
-    document.querySelectorAll('[data-view-panel]').forEach(function (p) { p.hidden = p.getAttribute('data-view-panel') !== target; });
+    if (!document.querySelector('[data-view-panel="' + h + '"]')) h = 'home';
+    document.querySelectorAll('[data-view-panel]').forEach(function (p) { p.hidden = p.getAttribute('data-view-panel') !== h; });
     document.querySelectorAll('.nav a[data-view]').forEach(function (a) {
-      if (a.getAttribute('data-view') === target) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      if (a.getAttribute('data-view') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    if (h === 'collection') { var c = $('collection'); if (c) c.scrollIntoView(); } else window.scrollTo(0, 0);
+    if (h === 'browse') renderBrowse();
+    if (h === 'home') hero.paint();
+    if (h === 'product') gallery.paint();
+    window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route);
-  route();
+  renderHero(); renderProduct(); route();
 })();
 </script>

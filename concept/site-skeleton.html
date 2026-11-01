@@ -139,6 +139,8 @@ body:not(.show-notes) .note { display: none; }
 .overlay .tag { min-height: 32px; border: 0; background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--fg); white-space: nowrap; }
 .overlay .tag[aria-pressed="true"] { background: color-mix(in srgb, var(--fg) 85%, transparent); color: var(--bg); }
 .overlay .tag[aria-pressed="true"] svg { fill: var(--bg); stroke: var(--bg); }
+.pic > .scrollbar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 0; z-index: 1; background: color-mix(in srgb, var(--bg) 45%, transparent); overflow: hidden; }
+.pic > .scrollbar span { display: block; height: 100%; border-radius: 2px; background: var(--fg); }
 .slide .pic > .likebox { background: color-mix(in srgb, var(--bg) 70%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-color: transparent; }
 .ov-top { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0 16px; box-sizing: border-box; background: color-mix(in srgb, var(--bg) 76%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--fg); text-decoration: none; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Keep faces clear: the photo starts below the name band, so text never covers a head. */
@@ -527,10 +529,26 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     $('hero-track').innerHTML = PIECES.map(function (p) {
       return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + picture(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' +
         '<a href="#product" data-open="' + p.id + '" class="ov-top">' + p.title + ' · € [PRICE]</a>' +
-        '<div class="overlay">' + tagChips(p) + '</div>' + likeBox(p) + '</div></div>';
+        '<div class="overlay">' + tagChips(p) + '</div>' + likeBox(p) + '<div class="scrollbar" aria-hidden="true" hidden><span></span></div></div></div>';
     }).join('');
     hero.paint();
+    updateBars();
   }
+  // Scroll indicator across the photo width, shown only when there are more attribute hearts than fit.
+  function updateBars() {
+    document.querySelectorAll('#hero-track .slide').forEach(function (sl) {
+      var t = sl.querySelector('.overlay .tags'), bar = sl.querySelector('.scrollbar'); if (!t || !bar) return;
+      var more = t.scrollWidth > t.clientWidth + 1;
+      bar.hidden = !more; if (!more) return;
+      var w = bar.clientWidth, thumb = Math.max(24, w * t.clientWidth / t.scrollWidth);
+      var x = (w - thumb) * (t.scrollLeft / (t.scrollWidth - t.clientWidth));
+      var s = bar.firstChild; s.style.width = thumb + 'px'; s.style.transform = 'translateX(' + x + 'px)';
+    });
+  }
+  $('hero-track').addEventListener('scroll', function (e) { if (e.target.classList && e.target.classList.contains('tags')) updateBars(); }, true);
+  window.addEventListener('resize', updateBars);
+  window.addEventListener('load', updateBars);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateBars);
 
   // Long press on the image (phone) likes the piece, like a double tap on Instagram. Never unlikes.
   (function () {
@@ -695,7 +713,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
       if (a.getAttribute('data-view') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     if (h === 'browse') renderBrowse();
-    if (h === 'home') hero.paint();
+    if (h === 'home') { hero.paint(); updateBars(); }
     if (h === 'product') gallery.paint();
     window.scrollTo(0, 0);
   }

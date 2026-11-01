@@ -1,0 +1,547 @@
+<title>Guaranteed Second-hand Fur skelet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  WORKING SKELETON v0.2, NOT A FINAL DESIGN.
+  One self-contained HTML file: no build step, no external images.
+  Views: #home (carousel on arrival), #browse (carousels per group), #product.
+  "Perfect fit" is a popup that asks for an email address.
+
+  Principle: minimalism. Images carry the page; text only where a visitor
+  needs it to decide (title, price, measurements, condition).
+
+  Taste learning in this file is a DEMO: hearts score a few tags and reorder
+  the pieces. Real machine learning comes later, behind a server.
+
+  Page text is Dutch (for Nikki). Fur species is always named on fur pieces;
+  Nikki verifies the species before publishing (see docs/CONCEPT.md).
+
+  Rules to keep when editing (from the project's AGENTS.md):
+  - Every piece is one of one (one SKU = one physical garment).
+  - Measurements are flat, in cm, measured on the garment. Flat chest width
+    is NOT a body circumference. Missing measurements stay empty, never 0.
+  - No invented material, species, age, brand or authenticity claims.
+  - All pieces, prices and measurements below are examples, not real stock.
+  - No customer data, keys or private fields in this file. Nothing is stored.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: image-first. Full-width carousel on arrival, carousel rows to browse, one column max 1120px elsewhere. */
+:root {
+  --bg: #F3F1EE;
+  --surface: #E6E2DC;
+  --line: #B8B1A8;
+  --fg: #26231F;
+  --muted: #5C564F;
+  --note-bg: #FFF1B8;
+  --note-fg: #3D3300;
+  --coat: #9C9389;
+  --coat-ink: #4A453F;
+  --scrim: rgba(20, 18, 16, 0.55);
+  --font-display: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --font-body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7;
+    --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; --scrim: rgba(0, 0, 0, 0.65); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7;
+  --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; --scrim: rgba(0, 0, 0, 0.65); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+a { color: var(--fg); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { font-size: 1.3rem; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.price { font-variant-numeric: tabular-nums; }
+.note { background: var(--note-bg); color: var(--note-fg); font-size: 0.85rem; padding: 8px 12px; max-width: 70ch; }
+body:not(.show-notes) .note { display: none; }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); text-decoration: none; font-size: 0.95rem; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--fg); }
+.icon-btn { flex: 0 0 auto; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--bg); cursor: pointer; border-radius: 50%; }
+.icon-btn svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 1.6; }
+.icon-btn[aria-pressed="true"] svg { fill: var(--fg); }
+
+/* header */
+.topbar .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding-block: 12px; }
+@media (max-width: 600px) { .nav { width: 100%; justify-content: flex-start; } }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
+.brand-name { font-family: var(--font-display); font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav { display: flex; align-items: center; gap: 4px 16px; flex-wrap: wrap; justify-content: flex-end; }
+.nav a, .nav button.link { text-decoration: none; padding: 10px 0; background: none; border: 0; cursor: pointer; font-size: 0.95rem; }
+.nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
+.nav .tool { color: var(--muted); font-size: 0.8rem; }
+
+/* drawings */
+.pic { position: relative; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 100%; }
+.pic svg.coat { height: 82%; width: auto; max-width: 86%; }
+.coat-body { stroke: var(--coat-ink); stroke-width: 1.5; }
+.coat-line { stroke: var(--coat-ink); stroke-width: 1.2; fill: none; }
+
+/* hero carousel */
+.hero { position: relative; }
+.track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.track::-webkit-scrollbar { display: none; }
+.slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; }
+.slide .pic { height: clamp(360px, 62vh, 680px); }
+.slide-info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+#hero-track ~ .arrow { top: calc(clamp(360px, 62vh, 680px) / 2); }
+.slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 0 1 auto; }
+.slide-info .tags { flex: 1 1 280px; justify-content: center; }
+.slide-title { font-family: var(--font-display); font-size: 1.15rem; }
+.slide-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg); cursor: pointer; font-size: 0.82rem; }
+.tag svg { width: 14px; height: 14px; stroke: var(--fg); fill: none; stroke-width: 1.8; }
+.tag[aria-pressed="true"] { border-color: var(--fg); }
+.tag[aria-pressed="true"] svg { fill: var(--fg); }
+.arrow { position: absolute; top: 50%; transform: translateY(-50%); }
+.arrow.prev { left: max(12px, env(safe-area-inset-left, 0px)); }
+.arrow.next { right: max(12px, env(safe-area-inset-right, 0px)); }
+.dots { display: flex; justify-content: center; gap: 6px; padding-block: 14px; }
+.dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.dots span.on { background: var(--fg); }
+.foryou { display: flex; justify-content: center; padding-bottom: 32px; }
+
+/* browse rows */
+.rows { display: flex; flex-direction: column; gap: 36px; padding-block: 28px 56px; }
+.row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.strip { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+.card { flex: 0 0 clamp(180px, 42vw, 240px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; }
+.card > a { display: flex; flex-direction: column; gap: 6px; text-decoration: none; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card .pic { aspect-ratio: 3 / 4; }
+.card-title { font-size: 0.95rem; }
+
+/* materials and mission */
+.page { display: flex; flex-direction: column; gap: 24px; padding-block: 32px 64px; }
+.mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+.mat { display: flex; flex-direction: column; gap: 10px; }
+.mat .pic { aspect-ratio: 4 / 3; }
+.mat .pic svg { width: 100%; height: 100%; }
+.mat-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.mat p { color: var(--muted); font-size: 0.95rem; }
+.mission { max-width: 640px; }
+.mission p { font-size: 1.15rem; }
+
+/* product */
+.product { display: flex; flex-wrap: wrap; gap: 32px; padding-block: 24px 56px; }
+.product > * { flex: 1 1 340px; min-width: 0; }
+.gallery .track .pic { aspect-ratio: 4 / 5; }
+.gallery .slide { flex-basis: 100%; }
+.facts { display: flex; flex-direction: column; gap: 20px; }
+.measure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.measure div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+details { border-top: 1px solid var(--line); padding-block: 12px; }
+summary { cursor: pointer; min-height: 32px; }
+
+/* popup */
+dialog { border: 0; padding: 0; max-width: min(440px, calc(100% - 32px)); width: 100%; background: var(--bg); color: var(--fg); }
+dialog::backdrop { background: var(--scrim); }
+.dlg { padding: 28px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.dlg .close { position: absolute; top: 8px; right: 8px; border: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+input[type="email"] { min-height: 48px; padding: 0 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
+.check input { width: 20px; height: 20px; margin-top: 1px; flex: 0 0 auto; }
+.ruler { aspect-ratio: 16 / 9; }
+
+footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) { .track { scroll-behavior: smooth; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="tx-fur" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" style="fill: var(--coat)"></rect>
+      <path d="M2 9 Q3 4 2 1 M7 10 Q8 5 7 2" style="stroke: var(--coat-ink); stroke-width: 0.7; fill: none; opacity: 0.55"></path>
+    </pattern>
+    <pattern id="tx-shearling" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" style="fill: var(--coat)"></rect>
+      <circle cx="2" cy="2" r="1.2" style="fill: var(--coat-ink); opacity: 0.35"></circle>
+      <circle cx="6" cy="6" r="1.2" style="fill: var(--coat-ink); opacity: 0.35"></circle>
+    </pattern>
+    <pattern id="tx-leather" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" style="fill: var(--coat)"></rect>
+      <path d="M0 30 Q20 26 40 31" style="stroke: var(--coat-ink); stroke-width: 0.5; fill: none; opacity: 0.3"></path>
+    </pattern>
+    <symbol id="pin" viewBox="0 0 120 120">
+      <path id="pin-ring" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" fill="none"></path>
+      <circle cx="60" cy="60" r="57" style="fill: var(--fg)"></circle>
+      <circle cx="60" cy="60" r="31" style="fill: none; stroke: var(--bg); stroke-width: 1.5"></circle>
+      <text font-size="11.5" letter-spacing="2.6" style="fill: var(--bg); font-family: var(--font-body)"><textPath href="#pin-ring">GUARANTEED · SECOND-HAND · FUR ·</textPath></text>
+      <text x="60" y="68" text-anchor="middle" font-size="26" font-style="italic" style="fill: var(--bg); font-family: var(--font-display)">GSF</text>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Guaranteed Second-hand Fur, naar start">
+      <svg width="36" height="36" aria-hidden="true"><use href="#pin"></use></svg>
+      <span class="brand-name">Guaranteed Second-hand Fur</span>
+    </a>
+    <nav class="nav" aria-label="Hoofdmenu">
+      <a href="#browse" data-view="browse">Collectie</a>
+      <a href="#materials" data-view="materials">Materialen</a>
+      <a href="#mission" data-view="mission">Missie</a>
+      <button type="button" class="link" data-open-fit>Perfect fit</button>
+      <button type="button" class="link tool" id="toggle-notes" aria-pressed="false">Notities</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- HOME: carousel straight away -->
+  <section data-view-panel="home">
+    <div class="wrap"><p class="note">Notitie: bezoekers zien direct stukken, geen tekstblokken. Swipen of pijltjes. Hartjes kunnen op het hele stuk of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm); zo leert de site sneller wat iemand zoekt. Een periode verschijnt alleen als die onderbouwd is. Na drie hartjes verschijnt de Perfect fit-popup.</p></div>
+    <div class="hero">
+      <div class="track" id="hero-track" aria-roledescription="carousel" aria-label="Stukken"></div>
+      <button type="button" class="icon-btn arrow prev" id="hero-prev" aria-label="Vorig stuk"><svg><use href="#i-left"></use></svg></button>
+      <button type="button" class="icon-btn arrow next" id="hero-next" aria-label="Volgend stuk"><svg><use href="#i-right"></use></svg></button>
+    </div>
+    <div class="dots" id="hero-dots" aria-hidden="true"></div>
+    <div class="foryou"><a class="btn ghost" href="#browse">Bekijk alles</a></div>
+  </section>
+
+  <!-- BROWSE: carousel rows -->
+  <section data-view-panel="browse" hidden>
+    <div class="wrap rows" id="rows">
+      <p class="note">Notitie: bladeren gebeurt ook in carrousels. De bovenste rij is persoonlijk en wordt beter naarmate iemand meer hartjes geeft.</p>
+    </div>
+  </section>
+
+  <!-- MATERIALS: grid, not a carousel, so materials can be compared side by side -->
+  <section data-view-panel="materials" hidden>
+    <div class="wrap page">
+      <p class="note">Notitie: uitleg per materiaal, naast elkaar zodat je kunt vergelijken. Een hartje bij een materiaal telt mee voor wat iemand te zien krijgt. Teksten zijn algemene uitleg; Nikki controleert ze. Bontsoorten staan apart, omdat de soort bij bont altijd genoemd wordt.</p>
+      <h1>Materialen</h1>
+      <div id="mats" style="display: flex; flex-direction: column; gap: 40px;"></div>
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section data-view-panel="mission" hidden>
+    <div class="wrap page mission">
+      <p class="note">Notitie: de missie in een paar zinnen. Voorstel van Claude; de woorden kiezen Nikki en Martijn zelf.</p>
+      <h1>Niets nieuws. Niets verspild.</h1>
+      <p>Elke jas hier bestaat al. De dieren waar hij van gemaakt is, leefden lang geleden. Hem weggooien zou ze twee keer verspillen.</p>
+      <p>Wij vinden deze stukken, verzorgen ze en geven ze door. Zo worden ze nog tientallen jaren gedragen, en hoeft er niets nieuws gemaakt te worden.</p>
+      <p class="muted">Dat betekent de speld: gegarandeerd tweedehands.</p>
+      <svg width="88" height="88" aria-hidden="true"><use href="#pin"></use></svg>
+    </div>
+  </section>
+
+  <!-- PRODUCT -->
+  <section data-view-panel="product" hidden>
+    <div class="wrap product">
+      <div class="gallery">
+        <div class="hero">
+          <div class="track" id="gal-track" aria-roledescription="carousel" aria-label="Foto's"></div>
+          <button type="button" class="icon-btn arrow prev" id="gal-prev" aria-label="Vorige foto"><svg><use href="#i-left"></use></svg></button>
+          <button type="button" class="icon-btn arrow next" id="gal-next" aria-label="Volgende foto"><svg><use href="#i-right"></use></svg></button>
+        </div>
+        <div class="dots" id="gal-dots" aria-hidden="true"></div>
+      </div>
+      <div class="facts">
+        <p class="note">Notitie: alleen tekst die nodig is om te beslissen. De rest zit achter uitklapbare kopjes.</p>
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+          <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+            <h1 id="p-title"></h1>
+            <p class="price" id="p-price">€ [PRICE]</p>
+          </div>
+          <button type="button" class="icon-btn" id="p-like" aria-pressed="false" aria-label="Vind ik mooi"><svg><use href="#i-heart"></use></svg></button>
+        </div>
+        <button type="button" class="btn" id="p-buy">In winkelmand</button>
+        <p class="muted" id="p-buy-msg">Uniek exemplaar.</p>
+        <div>
+          <div class="measure" id="p-measure"></div>
+          <p class="muted" style="padding-top: 8px;">Plat gemeten aan de jas, in cm.</p>
+        </div>
+        <div>
+          <details><summary>Staat</summary><p class="muted">[Beoordeling]. [Gebruikssporen en reparaties, elk met foto.]</p></details>
+          <details><summary>Materiaal en herkomst</summary><p class="muted" id="p-material"></p></details>
+          <details><summary>Vergelijken met je eigen jas</summary><p class="muted">Leg een jas die goed zit plat neer, dichtgeknoopt, en meet hem op dezelfde manier. Of laat je helpen: <button type="button" class="link" data-open-fit style="background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer;">Perfect fit</button>.</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>Skelet v0.3 · alle stukken zijn voorbeelden</span><span>Verzending · Retour · Contact</span></div>
+</footer>
+
+<dialog id="fit" aria-labelledby="fit-title">
+  <div class="dlg">
+    <button type="button" class="icon-btn close" id="fit-close" aria-label="Sluiten"><svg><use href="#i-close"></use></svg></button>
+    <form id="fit-form" style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 id="fit-title">Jouw perfecte stuk, per e-mail</h2>
+      <p class="muted">We leren wat je mooi vindt. Komt het juiste stuk binnen, dan sturen we het je.</p>
+      <label class="field" for="fit-email">E-mailadres<input id="fit-email" type="email" autocomplete="email" placeholder="jij@voorbeeld.nl"></label>
+      <label class="check" for="fit-consent"><input id="fit-consent" type="checkbox">Stuur me suggesties op basis van wat ik mooi vind. Afmelden kan altijd.</label>
+      <p class="muted" id="fit-msg" role="status"></p>
+      <button type="submit" class="btn">Houd me op de hoogte</button>
+    </form>
+    <div id="fit-done" hidden style="display: flex; flex-direction: column; gap: 16px;">
+      <h2>Dank je</h2>
+      <p class="muted">Wil je ook suggesties die passen? Meet één jas die goed zit. Wij helpen je daarbij.</p>
+      <div class="pic ruler" id="fit-ruler"></div>
+      <p class="note">Notitie: hier komt de AI-meethulp (foto met liniaal of ander hulpmiddel). Nog uit te werken, zie docs/CONCEPT.md.</p>
+      <button type="button" class="btn ghost" id="fit-later">Later</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- drawings ----------
+  var SHAPES = {
+    long:    { body: 'M70 20 L100 34 L130 20 L160 40 L182 200 L162 204 L150 90 L152 248 L48 248 L50 90 L38 204 L18 200 L40 40 Z', hem: 248, top: 104, collar: 'M66 22 L100 80 L134 22 L146 34 L100 104 L54 34 Z' },
+    mid:     { body: 'M70 24 L100 36 L130 24 L160 44 L182 200 L162 204 L150 94 L150 214 L50 214 L50 94 L38 204 L18 200 L40 44 Z', hem: 214, top: 70, collar: 'M70 26 L100 56 L130 26 L138 34 L100 70 L62 34 Z' },
+    short:   { body: 'M70 30 L100 42 L130 30 L160 50 L182 190 L162 194 L150 100 L150 162 L50 162 L50 100 L38 194 L18 190 L40 50 Z', hem: 162, top: 86, collar: 'M68 32 L100 70 L132 32 L142 44 L100 86 L58 44 Z' },
+    aviator: { body: 'M70 30 L100 42 L130 30 L162 50 L184 186 L162 190 L150 100 L150 166 L50 166 L50 100 L38 190 L16 186 L38 50 Z', hem: 166, top: 100, collar: 'M56 22 L100 76 L144 22 L162 46 L100 100 L38 46 Z' }
+  };
+  function coat(p, opts) {
+    opts = opts || {};
+    var s = SHAPES[p.shape];
+    var collarTx = p.collar || p.tx;
+    var parts = '<path class="coat-body" d="' + s.body + '" style="fill: url(#tx-' + p.tx + ')"></path>';
+    if (!opts.back) parts += '<path class="coat-body" d="' + s.collar + '" style="fill: url(#tx-' + collarTx + ')"></path><path class="coat-line" d="M100 ' + s.top + ' L100 ' + s.hem + '"></path>';
+    if (opts.flaw) parts += '<circle cx="164" cy="190" r="16" style="fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 4 3"></circle>';
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="' + (opts.label || 'Tekening: ' + p.title) + '">' + parts + '</svg>';
+  }
+  function labelDrawing() {
+    return '<svg class="coat" viewBox="0 0 200 260" role="img" aria-label="Tekening van een label"><rect x="40" y="95" width="120" height="70" style="fill: var(--bg); stroke: var(--coat-ink); stroke-width: 1.5"></rect><text x="100" y="135" text-anchor="middle" font-size="14" style="fill: var(--fg); font-family: var(--font-display)">[LABEL]</text></svg>';
+  }
+  function rulerDrawing() {
+    var ticks = '';
+    for (var i = 0; i <= 30; i++) ticks += '<line x1="' + (20 + i * 9) + '" y1="128" x2="' + (20 + i * 9) + '" y2="' + (i % 5 ? 134 : 140) + '"></line>';
+    return '<svg viewBox="0 0 320 180" style="width: 90%; height: auto;" role="img" aria-label="Schets: jas plat neergelegd met een liniaal ernaast, van bovenaf gefotografeerd">' +
+      '<path class="coat-body" d="M120 20 L160 30 L200 20 L230 40 L250 110 L232 114 L222 66 L222 118 L98 118 L98 66 L88 114 L70 110 L90 40 Z" style="fill: var(--coat)"></path>' +
+      '<rect x="16" y="124" width="288" height="20" style="fill: var(--bg); stroke: var(--coat-ink)"></rect><g style="stroke: var(--coat-ink); stroke-width: 1">' + ticks + '</g>' +
+      '<line x1="98" y1="72" x2="222" y2="72" style="stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 4 3"></line></svg>';
+  }
+
+  // ---------- example data (NOT real stock) ----------
+  // Tags per piece: model (silhouette), era (only when supported by evidence; null = not shown),
+  // material, length, colour, fit. All values are examples.
+  var PIECES = [
+    { id: 1, title: 'Lange nertsjas met sjaalkraag', mat: 'Bont', species: 'Nerts', shape: 'long', tx: 'fur', m: [56, 44.5, 61, 104], model: 'Sjaalkraag', era: 'Jaren 70', length: 'Lang', colour: 'Donkerbruin', fit: 'Recht' },
+    { id: 2, title: 'Shearling jas met ceintuur', mat: 'Shearling', shape: 'mid', tx: 'shearling', m: [54, 43, 60, 92], model: 'Overslag met ceintuur', era: 'Jaren 80', length: 'Knielang', colour: 'Camel', fit: 'Getailleerd' },
+    { id: 3, title: 'Leren autojas', mat: 'Leer', shape: 'mid', tx: 'leather', m: [58, 46, 63, 90], model: 'Autojas', era: null, length: 'Knielang', colour: 'Zwart', fit: 'Recht' },
+    { id: 4, title: 'Kort vossenjack', mat: 'Bont', species: 'Vos', shape: 'short', tx: 'fur', m: [52, 41, 58, 62], model: 'Kort jack', era: 'Jaren 80', length: 'Heuplang', colour: 'Zilvergrijs', fit: 'Boxy' },
+    { id: 5, title: 'Leren jack met vossenkraag', mat: 'Leer', species: 'Vos', shape: 'short', tx: 'leather', collar: 'fur', m: [55, 44, null, 64], model: 'Bontkraag', era: 'Jaren 90', length: 'Heuplang', colour: 'Cognac', fit: 'Recht' },
+    { id: 6, title: 'Shearling pilotenjack', mat: 'Shearling', shape: 'aviator', tx: 'shearling', m: [60, 48, 64, 66], model: 'Pilotenjack', era: null, length: 'Heuplang', colour: 'Bruin', fit: 'Oversized' },
+    { id: 7, title: 'Lange leren jas', mat: 'Leer', shape: 'long', tx: 'leather', m: [57, 45, 62, 112], model: 'Trenchcoat', era: 'Jaren 70', length: 'Lang', colour: 'Zwart', fit: 'Getailleerd' },
+    { id: 8, title: 'Halflange persianer jas', mat: 'Bont', species: 'Persianer', shape: 'mid', tx: 'fur', m: [55, 43.5, 60, 88], model: 'Reverskraag', era: 'Jaren 60', length: 'Knielang', colour: 'Zwart', fit: 'Recht' },
+    { id: 9, title: 'Kort shearling jack', mat: 'Shearling', shape: 'short', tx: 'shearling', m: [53, 42, 59, 60], model: 'Kort jack', era: null, length: 'Heuplang', colour: 'Crème', fit: 'Boxy' }
+  ];
+  var TAG_FIELDS = [['species', 'Bontsoort'], ['model', 'Model'], ['era', 'Periode'], ['mat', 'Materiaal'], ['length', 'Lengte'], ['colour', 'Kleur'], ['fit', 'Pasvorm']];
+  function tagsOf(p) {
+    return TAG_FIELDS.filter(function (f) { return p[f[0]] != null; }).map(function (f) { return { key: f[0] + ':' + p[f[0]], kind: f[1], value: p[f[0]] }; });
+  }
+  var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };
+
+  // ---------- taste (DEMO, not real machine learning) ----------
+  var liked = {};          // id -> true
+  var likedMats = {};      // material key -> true
+  var likedTags = {};      // 'field:value' -> true
+  var popupShown = false;
+  var MATERIALS = [
+    { key: 'Nerts', group: 'Bontsoorten', tx: 'fur', text: 'Kort, dicht en glanzend haar. Licht en soepel; veel gebruikt in klassieke jassen.', match: function (p) { return p.species === 'Nerts'; } },
+    { key: 'Vos', group: 'Bontsoorten', tx: 'fur', text: 'Lang, zacht en volumineus haar. Opvallend en warm; vaak in kragen en korte jacks.', match: function (p) { return p.species === 'Vos'; } },
+    { key: 'Persianer', group: 'Bontsoorten', tx: 'shearling', text: 'Vacht van het karakoellam met kleine, vaste krullen. Vlak, licht en stevig.', match: function (p) { return p.species === 'Persianer'; } },
+    { key: 'Konijn', group: 'Bontsoorten', tx: 'fur', text: 'Zacht en licht, maar minder slijtvast. Meestal betaalbaarder.', match: function (p) { return p.species === 'Konijn'; } },
+    { key: 'Shearling', group: 'Materialen', tx: 'shearling', text: 'Schapenvacht gelooid met de wol eraan. Wol binnen, suède of leer buiten. Heel warm.', match: function (p) { return p.mat === 'Shearling'; } },
+    { key: 'Leer', group: 'Materialen', tx: 'leather', text: 'Gelooide huid met een gladde buitenkant. Wordt soepeler en vormt zich naar de drager.', match: function (p) { return p.mat === 'Leer'; } },
+    { key: 'Suède', group: 'Materialen', tx: 'shearling', text: 'Leer met een geruwde, fluweelachtige kant. Zachter, gevoeliger voor regen.', match: function (p) { return p.mat === 'Leer'; } },
+    { key: 'Bontrand', group: 'Materialen', tx: 'fur', text: 'Bontkraag, -manchetten of -rand op een jas van leer, suède of wol.', match: function (p) { return p.collar === 'fur'; } }
+  ];
+  function score(p) {
+    var s = 0;
+    MATERIALS.forEach(function (m) { if (likedMats[m.key] && m.match(p)) s += 3; });
+    tagsOf(p).forEach(function (t) { if (likedTags[t.key]) s += 2; });
+    Object.keys(liked).forEach(function (id) {
+      var q = byId(Number(id));
+      if (q.mat === p.mat) s += 2;
+      if (q.shape === p.shape) s += 1;
+      if (q.tx === p.tx || q.collar === p.tx) s += 1;
+    });
+    return s;
+  }
+  function ranked(list) {
+    return list.slice().sort(function (a, b) { return score(b) - score(a) || a.id - b.id; });
+  }
+  function heartBtn(p) {
+    return '<button type="button" class="icon-btn" data-like="' + p.id + '" aria-pressed="' + !!liked[p.id] + '" aria-label="Vind ik mooi: ' + p.title + '"><svg><use href="#i-heart"></use></svg></button>';
+  }
+  function toggleLike(id) {
+    if (liked[id]) delete liked[id]; else liked[id] = true;
+    document.querySelectorAll('[data-like="' + id + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(!!liked[id])); });
+    $('p-like').setAttribute('aria-pressed', String(!!liked[current]));
+    maybeOpenFit();
+  }
+  function likeCount() { return Object.keys(liked).length + Object.keys(likedTags).length; }
+  function maybeOpenFit() { if (!popupShown && likeCount() >= 3) { popupShown = true; openFit(); } }
+  function toggleTag(key) {
+    if (likedTags[key]) delete likedTags[key]; else likedTags[key] = true;
+    document.querySelectorAll('[data-like-tag="' + key + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(!!likedTags[key])); });
+    maybeOpenFit();
+  }
+  function tagChips(p) {
+    return '<div class="tags" role="group" aria-label="Wat vind je mooi aan dit stuk?">' + tagsOf(p).map(function (t) {
+      return '<button type="button" class="tag" data-like-tag="' + t.key + '" aria-pressed="' + !!likedTags[t.key] + '" aria-label="Vind ik mooi, ' + t.kind.toLowerCase() + ': ' + t.value + '">' +
+        '<svg aria-hidden="true"><use href="#i-heart"></use></svg>' + t.value + '</button>';
+    }).join('') + '</div>';
+  }
+
+  // ---------- carousel helper ----------
+  function carousel(track, prev, next, dotsEl) {
+    function idx() { return Math.round(track.scrollLeft / track.clientWidth); }
+    function paint() {
+      var n = track.children.length, i = idx();
+      dotsEl.innerHTML = Array.from({ length: n }, function (_, k) { return '<span class="' + (k === i ? 'on' : '') + '"></span>'; }).join('');
+    }
+    prev.addEventListener('click', function () { track.scrollTo({ left: Math.max(0, idx() - 1) * track.clientWidth }); });
+    next.addEventListener('click', function () {
+      var i = idx() + 1; if (i >= track.children.length) i = 0;
+      track.scrollTo({ left: i * track.clientWidth });
+    });
+    track.addEventListener('scroll', function () { window.requestAnimationFrame(paint); }, { passive: true });
+    return { paint: paint, reset: function () { track.scrollLeft = 0; paint(); } };
+  }
+
+  // ---------- home ----------
+  var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
+  function renderHero() {
+    $('hero-track').innerHTML = PIECES.map(function (p) {
+      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic">' + coat(p) + '</div>' +
+        '<div class="slide-info"><a href="#product" data-open="' + p.id + '"><span class="slide-title">' + p.title + '</span><span class="price muted">€ [PRICE]</span></a>' + tagChips(p) + heartBtn(p) + '</div></div>';
+    }).join('');
+    hero.paint();
+  }
+
+  // ---------- browse ----------
+  function strip(title, list) {
+    return '<div><div class="row-head"><h2>' + title + '</h2><span class="muted">' + list.length + '</span></div><div class="strip">' +
+      list.map(function (p) {
+        return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + coat(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
+      }).join('') + '</div></div>';
+  }
+  function renderBrowse() {
+    var note = $('rows').querySelector('.note').outerHTML;
+    var hasTaste = likeCount() + Object.keys(likedMats).length > 0;
+    var html = note + strip(hasTaste ? 'Voor jou' : 'Nieuw binnen', hasTaste ? ranked(PIECES) : PIECES.slice().reverse());
+    ['Bont', 'Leer', 'Shearling'].forEach(function (m) { html += strip(m, ranked(PIECES.filter(function (p) { return p.mat === m; }))); });
+    $('rows').innerHTML = html;
+  }
+
+  // ---------- materials ----------
+  function renderMats() {
+    $('mats').innerHTML = ['Bontsoorten', 'Materialen'].map(function (g) {
+      return '<div style="display: flex; flex-direction: column; gap: 16px;"><h2>' + g + '</h2><div class="mats">' + MATERIALS.filter(function (m) { return m.group === g; }).map(function (m) {
+        return '<div class="mat"><div class="pic"><svg viewBox="0 0 160 120" role="img" aria-label="Textuur: ' + m.key + '"><rect width="160" height="120" style="fill: url(#tx-' + m.tx + ')"></rect></svg></div>' +
+          '<div class="mat-head"><h3>' + m.key + '</h3><button type="button" class="icon-btn" data-like-mat="' + m.key + '" aria-pressed="' + !!likedMats[m.key] + '" aria-label="Vind ik mooi: ' + m.key + '"><svg><use href="#i-heart"></use></svg></button></div>' +
+          '<p>' + m.text + '</p></div>';
+      }).join('') + '</div></div>';
+    }).join('');
+  }
+
+  // ---------- product ----------
+  var current = 1;
+  var gallery = carousel($('gal-track'), $('gal-prev'), $('gal-next'), $('gal-dots'));
+  function renderProduct() {
+    var p = byId(current);
+    $('p-title').textContent = p.title;
+    $('p-like').setAttribute('aria-pressed', String(!!liked[p.id]));
+    $('p-like').setAttribute('aria-label', 'Vind ik mooi: ' + p.title);
+    $('p-buy-msg').textContent = 'Uniek exemplaar.';
+    var shots = [coat(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
+    $('gal-track').innerHTML = shots.map(function (s) { return '<div class="slide"><div class="pic">' + s + '</div></div>'; }).join('');
+    gallery.reset();
+    var names = ['Borst, plat', 'Schouder', 'Mouw', 'Ruglengte'];
+    $('p-measure').innerHTML = names.map(function (n, i) {
+      return '<div><span>' + n + '</span><span>' + (p.m[i] == null ? '—' : p.m[i].toFixed(1)) + '</span></div>';
+    }).join('');
+    $('p-material').textContent = p.mat + (p.species ? (p.collar ? ', kraag van ' : ': ') + p.species.toLowerCase() : '') + '. Label: [zoals op het kledingstuk]. Periode: ' + (p.era ? p.era.toLowerCase() : 'onbekend') + '.';
+  }
+  $('p-like').addEventListener('click', function () { toggleLike(current); });
+  $('p-buy').addEventListener('click', function () { $('p-buy-msg').textContent = 'Dit is een skelet: afrekenen kan nog niet.'; });
+
+  // ---------- clicks ----------
+  document.addEventListener('click', function (e) {
+    var like = e.target.closest('[data-like]');
+    if (like) { e.preventDefault(); toggleLike(Number(like.getAttribute('data-like'))); return; }
+    var likeTag = e.target.closest('[data-like-tag]');
+    if (likeTag) { toggleTag(likeTag.getAttribute('data-like-tag')); return; }
+    var likeMat = e.target.closest('[data-like-mat]');
+    if (likeMat) {
+      var k = likeMat.getAttribute('data-like-mat');
+      if (likedMats[k]) delete likedMats[k]; else likedMats[k] = true;
+      likeMat.setAttribute('aria-pressed', String(!!likedMats[k]));
+      return;
+    }
+    var open = e.target.closest('[data-open]');
+    if (open) { current = Number(open.getAttribute('data-open')); renderProduct(); }
+    if (e.target.closest('[data-open-fit]')) openFit();
+  });
+
+  // ---------- perfect fit popup ----------
+  var dlg = $('fit');
+  $('fit-ruler').innerHTML = rulerDrawing();
+  function openFit() {
+    $('fit-form').hidden = false; $('fit-done').hidden = true; $('fit-msg').textContent = '';
+    if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); } else dlg.setAttribute('open', '');
+  }
+  function closeFit() { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); }
+  $('fit-close').addEventListener('click', closeFit);
+  $('fit-later').addEventListener('click', closeFit);
+  $('fit-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = $('fit-email');
+    if (!email.value.trim() || !email.checkValidity()) { $('fit-msg').textContent = 'Vul een geldig e-mailadres in.'; return; }
+    if (!$('fit-consent').checked) { $('fit-msg').textContent = 'Vink het vakje aan, dan mogen we je mailen.'; return; }
+    $('fit-form').hidden = true; $('fit-done').hidden = false;
+  });
+
+  // ---------- notes ----------
+  $('toggle-notes').addEventListener('click', function () {
+    var on = document.body.classList.toggle('show-notes');
+    this.setAttribute('aria-pressed', String(on));
+  });
+
+  // ---------- routing ----------
+  function route() {
+    var h = (location.hash || '#home').slice(1);
+    if (!document.querySelector('[data-view-panel="' + h + '"]')) h = 'home';
+    document.querySelectorAll('[data-view-panel]').forEach(function (p) { p.hidden = p.getAttribute('data-view-panel') !== h; });
+    document.querySelectorAll('.nav a[data-view]').forEach(function (a) {
+      if (a.getAttribute('data-view') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    if (h === 'browse') renderBrowse();
+    if (h === 'home') hero.paint();
+    if (h === 'product') gallery.paint();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  renderHero(); renderProduct(); renderMats(); route();
+})();
+</script>

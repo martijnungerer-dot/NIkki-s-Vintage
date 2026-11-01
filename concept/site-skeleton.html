@@ -104,7 +104,8 @@ body:not(.show-notes) .note { display: none; }
 /* drawings */
 .pic { position: relative; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 100%; }
 .pic svg.coat { height: 82%; width: auto; max-width: 86%; }
-.pic img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pic img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.pic img.photo-bg { position: absolute; inset: -24px; width: calc(100% + 48px); height: calc(100% + 48px); object-fit: cover; filter: blur(18px); opacity: 0.55; }
 /* Style frames: each style shapes the photos differently. */
 :root[data-style="parisienne"] .slide .pic { border-radius: 50% 50% 0 0 / 28% 28% 0 0; outline: 1px solid #B08D57; outline-offset: -10px; }
 :root[data-style="parisienne"] .card .pic { border-radius: 50% 50% 0 0 / 30% 30% 0 0; }
@@ -112,7 +113,8 @@ body:not(.show-notes) .note { display: none; }
 :root[data-style="bonbon"] .slide .pic::before { content: "uniek!"; position: absolute; top: 16px; left: 16px; z-index: 1; background: var(--fg); color: var(--bg); font-family: var(--font-display); padding: 6px 14px; border-radius: 18px; transform: rotate(-6deg); }
 :root[data-style="hollywood"] .slide .pic::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(17, 16, 16, 0) 40%, rgba(17, 16, 16, 0.85) 100%); box-shadow: inset 0 0 0 1px #C9A96E; }
 :root[data-style="boudoir"] .slide .pic { background-color: var(--surface); background-image: radial-gradient(circle, var(--line) 1.5px, transparent 2px); background-size: 22px 22px; }
-:root[data-style="boudoir"] .slide .pic img.photo { inset: 6% 20%; width: 60%; height: 88%; border-radius: 50%; outline: 3px solid var(--fg); outline-offset: 6px; }
+:root[data-style="boudoir"] .slide .pic img.photo { inset: 4% 16%; width: 68%; height: 92%; border-radius: 50%; outline: 3px solid var(--fg); outline-offset: 6px; object-fit: cover; object-position: center top; }
+:root[data-style="boudoir"] .slide .pic img.photo-bg { display: none; }
 :root[data-style="boudoir"] .card .pic { border-radius: 50%; }
 :root[data-style="ivoor"] .slide .pic::after, :root:not([data-style]) .slide .pic::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(255, 255, 255, 0.7); pointer-events: none; }
 .coat-body { stroke: var(--coat-ink); stroke-width: 1.5; }
@@ -426,7 +428,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   PIECES.sort(function (a, b) { return (PHOTOS[b.id] ? 1 : 0) - (PHOTOS[a.id] ? 1 : 0); });
   function picture(p, opts) {
     var ph = PHOTOS[p.id];
-    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo" src="' + ph.src + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + ph.alt + '" draggable="false">';
+    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo-bg" src="' + ph.src + '" alt="" aria-hidden="true" draggable="false"><img class="photo" src="' + ph.src + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + ph.alt + '" draggable="false">';
     return coat(p, opts);
   }
   var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };

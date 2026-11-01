@@ -1,5 +1,12 @@
 # Websiteconcept (skelet)
 
+## Voor Nikki
+
+Begin met [de HTML-handleiding](start-hier-nikki.html). Download de projectmap als ZIP, pak hem uit en open dit bestand in `concept/` in je browser. De handleiding bevat de Gemini-startopdracht, uitleg van winkel en invoer, inspiratie en vragen die één voor één verschijnen.
+
+Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werkende winkel en voorraadkoppeling zijn buiten deze ontwerpronde. Airtable versus rechtstreeks beheer in het winkelplatform wordt nog onderzocht.
+
+
 [site-skeleton.html](site-skeleton.html) is een werkend skelet van de winkel, geen eindontwerp. Eén HTML-bestand zonder build of externe afbeeldingen. Openen in een browser is genoeg.
 
 - Binnenkomen (`#home`): meteen een carrousel met stukken, nauwelijks tekst. Naam en prijs staan in een smalle band bovenaan de foto (de foto begint daaronder, zodat de tekst nooit over een hoofd valt); de kenmerken staan midden onderin als licht doorschijnende knopjes zonder vlak erachter, en het hartje voor het hele stuk met teller staat rechtsonder. Swipen telt niet als "niet mooi"; alleen aangeklikte hartjes tellen. Hartjes op het hele stuk (knop rechtsonder in de foto met teller, of lang drukken op de foto) of op losse kenmerken (bontsoort, model, periode, materiaal, lengte, kleur, pasvorm) leren de site wat iemand mooi vindt; de tellers zijn voorbeeldgetallen; na drie hartjes verschijnt de Perfect fit-popup.
@@ -10,14 +17,14 @@
 - Perfect fit: popup die om een e-mailadres vraagt, met daarna een plaatshouder voor de AI-meethulp.
 - Getekende jassen in plaats van foto's. Alle stukken, prijzen en maten zijn voorbeelden. Het smaak-leren is een demoregel, geen echte machine learning.
 - Minimalistisch en bewust neutraal: kleur, letters en sfeer bepaalt Nikki. Paginateksten in het Nederlands. Gele notities (Nederlands) verschijnen via de knop *Notes*.
-- Er wordt niets opgeslagen of verstuurd; er is geen checkout.
+- Er is geen checkout of e-mailverzending. Stijlkeuzes worden lokaal onthouden. Foto’s kunnen in een privé-HTML worden ingesloten via Sfeerfoto’s.
 
 ## Invoerprototype voor Nikki
 
-[intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met automatische voorstellen gaat. Scherm 1: foto's maken of kiezen in willekeurige volgorde, dan *Verwerken*. Scherm 2: één compacte checklist met het hele pad tot publiceren (Foto's, Wat is het, Bontsoort, Maten, Bijzonderheden, Titel en prijs). Tik aan wat klopt; het voorstel staat al aan. Een keuze die nog niet bestaat typ je via *+ nieuw* en die staat de volgende keer klaar. Daarna *Publiceren* en zie je welke voorbeeldklanten een mail zouden krijgen.
+[intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met automatische voorstellen gaat. Scherm 1: foto's maken of kiezen in willekeurige volgorde, dan *Verwerken*. Scherm 2: één compacte checklist met het hele pad tot publiceren (Foto's, Wat is het, Bontsoort, Maten, Bijzonderheden, Titel en prijs). Tik aan wat klopt; het voorstel staat al aan. Een keuze die nog niet bestaat typ je via *+ nieuw* en die staat de volgende keer klaar. Daarna *Publiceren (proef)* en zie je welke voorbeeldklanten een mail zouden krijgen.
 
 - De AI werkt alleen in de gepubliceerde Claude-versie (artifact), op het Claude-account van wie het opent. Als los bestand of in Gemini zit er geen AI in; dan vult ze alles zelf in.
-- Er wordt niets opgeslagen, niets verstuurd en niets naar Airtable geschreven. De klanten zijn verzonnen voorbeelden.
+- Het kledingstuk wordt niet opgeslagen of naar Airtable geschreven. Eigen keuzewoorden en een correctieteller worden lokaal onthouden. Bij automatische analyse in Claude worden geselecteerde foto’s naar Claude gestuurd; de losse handmatige versie doet dat niet. De klanten zijn verzonnen voorbeelden.
 - *Bevat het bont?* (Ja / Alleen kraag of rand / Nee) is een vaste keuze, los van de materiaalnaam. Bij Ja of kraag/rand is de soort verplicht en vinkt Nikki aan dat ze die zelf heeft gecontroleerd. Een gekozen soort bij Nee moet eerst gewist worden.
 - Per foto is de plek aan te passen en is een hoofdfoto aan te wijzen; zonder keuze geldt de foto met plek Voorkant. De uploadvolgorde bepaalt niets.
 - Terug naar foto's en opnieuw verwerken bewaart maten, prijs en gemaakte keuzes; alleen *Volgend stuk* begint leeg.
@@ -42,7 +49,9 @@ Linksonder in het skelet staat een stijlknop. Daarmee wisselt Nikki tussen vijf 
 
 ## Foto's
 
-Het skelet toont per stuk een foto als die in `PHOTOS` (in de code) staat, anders een tekening. In Git is `PHOTOS` leeg. De gepubliceerde, privé conceptversie krijgt sfeerfoto's die Martijn aanleverde; die staan bewust niet in de repository, omdat de beeldrechten niet bij ons liggen en er herkenbare personen op staan. Voor de echte site komen hier foto's van Nikki's eigen jassen. Een nieuwe publicatie vanuit Git toont dus weer tekeningen, tot de foto's opnieuw worden ingevoegd.
+De knop **Sfeerfoto’s** laat Nikki per plek een JPEG, PNG of WebP toevoegen (maximaal 8 MB per foto). **Bewaar HTML met foto’s** downloadt één zelfstandig HTML-bestand met de beelden én de gekozen beginstijl. Alle vijf stijlen blijven beschikbaar. Foto’s worden niet naar een server geüpload en zijn pas bewaard na deze export. Ze blijven buiten Git. Het label bij elke foto maakt duidelijk dat productgegevens verzonnen voorbeelden zijn; er worden geen kenmerken uit de foto afgeleid.
+
+Een aangeleverd `.htm`-bestand is een opgeslagen webpagina en kan niet als foto worden geïmporteerd. Gebruik in de browser ‘Afbeelding opslaan als’ en kies daarna het afbeeldingsbestand. De tekeningen blijven staan op plekken waar geen foto is toegevoegd.
 
 ## Verder werken in Gemini
 
@@ -58,3 +67,10 @@ Gebruik Gemini om de gekozen stijl verder te verfijnen.
 4. Stuur het resultaat (het HTML-bestand of de Gemini-link) naar Martijn. Claude of Codex zet het daarna terug in deze repository.
 
 Gemini heeft geen toegang tot GitHub of Airtable van dit project. Werk daarom met kopieën en lever wijzigingen aan via Martijn.
+
+
+## Controles voor ontwikkelaars
+
+`node scripts/check-project.mjs` controleert de fundering. De aanvullende browsercontrole is `node tests/prototypes.cjs` met Playwright en Chromium geïnstalleerd. Eventueel `CHROMIUM_PATH=/usr/bin/chromium` instellen voor een bestaande browser. Er is geen npm-project of productiebuild toegevoegd; Playwright is een testvereiste, geen afhankelijkheid van de HTML-bestanden.
+
+De test controleert mobiele documentmodus en breedte, de vijf stijlen en stijlkeuze, foto-import/export/heropenen (met synthetische testpixel), de handleiding, numerieke invoer, onverwachte bontclassificaties en behoud van invoer. Externe aanvragen worden geblokkeerd. De Claude-analyse en Gemini Canvas zijn niet live getest.

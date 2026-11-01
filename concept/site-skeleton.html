@@ -94,8 +94,9 @@ body:not(.show-notes) .note { display: none; }
 .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .track::-webkit-scrollbar { display: none; }
 .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; }
-.slide .pic { height: clamp(420px, 72vh, 760px); }
-.slide-info { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 20px max(16px, env(safe-area-inset-left, 0px)); }
+.slide .pic { height: clamp(360px, 62vh, 680px); }
+.slide-info { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+#hero-track ~ .arrow { top: calc(clamp(360px, 62vh, 680px) / 2); }
 .slide-info a { text-decoration: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .slide-title { font-family: var(--font-display); font-size: 1.15rem; }
 .slide-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }

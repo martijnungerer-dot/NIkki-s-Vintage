@@ -18,7 +18,7 @@ Voorgestelde beheerrollen: Nikki beheert collectie, kwaliteitscontrole en produc
 
 ## Buiten de eerste versie
 
-Een automatische pasvormgarantie, lichaamsmetingen van klanten, virtueel passen, een meetpaspopintegratie, een marketplace, automatische inkoop en een zelfgebouwd betaalsysteem. Een paspop kan later als meetmethode worden onderzocht; invoer begint met reproduceerbaar handmatig meten.
+Een automatische pasvormgarantie, lichaamsmetingen van klanten, virtueel passen, een meetpaspopintegratie, een marketplace, automatische inkoop en een zelfgebouwd betaalsysteem. Een paspop kan later als meetmethode worden onderzocht; invoer begint met reproduceerbaar handmatig meten. Een klantpasprofiel, matching en meldingen bij nieuwe passende stukken worden verkend in [het verkoopconcept](CONCEPT.md); dat is nog geen besluit voor de eerste versie.
 
 ## Nog te beslissen
 

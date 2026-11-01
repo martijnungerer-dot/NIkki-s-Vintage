@@ -17,7 +17,9 @@
 
 - De AI werkt alleen in de gepubliceerde Claude-versie (artifact), op het Claude-account van wie het opent. Als los bestand of in Gemini zit er geen AI in; dan vult ze alles zelf in.
 - Er wordt niets opgeslagen, niets verstuurd en niets naar Airtable geschreven. De klanten zijn verzonnen voorbeelden.
-- Bij bont is de soort verplicht en moet Nikki aanvinken dat ze die zelf heeft gecontroleerd.
+- *Bevat het bont?* (Ja / Alleen kraag of rand / Nee) is een vaste keuze, los van de materiaalnaam. Bij Ja of kraag/rand is de soort verplicht en vinkt Nikki aan dat ze die zelf heeft gecontroleerd. Een gekozen soort bij Nee moet eerst gewist worden.
+- Per foto is de plek aan te passen en is een hoofdfoto aan te wijzen; zonder keuze geldt de foto met plek Voorkant. De uploadvolgorde bepaalt niets.
+- Terug naar foto's en opnieuw verwerken bewaart maten, prijs en gemaakte keuzes; alleen *Volgend stuk* begint leeg.
 - Leren: eigen keuzes en aanpassingen op voorstellen worden in deze browser onthouden. In de echte versie worden ze trainingsdata voor betere voorstellen (server-side).
 
 ## Verder werken in Gemini

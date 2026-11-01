@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 1 november 2026 — invoerscherm als checklist
+- Invoerprototype vereenvoudigd: twee knoppen (Verwerken, Publiceren), geen AI-woorden in beeld, en de controle als één checklist met het hele pad tot publiceren. Keuzes via aantikken; nieuwe waarden via *+ nieuw* worden onthouden in de browser. Volledige route zonder automatische voorstellen lokaal getest; de automatische voorstellen alleen te testen in de gepubliceerde versie.
+
 ### 1 november 2026 — invoerprototype
 - Prototype voor Nikki's invoer met AI toegevoegd (`concept/intake-prototype.html`): foto's, AI-voorstellen, controle, maten, demo-matching met voorbeeldklanten. Niets opgeslagen of verstuurd. Handmatige route lokaal getest; de echte AI-aanroep is alleen in de gepubliceerde versie te testen.
 - Skelet: kenmerken tussen naam/prijs en hartje; hartjes ook in de collectierijen.

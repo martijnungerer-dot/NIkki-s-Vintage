@@ -11,6 +11,14 @@
 - Minimalistisch en bewust neutraal: kleur, letters en sfeer bepaalt Nikki. Paginateksten in het Nederlands. Gele notities (Nederlands) verschijnen via de knop *Notes*.
 - Er wordt niets opgeslagen of verstuurd; er is geen checkout.
 
+## Invoerprototype voor Nikki
+
+[intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met AI gaat: foto's van een jas maken of kiezen, AI-voorstellen krijgen (titel, materiaal, bontsoort, model, periode, kleur, lengte, pasvorm, staat, beschrijving), controleren en de maten met het meetlint invullen. Daarna ziet ze welke voorbeeldklanten een mail zouden krijgen.
+
+- De AI werkt alleen in de gepubliceerde Claude-versie (artifact), op het Claude-account van wie het opent. Als los bestand of in Gemini zit er geen AI in; dan vult ze alles zelf in.
+- Er wordt niets opgeslagen, niets verstuurd en niets naar Airtable geschreven. De klanten zijn verzonnen voorbeelden.
+- Bij bont is de soort verplicht en moet Nikki aanvinken dat ze die zelf heeft gecontroleerd.
+
 ## Verder werken in Gemini
 
 1. Download `site-skeleton.html` uit GitHub (knop *Download raw file*) of krijg het bestand van Martijn.

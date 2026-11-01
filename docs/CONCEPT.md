@@ -80,6 +80,14 @@ Doel: de klant meet een eigen jas die goed zit, zo nauwkeurig dat we die met Nik
 - **AR-meten met de telefoon**: bestaat, maar is bij zachte en dikke stof waarschijnlijk te onnauwkeurig voor de eerste versie.
 Open vragen: welke nauwkeurigheid is nodig (±1 cm?), hoe ga je om met perspectief en een niet helemaal plat liggende jas, worden klantfoto's bewaard (liever niet), en hoe meten we of de hulp werkt? Eerst testen met een paar mensen en hun echte jassen, de uitkomst vergelijken met handmatig meten.
 
+### Contentkant: invoer met AI (zelfde project, apart onderdeel)
+Nikki fotografeert een stuk met haar telefoon; AI stelt kenmerken en teksten voor; Nikki controleert, meet met het meetlint en keurt goed; het stuk gaat naar Airtable en na publicatie in de winkel; klanten met passende hartjes, maten en toestemming krijgen het als suggestie. Het deelt de database en kenmerken met de website en hoort dus in dit project, als eigen scherm.
+- AI stelt voor, Nikki beslist. Bontsoort en periode altijd door Nikki bevestigd; waarschuwing bij mogelijk verboden of beschermde soorten.
+- Maten nooit uit foto's.
+- Mails pas als het stuk echt te koop staat; bij meerdere kandidaten geldt wie het eerst komt.
+- Eerste echte versie: Airtable-app voor foto's plus een server-side AI-stap die velden vooraf invult (P2). Een eigen app pas als dat werkt.
+- Prototype om de ervaring te proeven: [concept/intake-prototype.html](../concept/intake-prototype.html).
+
 ## Eerst testen, dan bouwen
 
 1. **Vraagtest zonder techniek.** Een eenvoudig formulier: een paar stijlbeelden kiezen, platte maten van een favoriete jas invullen, e-mail met toestemming. Nikki mailt handmatig wie matcht bij nieuwe stukken. Meten: aanmeldingen, klikken, verkopen.

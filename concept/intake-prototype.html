@@ -1,0 +1,367 @@
+<title>Nikki's invoer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  PROTOTYPE: Nikki's phone intake for one garment.
+  Photos -> AI suggestions (Claude via the artifact's `sample` capability, on the
+  viewer's own Claude account) -> Nikki checks and measures -> approve ->
+  preview of which EXAMPLE customers would be emailed.
+  Nothing is stored, nothing is sent, nothing is written to Airtable.
+  Rules: AI suggests, Nikki decides. Measurements come from the tape measure,
+  never from photos. Fur species is shown only after Nikki confirms it.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: phone-first single column (max 560px), four steps shown one at a time. */
+:root {
+  --bg: #F3F1EE;
+  --surface: #E6E2DC;
+  --line: #B8B1A8;
+  --fg: #26231F;
+  --muted: #5C564F;
+  --ok: #2F6B3A;
+  --warn: #8A5A00;
+  --warn-bg: #FFF1CC;
+  --font-display: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --font-body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7; --ok: #8BC79A; --warn: #F2C46B; --warn-bg: #3A2F12; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7; --ok: #8BC79A; --warn: #F2C46B; --warn-bg: #3A2F12; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 1.6rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1.05rem; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+.app { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+.top { display: flex; align-items: center; gap: 10px; }
+.top .name { font-family: var(--font-display); }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; font-size: 0.75rem; color: var(--muted); }
+.steps span { border-top: 3px solid var(--line); padding-top: 4px; }
+.steps span.on { border-color: var(--fg); color: var(--fg); }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 22px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; width: 100%; font-size: 1rem; }
+.btn.ghost { background: transparent; color: var(--fg); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.shot { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border: 1px dashed var(--line); background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; overflow: hidden; text-align: center; padding: 8px; font-size: 0.9rem; }
+.shot.has { border-style: solid; }
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shot .lbl { position: absolute; left: 6px; bottom: 6px; background: var(--bg); padding: 2px 8px; font-size: 0.75rem; }
+.shot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.shot svg { width: 28px; height: 28px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+.extra { font-size: 0.85rem; }
+.notice { background: var(--warn-bg); color: var(--fg); padding: 12px 14px; font-size: 0.9rem; border-left: 4px solid var(--warn); }
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); }
+@media (prefers-reduced-motion: no-preference) { .dot { animation: pulse 1s ease-in-out infinite alternate; } @keyframes pulse { from { opacity: 0.2; } to { opacity: 1; } } }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > span.row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.9rem; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; min-height: 46px; padding: 8px 12px; border: 1px solid var(--line); background: var(--bg); }
+textarea { min-height: 84px; resize: vertical; }
+.why { font-size: 0.8rem; color: var(--muted); }
+.chip { font-size: 0.72rem; letter-spacing: 0.04em; padding: 2px 8px; border: 1px solid var(--line); white-space: nowrap; }
+.chip.hoog { border-color: var(--ok); color: var(--ok); }
+.chip.laag { border-color: var(--warn); color: var(--warn); }
+.chip.edit { border-color: var(--fg); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; }
+.check input { width: 22px; height: 22px; flex: 0 0 auto; margin-top: 1px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+legend { font-family: var(--font-display); font-size: 1.15rem; padding: 0; margin-bottom: 4px; }
+.card { border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.preview { display: flex; gap: 12px; align-items: flex-start; }
+.preview img, .preview .ph { width: 96px; height: 128px; object-fit: cover; background: var(--surface); flex: 0 0 auto; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 14px; padding: 2px 10px; }
+.match { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 8px; }
+.err { color: var(--warn); font-size: 0.9rem; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="pin" viewBox="0 0 120 120">
+      <path id="pin-ring" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" fill="none"></path>
+      <circle cx="60" cy="60" r="57" style="fill: var(--fg)"></circle>
+      <circle cx="60" cy="60" r="31" style="fill: none; stroke: var(--bg); stroke-width: 1.5"></circle>
+      <text font-size="11.5" letter-spacing="2.6" style="fill: var(--bg); font-family: var(--font-body)"><textPath href="#pin-ring">GUARANTEED · SECOND-HAND · FUR ·</textPath></text>
+      <text x="60" y="68" text-anchor="middle" font-size="26" font-style="italic" style="fill: var(--bg); font-family: var(--font-display)">GSF</text>
+    </symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="4"></circle></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <div class="top">
+    <svg width="32" height="32" aria-hidden="true"><use href="#pin"></use></svg>
+    <span class="name">Nieuw stuk invoeren</span>
+  </div>
+  <div class="steps" aria-hidden="true"><span id="s1">Foto's</span><span id="s2">AI kijkt</span><span id="s3">Controle</span><span id="s4">Klaar</span></div>
+
+  <!-- STEP 1: photos -->
+  <section id="step-photos" class="stack">
+    <h1>Fotografeer de jas</h1>
+    <p class="muted">Tik op een vak om een foto te maken of te kiezen. Hoe meer kanten, hoe beter het voorstel.</p>
+    <div class="shots" id="shots"></div>
+    <label class="extra muted" for="more">Meer foto's toevoegen (details, voering, sluiting)
+      <input id="more" type="file" accept="image/*" multiple>
+    </label>
+    <p class="muted" id="photo-count"></p>
+    <p class="notice" id="ai-off" hidden>AI is in deze weergave niet beschikbaar. Je kunt de velden zelf invullen.</p>
+    <button type="button" class="btn" id="analyse" disabled>Laat AI kijken</button>
+    <button type="button" class="btn ghost" id="manual">Zelf invullen, zonder AI</button>
+  </section>
+
+  <!-- STEP 2: thinking -->
+  <section id="step-thinking" class="stack" hidden>
+    <h1>AI bekijkt de foto's</h1>
+    <div class="thinking" role="status"><span class="dot"></span><span id="think-msg">Bezig met kijken. Dit kan een halve minuut duren.</span></div>
+    <button type="button" class="btn ghost" id="stop">Stoppen</button>
+  </section>
+
+  <!-- STEP 3: review -->
+  <form id="step-review" class="stack" hidden novalidate>
+    <h1>Klopt dit?</h1>
+    <p class="muted" id="review-intro">Dit zijn voorstellen. Pas aan wat niet klopt. Niets gaat online zonder jouw akkoord.</p>
+    <div id="warnings" class="stack"></div>
+
+    <fieldset>
+      <legend>Wat is het?</legend>
+      <div id="ai-fields" class="stack"></div>
+      <label class="check" for="species-ok" id="species-ok-wrap"><input id="species-ok" type="checkbox">Ik heb de bontsoort zelf gecontroleerd (label, herkomst of kenmerken).</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Maten (meetlint, plat gemeten)</legend>
+      <p class="muted">Niet uit de foto. Laat leeg wat je niet kunt meten.</p>
+      <div class="grid2">
+        <label class="field" for="m-chest"><span class="row">Borst, plat (cm)</span><input id="m-chest" type="number" inputmode="decimal" step="0.5" min="20" max="120"></label>
+        <label class="field" for="m-shoulder"><span class="row">Schouder (cm)</span><input id="m-shoulder" type="number" inputmode="decimal" step="0.5" min="20" max="80"></label>
+        <label class="field" for="m-sleeve"><span class="row">Mouw (cm)</span><input id="m-sleeve" type="number" inputmode="decimal" step="0.5" min="20" max="100"></label>
+        <label class="field" for="m-length"><span class="row">Ruglengte (cm)</span><input id="m-length" type="number" inputmode="decimal" step="0.5" min="30" max="160"></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Prijs</legend>
+      <label class="field" for="price"><span class="row">Prijs (€)</span><input id="price" type="number" inputmode="decimal" step="1" min="1"></label>
+    </fieldset>
+
+    <p class="err" id="review-err" role="status"></p>
+    <button type="submit" class="btn">Goedkeuren</button>
+    <button type="button" class="btn ghost" id="back-photos">Terug naar foto's</button>
+  </form>
+
+  <!-- STEP 4: done -->
+  <section id="step-done" class="stack" hidden>
+    <h1>Goedgekeurd</h1>
+    <p class="muted">In de echte versie gaat het stuk nu naar de database en, na publicatie, in de winkel. Dit prototype bewaart en verstuurt niets.</p>
+    <div class="card">
+      <div class="preview"><div id="pv-img"></div><div class="stack" style="gap: 6px; min-width: 0;"><h2 id="pv-title"></h2><p id="pv-price" class="muted"></p><div class="tags" id="pv-tags"></div></div></div>
+    </div>
+    <h2>Wie zou een mail krijgen?</h2>
+    <p class="muted">Voorbeeldklanten, verzonnen voor deze proef. Zij krijgen pas een mail als het stuk echt te koop staat.</p>
+    <div class="card" id="matches"></div>
+    <button type="button" class="btn" id="again">Nog een stuk invoeren</button>
+  </section>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SLOTS = [['front', 'Voorkant'], ['back', 'Achterkant'], ['label', 'Label'], ['detail', 'Detail of gebrek']];
+  var photos = {};       // slot -> File
+  var extras = [];       // File[]
+  var sample = null, limits = null, ctl = null;
+  var suggestion = null;
+
+  // Fields Nikki reviews. kind: select options or text.
+  var FIELDS = [
+    { key: 'titel', label: 'Titel', type: 'text', plain: true },
+    { key: 'materiaal', label: 'Materiaal', type: 'select', options: ['Bont', 'Leer', 'Suède', 'Shearling', 'Anders', 'Onbekend'] },
+    { key: 'bontsoort', label: 'Bontsoort', type: 'text' },
+    { key: 'model', label: 'Model', type: 'text' },
+    { key: 'periode', label: 'Periode', type: 'text' },
+    { key: 'kleur', label: 'Kleur', type: 'text' },
+    { key: 'lengte', label: 'Lengte', type: 'select', options: ['', 'Lang', 'Knielang', 'Heuplang', 'Kort'] },
+    { key: 'pasvorm', label: 'Pasvorm', type: 'select', options: ['', 'Recht', 'Getailleerd', 'Boxy', 'Oversized'] },
+    { key: 'labeltekst', label: 'Tekst op het label', type: 'text', plain: true },
+    { key: 'staat', label: 'Staat en gebreken', type: 'textarea', plain: true },
+    { key: 'beschrijving', label: 'Beschrijving voor de site', type: 'textarea', plain: true }
+  ];
+  var CONF = { hoog: 'AI: zeker', middel: 'AI: waarschijnlijk', laag: 'AI: twijfel' };
+
+  // Example customers (invented for this test, not real people).
+  var PROFILES = [
+    { name: 'Voorbeeldklant A', likes: ['nerts', 'lang', 'jaren 70', 'sjaalkraag'], chest: 56 },
+    { name: 'Voorbeeldklant B', likes: ['vos', 'kort', 'heuplang', 'zilvergrijs'], chest: 52 },
+    { name: 'Voorbeeldklant C', likes: ['shearling', 'oversized', 'pilotenjack', 'bruin'], chest: 60 },
+    { name: 'Voorbeeldklant D', likes: ['leer', 'zwart', 'getailleerd', 'trenchcoat'], chest: 57 },
+    { name: 'Voorbeeldklant E', likes: ['bont', 'knielang', 'camel', 'persianer'], chest: 55 }
+  ];
+
+  function step(n) {
+    ['step-photos', 'step-thinking', 'step-review', 'step-done'].forEach(function (id, i) { $(id).hidden = i !== n - 1; });
+    ['s1', 's2', 's3', 's4'].forEach(function (id, i) { $(id).className = i < n ? 'on' : ''; });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- photos ----------
+  function renderShots() {
+    $('shots').innerHTML = SLOTS.map(function (s) {
+      var f = photos[s[0]];
+      return '<label class="shot' + (f ? ' has' : '') + '" for="ph-' + s[0] + '">' +
+        (f ? '<img alt="' + s[1] + '" src="' + URL.createObjectURL(f) + '"><span class="lbl">' + s[1] + '</span>'
+           : '<svg aria-hidden="true"><use href="#i-cam"></use></svg><span>' + s[1] + '</span>') +
+        '<input id="ph-' + s[0] + '" data-slot="' + s[0] + '" type="file" accept="image/*" capture="environment"></label>';
+    }).join('');
+    var n = allPhotos().length;
+    $('photo-count').textContent = n ? n + (n === 1 ? ' foto' : " foto's") + ' klaar.' : '';
+    $('analyse').disabled = !n || !sample;
+  }
+  function allPhotos() { return SLOTS.map(function (s) { return photos[s[0]]; }).filter(Boolean).concat(extras); }
+  $('shots').addEventListener('change', function (e) {
+    var inp = e.target.closest('input[data-slot]'); if (!inp || !inp.files[0]) return;
+    photos[inp.getAttribute('data-slot')] = inp.files[0]; renderShots();
+  });
+  $('more').addEventListener('change', function () { extras = extras.concat(Array.from(this.files)); this.value = ''; renderShots(); });
+
+  // ---------- AI ----------
+  var PROMPT = [
+    'Je helpt Nikki, die een tweedehandswinkel heeft in vintage bont, leer en shearling, met het invoeren van één kledingstuk.',
+    'De foto\'s tonen hetzelfde stuk van verschillende kanten (voorkant, achterkant, label, details).',
+    'Doe voorstellen, Nikki controleert alles. Regels:',
+    '- Gok niet. Als iets niet zichtbaar of niet zeker is: waarde null en zekerheid "laag".',
+    '- Bontsoort alleen voorstellen met zichtbare kenmerken (haarlengte, glans, krul, tekening) en leg uit waarom. Noem twijfel.',
+    '- Als het mogelijk honden- of kattenbont is, of een beschermde soort (bijv. bepaalde katachtigen, zeehond, wolf): zet dat in "waarschuwingen".',
+    '- Merk en labeltekst alleen als ze letterlijk leesbaar zijn op de foto.',
+    '- Geen maten schatten. Geen echtheids- of herkomstclaims.',
+    '- Periode alleen als die echt af te leiden is (label, constructie, stijl); anders null.',
+    '- Schrijf in het Nederlands. Beschrijving: twee rustige zinnen, alleen wat zichtbaar is.',
+    'Antwoord met alleen dit JSON-object:',
+    '{"titel": string, "materiaal": {"waarde": "Bont"|"Leer"|"Suède"|"Shearling"|"Anders"|"Onbekend", "zekerheid": "hoog"|"middel"|"laag", "waarom": string},',
+    ' "bontsoort": {"waarde": string|null, "zekerheid": ..., "waarom": string}, "model": {...zelfde vorm, bijv. "Sjaalkraag", "Pilotenjack"},',
+    ' "periode": {...zelfde vorm, bijv. "Jaren 70"}, "kleur": {...}, "lengte": {"waarde": "Lang"|"Knielang"|"Heuplang"|"Kort"|null, ...},',
+    ' "pasvorm": {"waarde": "Recht"|"Getailleerd"|"Boxy"|"Oversized"|null, ...}, "labeltekst": string|null, "staat": string, "beschrijving": string, "waarschuwingen": [string]}'
+  ].join('\n');
+
+  $('analyse').addEventListener('click', function () {
+    if (!sample) return;
+    var max = (limits && limits.images && limits.images.maxCount) || 4;
+    var files = allPhotos().slice(0, max);
+    ctl = new AbortController();
+    step(2);
+    $('think-msg').textContent = 'Bezig met kijken naar ' + files.length + (files.length === 1 ? ' foto' : " foto's") + '. Dit kan een halve minuut duren.';
+    sample.json(PROMPT, { images: files, modelTier: 'default', signal: ctl.signal })
+      .then(function (data) { suggestion = data || {}; fillReview(suggestion); step(3); })
+      .catch(function (e) {
+        if (e && e.code === 'cancelled') { step(1); return; }
+        var msg = {
+          not_granted: 'Je hebt de AI geen toestemming gegeven. Vul de velden zelf in.',
+          sampling_disabled: 'AI is niet beschikbaar voor dit account. Vul de velden zelf in.',
+          images_unavailable: 'Foto\'s sturen naar de AI kan hier niet. Vul de velden zelf in.',
+          image_rejected: 'Een foto werd niet geaccepteerd. Probeer een andere foto.',
+          rate_limited: 'Even te veel tegelijk. Probeer het over een paar minuten opnieuw.',
+          invalid_json: 'Het antwoord van de AI was onleesbaar. Probeer het opnieuw.'
+        }[e && e.code] || 'Er ging iets mis bij de AI. Probeer het opnieuw of vul zelf in.';
+        fillReview({}); step(3); $('review-intro').textContent = msg;
+      });
+  });
+  $('stop').addEventListener('click', function () { if (ctl) ctl.abort(); });
+  $('manual').addEventListener('click', function () { suggestion = {}; fillReview({}); step(3); });
+  $('back-photos').addEventListener('click', function () { step(1); });
+
+  // ---------- review ----------
+  function val(s, key) { var v = s[key]; return v && typeof v === 'object' ? v.waarde : v; }
+  function fillReview(s) {
+    $('review-intro').textContent = Object.keys(s).length ? 'Dit zijn voorstellen. Pas aan wat niet klopt. Niets gaat online zonder jouw akkoord.' : 'Vul in wat je weet. Niets gaat online zonder jouw akkoord.';
+    var warns = Array.isArray(s.waarschuwingen) ? s.waarschuwingen : [];
+    $('warnings').innerHTML = warns.map(function (w) { return '<p class="notice">' + esc(w) + '</p>'; }).join('');
+    $('ai-fields').innerHTML = FIELDS.map(function (f) {
+      var o = s[f.key];
+      var v = val(s, f.key); v = v == null ? '' : String(v);
+      var conf = o && typeof o === 'object' && o.zekerheid ? o.zekerheid : null;
+      var chip = conf && CONF[conf] ? '<span class="chip ' + conf + '" id="chip-' + f.key + '">' + CONF[conf] + '</span>' : '<span id="chip-' + f.key + '"></span>';
+      var why = o && typeof o === 'object' && o.waarom ? '<span class="why">' + esc(o.waarom) + '</span>' : '';
+      var input;
+      if (f.type === 'select') {
+        var opts = f.options.slice(); if (v && opts.indexOf(v) < 0) opts.push(v);
+        input = '<select id="f-' + f.key + '">' + opts.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select>';
+      } else if (f.type === 'textarea') {
+        input = '<textarea id="f-' + f.key + '">' + esc(v) + '</textarea>';
+      } else {
+        input = '<input id="f-' + f.key + '" type="text" value="' + esc(v) + '">';
+      }
+      return '<label class="field" for="f-' + f.key + '"><span class="row"><span>' + f.label + '</span>' + chip + '</span>' + input + why + '</label>';
+    }).join('');
+    $('species-ok').checked = false;
+    syncSpecies();
+    ['m-chest', 'm-shoulder', 'm-sleeve', 'm-length', 'price'].forEach(function (id) { $(id).value = ''; });
+    $('review-err').textContent = '';
+  }
+  function syncSpecies() { $('species-ok-wrap').hidden = $('f-materiaal') ? $('f-materiaal').value !== 'Bont' && !$('f-bontsoort').value : true; }
+  $('ai-fields').addEventListener('input', function (e) {
+    var id = e.target.id; if (!id || id.indexOf('f-') !== 0) return;
+    var chip = $('chip-' + id.slice(2)); if (chip) { chip.className = 'chip edit'; chip.textContent = 'Aangepast'; }
+    syncSpecies();
+  });
+  $('ai-fields').addEventListener('change', syncSpecies);
+
+  $('step-review').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var g = function (k) { var el = $('f-' + k); return el ? el.value.trim() : ''; };
+    if (!g('titel')) { $('review-err').textContent = 'Geef het stuk een titel.'; return; }
+    if (g('materiaal') === 'Bont' && !g('bontsoort')) { $('review-err').textContent = 'Vul de bontsoort in. Bij bont noemen we altijd de soort.'; return; }
+    if (!$('species-ok-wrap').hidden && !$('species-ok').checked) { $('review-err').textContent = 'Vink aan dat je de bontsoort zelf hebt gecontroleerd.'; return; }
+    var price = Number($('price').value);
+    if (!(price > 0)) { $('review-err').textContent = 'Vul een prijs in.'; return; }
+    showDone({
+      titel: g('titel'), materiaal: g('materiaal'), bontsoort: g('bontsoort'), model: g('model'), periode: g('periode'),
+      kleur: g('kleur'), lengte: g('lengte'), pasvorm: g('pasvorm'), price: price,
+      chest: $('m-chest').value === '' ? null : Number($('m-chest').value)
+    });
+  });
+
+  // ---------- done + matching (demo) ----------
+  function showDone(p) {
+    var first = allPhotos()[0];
+    $('pv-img').innerHTML = first ? '<img alt="" src="' + URL.createObjectURL(first) + '" style="width:96px;height:128px;object-fit:cover">' : '<div class="ph"></div>';
+    $('pv-title').textContent = p.titel;
+    $('pv-price').textContent = '€ ' + p.price.toLocaleString('nl-NL');
+    var tags = [p.bontsoort, p.model, p.periode, p.materiaal, p.lengte, p.kleur, p.pasvorm].filter(function (t) { return t && t !== 'Onbekend'; });
+    $('pv-tags').innerHTML = tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+    var lower = tags.map(function (t) { return t.toLowerCase(); });
+    var rows = PROFILES.map(function (c) {
+      var hits = c.likes.filter(function (l) { return lower.some(function (t) { return t.indexOf(l) >= 0 || l.indexOf(t) >= 0; }); });
+      var fit = p.chest == null ? null : Math.abs(p.chest - c.chest) <= 2;
+      return { c: c, hits: hits, fit: fit };
+    }).filter(function (r) { return r.hits.length && r.fit !== false; })
+      .sort(function (a, b) { return b.hits.length - a.hits.length; });
+    $('matches').innerHTML = rows.length ? rows.map(function (r) {
+      return '<div class="match"><span>' + r.c.name + '</span><span class="muted">vindt mooi: ' + r.hits.join(', ') + (r.fit ? ' · maat past' : p.chest == null ? ' · maat niet gemeten' : '') + '</span></div>';
+    }).join('') : '<p class="muted">Geen van de voorbeeldklanten past bij dit stuk.</p>';
+    step(4);
+  }
+  $('again').addEventListener('click', function () { photos = {}; extras = []; suggestion = null; renderShots(); step(1); });
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---------- start ----------
+  renderShots(); step(1);
+  var use = window.claude && window.claude.use ? window.claude.use('sample') : Promise.resolve(null);
+  Promise.resolve(use).then(function (s) {
+    sample = s || null;
+    if (!sample) { $('ai-off').hidden = false; renderShots(); return; }
+    return sample.limits().then(function (l) {
+      limits = l;
+      if (!l || !l.images) { sample = null; $('ai-off').hidden = false; }
+      renderShots();
+    }, function () { sample = null; $('ai-off').hidden = false; renderShots(); });
+  }).catch(function () { $('ai-off').hidden = false; });
+})();
+</script>

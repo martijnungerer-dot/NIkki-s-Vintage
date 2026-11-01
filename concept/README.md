@@ -22,13 +22,37 @@
 - Terug naar foto's en opnieuw verwerken bewaart maten, prijs en gemaakte keuzes; alleen *Volgend stuk* begint leeg.
 - Leren: eigen keuzes en aanpassingen op voorstellen worden in deze browser onthouden. In de echte versie worden ze trainingsdata voor betere voorstellen (server-side).
 
+## Stijlen kiezen (voor Nikki)
+
+Linksonder in het skelet staat een stijlknop. Daarmee wisselt Nikki tussen vijf stijlen; de indeling blijft gelijk, alleen kleuren, letters en knopvormen veranderen.
+
+| Stijl | Gevoel | Kleuren en letters |
+|---|---|---|
+| Ivoor | strak, minimalistisch (standaard) | ivoor, espresso; Libre Caslon en Work Sans |
+| Parisienne | chic met een vleugje roze | poederroze, crème, zwart; Cormorant Garamond en Jost |
+| Bonbon | lief en speels | zacht roze, framboos; Fredoka en Nunito |
+| Hollywood | glamour, avond | zwart, champagne, roze accent; Playfair Display en Montserrat |
+| Boudoir | vintage, warm | perzik, oudroze, bordeaux; Bodoni Moda en Lato |
+
+- Het hartje naast de stijlnaam markeert een stijl die ze mooi vindt.
+- *Mijn keuze* vraagt: mooiste stijl, chic of speels (schuifje) en wat ze zou veranderen. *Kopieer mijn antwoorden* zet alles als korte tekst op het klembord, om naar Martijn te sturen.
+- Keuzes worden alleen in haar eigen browser onthouden; er wordt niets verstuurd.
+- Elke stijl geeft de foto's een eigen lijst: Ivoor een dunne lijn, Parisienne een boog met gouden rand, Bonbon afgeronde hoeken met een sticker, Hollywood een spotlicht, Boudoir een ovaal op behangpatroon.
+
+## Foto's
+
+Het skelet toont per stuk een foto als die in `PHOTOS` (in de code) staat, anders een tekening. In Git is `PHOTOS` leeg. De gepubliceerde, privé conceptversie krijgt sfeerfoto's die Martijn aanleverde; die staan bewust niet in de repository, omdat de beeldrechten niet bij ons liggen en er herkenbare personen op staan. Voor de echte site komen hier foto's van Nikki's eigen jassen. Een nieuwe publicatie vanuit Git toont dus weer tekeningen, tot de foto's opnieuw worden ingevoegd.
+
 ## Verder werken in Gemini
+
+Gebruik Gemini om de gekozen stijl verder te verfijnen.
 
 1. Download `site-skeleton.html` uit GitHub (knop *Download raw file*) of krijg het bestand van Martijn.
 2. Open Gemini, kies **Canvas**, upload het bestand en vraag Gemini er een webpagina-voorbeeld van te maken.
 3. Gebruik bijvoorbeeld deze opdracht:
 
-> Dit is een werkend skelet voor een webshop in vintage bont, leer en shearling. Behoud de structuur en de werkende onderdelen (carrousels, hartjes, Perfect fit-popup). Pas alleen de stijl aan: [jouw wensen, bijv. kleuren, lettertype, sfeer]. Houd je aan de regels in het commentaar bovenaan het bestand: maten plat in cm, bontsoort altijd benoemen maar alleen zoals Nikki die heeft vastgesteld, geen verzonnen claims, alle stukken zijn voorbeelden.
+> Dit is een werkend skelet voor een webshop in vintage bont, leer en shearling, voor Nikki. Behoud de structuur, teksten en alle werkende onderdelen (carrousels, hartjes met teller, lang drukken op de foto, Perfect fit-popup, stijlknop en Mijn keuze). Houd je aan de regels in het commentaar bovenaan het bestand: maten plat in cm, bontsoort altijd benoemen maar alleen zoals Nikki die heeft vastgesteld, geen verzonnen claims, alle stukken zijn voorbeelden.
+> Mijn favoriete stijl is [naam]. Werk die verder uit: [wensen, bijv. meer roze, ander lettertype, ronde foto's]. Pas alleen de kleur- en lettervariabelen bij `:root[data-style="…"]` en de knopvormen aan, niet de indeling. Zorg dat alles goed leesbaar blijft (voldoende contrast) en werkt op een telefoon.
 
 4. Stuur het resultaat (het HTML-bestand of de Gemini-link) naar Martijn. Claude of Codex zet het daarna terug in deze repository.
 

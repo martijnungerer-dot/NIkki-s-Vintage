@@ -10,6 +10,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 1 november 2026 — foto's in skelet en stijlbord
+- Design-canvas "Stijlen voor Nikki" met vijf stijlen, gevuld met sfeerfoto's van Martijn (één foto met een ander merklogo niet gebruikt). Bontsoort bij deze foto's als [soort]: onbekend.
+- Skelet kan per stuk een foto tonen (anders tekening), met een eigen fotolijst per stijl. Sfeerfoto's alleen in de gepubliceerde privéversie, niet in Git (beeldrechten).
+
+### 1 november 2026 — stijlknop voor Nikki
+- Skelet: stijlknop met vijf stijlen (Ivoor, Parisienne, Bonbon, Hollywood, Boudoir), hartje per stijl en *Mijn keuze* met kopieerbare antwoorden. Contrast per stijl nagemeten (tekst minstens 12:1, gedempte tekst minstens 5,6:1). Eerder deze dag: hartje met voorbeeldteller in de foto en lang drukken om te liken.
+- Gemini-opdracht in `concept/README.md` bijgewerkt: verfijnen van de gekozen stijl.
+
 ### 1 november 2026 — review Codex verwerkt
 - Drie bevindingen uit de Codex-review van PR #3 opgelost in het invoerprototype: bontclassificatie los van de materiaalnaam (eigen materiaalnaam kon de soortcontrole omzeilen), maten/prijs/keuzes blijven bewaard bij terug naar foto's, fotoplek weer aanpasbaar en hoofdfoto expliciet te kiezen. De drie reproducties uit de review lokaal nagespeeld in headless Chromium; alle drie opgelost.
 

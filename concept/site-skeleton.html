@@ -24,7 +24,7 @@
   - No customer data, keys or private fields in this file. Nothing is stored.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@0;1&family=Work+Sans:wght@400;500&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@400;500&family=Fredoka:wght@500&family=Nunito:wght@400;600&family=Playfair+Display:ital@0;1&family=Montserrat:wght@400;500&family=Bodoni+Moda:ital@0;1&family=Lato:wght@400;700&display=swap">
 <style>
 /* Layout: image-first. Full-width carousel on arrival, carousel rows to browse, one column max 1120px elsewhere. */
 :root {
@@ -51,6 +51,24 @@
   --bg: #1E1C1A; --surface: #2B2825; --line: #57514A; --fg: #EFEBE6; --muted: #B9B1A7;
   --note-bg: #4A4010; --note-fg: #FFF1B8; --coat: #6F675F; --coat-ink: #CFC7BD; --scrim: rgba(0, 0, 0, 0.65); color-scheme: dark;
 }
+/* Style choices for Nikki (style button). "Ivoor" is the default above and follows light/dark;
+   the other styles are single looks and override the tokens. Placed after the dark blocks so they win. */
+:root[data-style="parisienne"] { --bg: #FBF3F1; --surface: #F3DCDC; --line: #D9B8B8; --fg: #1C1A1A; --muted: #5E4A4C; --coat: #D8AFAF; --coat-ink: #3A2A2C; --scrim: rgba(28, 26, 26, 0.5); --note-bg: #FFF1B8; --note-fg: #3D3300; --font-display: "Cormorant Garamond", Georgia, serif; --font-body: "Jost", system-ui, sans-serif; --btn-radius: 0; color-scheme: light; }
+:root[data-style="bonbon"] { --bg: #FFF0F5; --surface: #FFD6E5; --line: #F2A7C3; --fg: #4A1030; --muted: #7A2E52; --coat: #F6A9C6; --coat-ink: #8C1D4F; --scrim: rgba(74, 16, 48, 0.45); --note-bg: #FFF1B8; --note-fg: #3D3300; --font-display: "Fredoka", "Nunito", system-ui, sans-serif; --font-body: "Nunito", system-ui, sans-serif; --btn-radius: 26px; color-scheme: light; }
+:root[data-style="hollywood"] { --bg: #111010; --surface: #1E1B1B; --line: #4A4040; --fg: #F3E3C3; --muted: #C9B79A; --coat: #3A3232; --coat-ink: #E8B4C4; --scrim: rgba(0, 0, 0, 0.7); --note-bg: #4A4010; --note-fg: #FFF1B8; --font-display: "Playfair Display", Georgia, serif; --font-body: "Montserrat", system-ui, sans-serif; --btn-radius: 0; color-scheme: dark; }
+:root[data-style="boudoir"] { --bg: #FBEDE4; --surface: #F2D2C4; --line: #D6A796; --fg: #4A1622; --muted: #6E3A3E; --coat: #D99A8C; --coat-ink: #4A1622; --scrim: rgba(74, 22, 34, 0.5); --note-bg: #FFF1B8; --note-fg: #3D3300; --font-display: "Bodoni Moda", Georgia, serif; --font-body: "Lato", system-ui, sans-serif; --btn-radius: 4px; color-scheme: light; }
+.btn { border-radius: var(--btn-radius, 0); }
+.stylebar { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 20; display: flex; align-items: center; gap: 4px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 26px; padding: 4px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12); font-size: 0.85rem; }
+.stylebar button { min-height: 40px; padding: 0 12px; border: 0; background: transparent; cursor: pointer; border-radius: 20px; }
+.stylebar .sname { font-weight: 500; }
+.stylebar [data-style-like] svg { width: 18px; height: 18px; stroke: var(--fg); fill: none; stroke-width: 1.6; vertical-align: middle; }
+.stylebar [data-style-like][aria-pressed="true"] svg { fill: var(--fg); }
+.choice { display: flex; flex-direction: column; gap: 8px; }
+.choice label { display: flex; gap: 10px; align-items: center; }
+.choice input[type="radio"] { width: 20px; height: 20px; }
+input[type="range"] { width: 100%; }
+.slider-ends { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
@@ -86,6 +104,17 @@ body:not(.show-notes) .note { display: none; }
 /* drawings */
 .pic { position: relative; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 100%; }
 .pic svg.coat { height: 82%; width: auto; max-width: 86%; }
+.pic img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Style frames: each style shapes the photos differently. */
+:root[data-style="parisienne"] .slide .pic { border-radius: 50% 50% 0 0 / 28% 28% 0 0; outline: 1px solid #B08D57; outline-offset: -10px; }
+:root[data-style="parisienne"] .card .pic { border-radius: 50% 50% 0 0 / 30% 30% 0 0; }
+:root[data-style="bonbon"] .slide .pic, :root[data-style="bonbon"] .card .pic { border-radius: 28px; }
+:root[data-style="bonbon"] .slide .pic::before { content: "uniek!"; position: absolute; top: 16px; left: 16px; z-index: 1; background: var(--fg); color: var(--bg); font-family: var(--font-display); padding: 6px 14px; border-radius: 18px; transform: rotate(-6deg); }
+:root[data-style="hollywood"] .slide .pic::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(17, 16, 16, 0) 40%, rgba(17, 16, 16, 0.85) 100%); box-shadow: inset 0 0 0 1px #C9A96E; }
+:root[data-style="boudoir"] .slide .pic { background-color: var(--surface); background-image: radial-gradient(circle, var(--line) 1.5px, transparent 2px); background-size: 22px 22px; }
+:root[data-style="boudoir"] .slide .pic img.photo { inset: 6% 20%; width: 60%; height: 88%; border-radius: 50%; outline: 3px solid var(--fg); outline-offset: 6px; }
+:root[data-style="boudoir"] .card .pic { border-radius: 50%; }
+:root[data-style="ivoor"] .slide .pic::after, :root:not([data-style]) .slide .pic::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(255, 255, 255, 0.7); pointer-events: none; }
 .coat-body { stroke: var(--coat-ink); stroke-width: 1.5; }
 .coat-line { stroke: var(--coat-ink); stroke-width: 1.2; fill: none; }
 
@@ -94,8 +123,8 @@ body:not(.show-notes) .note { display: none; }
 .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .track::-webkit-scrollbar { display: none; }
 .slide { flex: 0 0 100%; min-width: 0; max-width: 100%; scroll-snap-align: start; position: relative; }
-:root { --hero-h: clamp(240px, calc(100vh - 300px), 680px); }
-@supports (height: 100svh) { :root { --hero-h: clamp(240px, calc(100svh - 300px), 680px); } }
+:root { --hero-h: clamp(240px, calc(100vh - 370px), 680px); }
+@supports (height: 100svh) { :root { --hero-h: clamp(240px, calc(100svh - 370px), 680px); } }
 .slide .pic { height: var(--hero-h); }
 .slide-info { display: flex; flex-wrap: nowrap; align-items: stretch; justify-content: space-between; gap: 12px 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
 #hero-track ~ .arrow { top: calc(var(--hero-h) / 2); }
@@ -320,6 +349,26 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   </div>
 </dialog>
 
+<div class="stylebar" role="group" aria-label="Stijl kiezen">
+  <button type="button" id="style-next" aria-label="Volgende stijl">Stijl: <span class="sname" id="style-name">Ivoor</span> ›</button>
+  <button type="button" data-style-like aria-pressed="false" aria-label="Deze stijl vind ik mooi"><svg aria-hidden="true"><use href="#i-heart"></use></svg></button>
+  <button type="button" id="style-choice">Mijn keuze</button>
+</div>
+
+<dialog id="choice" aria-labelledby="choice-title">
+  <div class="dlg">
+    <button type="button" class="icon-btn close" id="choice-close" aria-label="Sluiten"><svg><use href="#i-close"></use></svg></button>
+    <h2 id="choice-title">Welke stijl vind je het mooist?</h2>
+    <div class="choice" id="choice-list" role="radiogroup" aria-label="Mooiste stijl"></div>
+    <label class="field" for="vibe">Chic of speels?<input id="vibe" type="range" min="0" max="10" value="5"></label>
+    <div class="slider-ends" aria-hidden="true"><span>chic</span><span>speels</span></div>
+    <label class="field" for="change">Wat zou je veranderen?<textarea id="change"></textarea></label>
+    <button type="button" class="btn" id="copy-choice">Kopieer mijn antwoorden</button>
+    <p class="muted" id="copy-msg" role="status"></p>
+    <textarea id="copy-out" readonly hidden aria-label="Jouw antwoorden"></textarea>
+  </div>
+</dialog>
+
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -369,6 +418,16 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var TAG_FIELDS = [['species', 'Bontsoort'], ['model', 'Model'], ['era', 'Periode'], ['mat', 'Materiaal'], ['length', 'Lengte'], ['colour', 'Kleur'], ['fit', 'Pasvorm']];
   function tagsOf(p) {
     return TAG_FIELDS.filter(function (f) { return p[f[0]] != null; }).map(function (f) { return { key: f[0] + ':' + p[f[0]], kind: f[1], value: p[f[0]] }; });
+  }
+  // Photos per piece: {id: {src, alt, over: {field overrides}}}. Empty in Git; the published (private)
+  // concept version fills it with mood photos. Real photos of Nikki's own pieces go here later.
+  var PHOTOS = {};
+  PIECES.forEach(function (p) { var ph = PHOTOS[p.id]; if (ph && ph.over) Object.keys(ph.over).forEach(function (k) { p[k] = ph.over[k]; }); });
+  PIECES.sort(function (a, b) { return (PHOTOS[b.id] ? 1 : 0) - (PHOTOS[a.id] ? 1 : 0); });
+  function picture(p, opts) {
+    var ph = PHOTOS[p.id];
+    if (ph && !(opts && (opts.back || opts.flaw))) return '<img class="photo" src="' + ph.src + '" alt="' + (opts && opts.label ? opts.label + ': ' : '') + ph.alt + '" draggable="false">';
+    return coat(p, opts);
   }
   var byId = function (id) { return PIECES.filter(function (p) { return p.id === id; })[0]; };
 
@@ -452,7 +511,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   var hero = carousel($('hero-track'), $('hero-prev'), $('hero-next'), $('hero-dots'));
   function renderHero() {
     $('hero-track').innerHTML = PIECES.map(function (p) {
-      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + coat(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' + likeBox(p) + '</div>' +
+      return '<div class="slide" role="group" aria-roledescription="slide" aria-label="' + p.title + '"><div class="pic" data-press="' + p.id + '">' + picture(p) + '<span class="burst" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-heart"></use></svg></span>' + likeBox(p) + '</div>' +
         '<div class="slide-info"><a href="#product" data-open="' + p.id + '"><span class="slide-title">' + p.title + '</span><span class="price muted">€ [PRICE]</span></a>' + tagChips(p) + '</div></div>';
     }).join('');
     hero.paint();
@@ -482,7 +541,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
   function strip(title, list) {
     return '<div><div class="row-head"><h2>' + title + '</h2><span class="muted">' + list.length + '</span></div><div class="strip">' +
       list.map(function (p) {
-        return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + coat(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
+        return '<div class="card"><a href="#product" data-open="' + p.id + '"><div class="pic">' + picture(p) + '</div><span class="card-title">' + p.title + '</span></a><div class="card-foot"><span class="price muted">€ [PRICE]</span>' + heartBtn(p) + '</div></div>';
       }).join('') + '</div></div>';
   }
   function renderBrowse() {
@@ -513,7 +572,7 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     $('p-like').setAttribute('aria-pressed', String(!!liked[p.id]));
     $('p-like').setAttribute('aria-label', 'Vind ik mooi: ' + p.title);
     $('p-buy-msg').textContent = 'Uniek exemplaar.';
-    var shots = [coat(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
+    var shots = [picture(p, { label: 'Voorkant' }), coat(p, { back: true, label: 'Achterkant' }), labelDrawing(), coat(p, { flaw: true, label: 'Gebrek bij de linkermanchet' })];
     $('gal-track').innerHTML = shots.map(function (s) { return '<div class="slide"><div class="pic">' + s + '</div></div>'; }).join('');
     gallery.reset();
     var names = ['Borst, plat', 'Schouder', 'Mouw', 'Ruglengte'];
@@ -560,6 +619,51 @@ footer .wrap { padding-block: 24px; font-size: 0.8rem; color: var(--muted); disp
     if (!$('fit-consent').checked) { $('fit-msg').textContent = 'Vink het vakje aan, dan mogen we je mailen.'; return; }
     $('fit-form').hidden = true; $('fit-done').hidden = false;
   });
+
+  // ---------- style button (for Nikki to compare looks) ----------
+  var STYLES = [['ivoor', 'Ivoor'], ['parisienne', 'Parisienne'], ['bonbon', 'Bonbon'], ['hollywood', 'Hollywood'], ['boudoir', 'Boudoir']];
+  var store = { get: function (k, d) { try { var v = localStorage.getItem('gsf-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+                set: function (k, v) { try { localStorage.setItem('gsf-' + k, JSON.stringify(v)); } catch (e) {} } };
+  var styleIdx = Math.max(0, STYLES.map(function (x) { return x[0]; }).indexOf(store.get('style', 'ivoor')));
+  var styleLikes = store.get('style-likes', {});
+  function applyStyle() {
+    var key = STYLES[styleIdx][0];
+    if (key === 'ivoor') document.documentElement.removeAttribute('data-style'); else document.documentElement.setAttribute('data-style', key);
+    $('style-name').textContent = STYLES[styleIdx][1];
+    document.querySelector('[data-style-like]').setAttribute('aria-pressed', String(!!styleLikes[key]));
+    store.set('style', key);
+  }
+  $('style-next').addEventListener('click', function () { styleIdx = (styleIdx + 1) % STYLES.length; applyStyle(); });
+  document.querySelector('[data-style-like]').addEventListener('click', function () {
+    var key = STYLES[styleIdx][0]; if (styleLikes[key]) delete styleLikes[key]; else styleLikes[key] = true;
+    store.set('style-likes', styleLikes); applyStyle();
+  });
+  var choiceDlg = $('choice');
+  $('style-choice').addEventListener('click', function () {
+    $('choice-list').innerHTML = STYLES.map(function (x, i) {
+      return '<label for="ch-' + x[0] + '"><input type="radio" name="fav" id="ch-' + x[0] + '" value="' + x[1] + '"' + (i === styleIdx ? ' checked' : '') + '>' + x[1] + (styleLikes[x[0]] ? ' ♥' : '') + '</label>';
+    }).join('');
+    $('copy-msg').textContent = ''; $('copy-out').hidden = true;
+    if (typeof choiceDlg.showModal === 'function') choiceDlg.showModal(); else choiceDlg.setAttribute('open', '');
+  });
+  $('choice-close').addEventListener('click', function () { if (choiceDlg.close) choiceDlg.close(); else choiceDlg.removeAttribute('open'); });
+  $('choice-list').addEventListener('change', function (e) {
+    var i = STYLES.map(function (x) { return x[1]; }).indexOf(e.target.value); if (i >= 0) { styleIdx = i; applyStyle(); }
+  });
+  $('copy-choice').addEventListener('click', function () {
+    var fav = (document.querySelector('input[name="fav"]:checked') || {}).value || '-';
+    var liked = STYLES.filter(function (x) { return styleLikes[x[0]]; }).map(function (x) { return x[1]; });
+    var text = 'Mijn stijlkeuze voor de website\n' +
+      'Mooiste stijl: ' + fav + '\n' +
+      'Hartjes: ' + (liked.length ? liked.join(', ') : 'geen') + '\n' +
+      'Chic (0) - speels (10): ' + $('vibe').value + '\n' +
+      'Zou ik veranderen: ' + ($('change').value.trim() || '-');
+    var out = $('copy-out'); out.value = text;
+    var done = function () { $('copy-msg').textContent = 'Gekopieerd. Plak het in een bericht aan Martijn.'; };
+    var fallback = function () { out.hidden = false; out.focus(); out.select(); $('copy-msg').textContent = 'Kopiëren lukte niet automatisch. Selecteer de tekst hieronder en kopieer hem.'; };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+  applyStyle();
 
   // ---------- notes ----------
   $('toggle-notes').addEventListener('click', function () {

@@ -25,6 +25,8 @@ export class Api {
     const data = await response.json().catch(() => null);
     if (!response.ok) {
       const error = Error(response.status === 409 || data?.message?.includes('VERSION_CONFLICT') ? 'Dit stuk is elders gewijzigd. Vernieuw de collectie en open het opnieuw.' :
+        data?.message?.includes('INVALID_PRODUCT') ? 'Dit stuk is niet opgeslagen. Controleer naam, materiaal, model, kleur, lengte, prijs, borstbreedte, ruglengte, de bontsoort bij bont en één hoofdfoto.' :
+        data?.message?.includes('PHOTO_NOT_UPLOADED') ? 'Een foto is nog niet goed geüpload. Sla opnieuw op; je invoer blijft staan.' :
         response.status === 401 ? 'Log opnieuw in om verder te gaan.' :
         response.status === 429 ? 'De analyselimiet is bereikt. Vul zelf in of probeer morgen opnieuw.' :
         response.status === 403 ? 'Dit account heeft geen beheerrechten.' :
@@ -45,7 +47,11 @@ export class Api {
     const s = await this.request('/auth/v1/token?grant_type=password', {method:'POST', auth:false, body:{email,password}});
     this.keep({...s, expires_at:s.expires_at || Date.now()/1000+s.expires_in});
     try { await this.request('/rest/v1/rpc/require_staff', {method:'POST', body:{}}); }
-    catch(e) {this.keep(null); throw e;}
+    catch(e) {
+      // Not staff (or check failed): also end the session on the server, not only in this browser.
+      try { await this.request('/auth/v1/logout', {method:'POST'}); } catch {}
+      this.keep(null); throw e;
+    }
   }
   async logout() {
     try {if(this.session) await this.request('/auth/v1/logout', {method:'POST'});} finally {this.keep(null);}
@@ -58,9 +64,17 @@ export class Api {
     }
     return rows;
   }
-  async imageUrl(path) {
-    const d = await this.request('/storage/v1/object/sign/garment-photos/' + path, {method:'POST',body:{expiresIn:3600}});
-    return this.url + '/storage/v1' + d.signedURL;
+  // Signs many photos in one request. Paths that cannot be signed are left out of the result,
+  // so one missing photo never blocks the rest of the collection.
+  async imageUrls(paths) {
+    const urls = new Map();
+    for (let i = 0; i < paths.length; i += 100) {
+      const part = paths.slice(i, i + 100);
+      const list = await this.request('/storage/v1/object/sign/garment-photos', {method:'POST', body:{expiresIn:3600, paths:part}});
+      for (const item of Array.isArray(list) ? list : [])
+        if (item && !item.error && typeof item.signedURL === 'string' && part.includes(item.path)) urls.set(item.path, this.url + '/storage/v1' + item.signedURL);
+    }
+    return urls;
   }
   async upload(id, image) {
     if(image.path && new RegExp('^'+id+'/[a-f0-9]{64}\\.(jpg|png|webp)$').test(image.path)) return {path:image.path,role:image.role,main:image.main};

@@ -2,7 +2,7 @@ const {chromium}=require('playwright');const fs=require('node:fs');const path=re
 (async()=>{
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
 try{
-const db=new Map(),photos=new Map();let failSave=true,analyses=0;
+const db=new Map(),photos=new Map();let failSave=true,analyses=0,signBatches=0;
 // Hold the sale response so the test cannot accidentally pass before saving finishes.
 let releaseSoldResponse;
 const soldResponse=new Promise(resolve=>{releaseSoldResponse=resolve;});
@@ -26,6 +26,10 @@ async function context(){
   if(u.pathname==='/auth/v1/logout')return json(null);
   if(u.pathname==='/rest/v1/rpc/require_staff')return json(auth?null:{},auth?200:403);
   if(u.pathname==='/rest/v1/garments')return json([...db.values()].filter(row=>auth||row.status==='published'));
+  if(u.pathname==='/storage/v1/object/sign/garment-photos'&&req.method()==='POST'){
+   signBatches++;
+   return json(req.postDataJSON().paths.map(name=>photos.has(name)?{error:null,path:name,signedURL:'/object/sign/garment-photos/'+name+'?token=test'}:{error:'Either the object does not exist or you do not have access to it',path:name,signedURL:null}));
+  }
   if(u.pathname.startsWith('/storage/v1/object/sign/garment-photos/')){
    const name=u.pathname.split('/garment-photos/')[1];
    if(req.method()==='POST')return json({signedURL:'/object/sign/garment-photos/'+name+'?token=test'});
@@ -76,6 +80,17 @@ db.set(extraId,{...structuredClone(db.get(originalKey)),id:extraId,display_id:2,
 await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
 assert.equal(await shop().locator('#hero-track [data-open]').filter({hasText:title}).getAttribute('data-open'),String(originalId));
 db.delete(extraId);await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('shop').contentDocument.querySelectorAll('#hero-track .slide').length===1);
+// One piece whose photo cannot be signed must not hide the rest of the collection; one batch request signs all photos.
+const brokenId='55555555-5555-4555-8555-555555555555';
+db.set(brokenId,{...structuredClone(db.get(originalKey)),id:brokenId,display_id:3,data:{...structuredClone(db.get(originalKey).data),title:'Stuk zonder foto',images:[{path:brokenId+'/'+'a'.repeat(64)+'.jpg',role:'Voorkant',main:true}]}});
+const batchesBefore=signBatches;await p.locator('#reload').click();
+await p.waitForFunction(()=>document.getElementById('status').textContent.includes('niet getoond'));
+assert.equal(await p.locator('#status').innerText(),'Collectie vernieuwd. 1 stuk wordt niet getoond omdat de foto’s niet bereikbaar zijn.');assert.equal(signBatches-batchesBefore,1);
+assert.equal(await shop().locator('#hero-track .slide').count(),1);db.delete(brokenId);
+// A refresh keeps a visitor on the view they were reading instead of jumping back to the start page.
+await shop().evaluate(()=>{location.hash='browse';});await p.locator('#reload').click();
+await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
+assert.equal(await shop().evaluate(()=>location.hash),'#browse');await shop().evaluate(()=>{location.hash='home';});
 const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
 await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#hero-track .slide').count(),1);
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),1);
@@ -93,6 +108,6 @@ await p.getByRole('button',{name:'Bewerken',exact:true}).click();await p.waitFor
 const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.locator('#t-titel').fill('Gewijzigde verkochte jas');await edit.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
 await v.locator('#reload').click();await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),0);
-assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, analysis adapter, photos, failed save/retry, durable reload, guest catalog, five styles, edit sold without resurrection. Remote services mocked.');
+assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view, analysis adapter, photos, failed save/retry, durable reload, guest catalog, five styles, edit sold without resurrection. Remote services mocked.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

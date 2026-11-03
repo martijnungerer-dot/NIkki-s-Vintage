@@ -20,7 +20,7 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 
 ## Contract
 
-`garments.id` is de permanente UUID van één stuk. `data` bevat uitsluitend de toegestane publieke productvelden, prijzen in eurocenten, maten als `[borst plat, schouder, mouw, ruglengte]` in cm, ontbrekende maten als `null`, en fotoverwijzingen. Er zijn geen velden voor privénotities of inkoopprijzen in dit contract. Deze horen later in een aparte beschermde tabel, niet als extra JSON-velden.
+`garments.id` is de permanente UUID van één stuk. Een vast `display_id` houdt lokale hartjes gekoppeld aan hetzelfde stuk wanneer de collectie van volgorde verandert. `data` bevat uitsluitend de toegestane publieke productvelden, prijzen in eurocenten, maten als `[borst plat, schouder, mouw, ruglengte]` in cm, ontbrekende maten als `null`, en fotoverwijzingen. Er zijn geen velden voor privénotities of inkoopprijzen in dit contract. Deze horen later in een aparte beschermde tabel, niet als extra JSON-velden.
 
 `save_garment` valideert het volledige contract en het bestaan van de foto's. Eerste publicatie gebruikt versie 0. Elke update vereist de laatst geopende versie; verouderde of dubbele aanvragen worden geweigerd. Een metadata-update verandert `status` nooit. `mark_garment_sold` is een afzonderlijke bewuste beheeractie. Er is geen automatische herpublicatie van verkochte stukken.
 

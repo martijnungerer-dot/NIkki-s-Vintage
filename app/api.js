@@ -53,7 +53,7 @@ export class Api {
   async list() {
     let rows = [], offset = 0;
     for (;;) {
-      const batch = await this.request('/rest/v1/garments?select=id,data,status,version&order=created_at.desc,id.asc&limit=100&offset=' + offset);
+      const batch = await this.request('/rest/v1/garments?select=id,data,status,version,display_id&order=created_at.desc,id.asc&limit=100&offset=' + offset);
       rows.push(...batch); if(batch.length < 100) break; offset += batch.length;
     }
     return rows;

@@ -30,7 +30,7 @@ intake=replaceOnce(intake,"}[e && e.code] || 'Er ging iets mis. Probeer het opni
 intake=replaceOnce(intake,"sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })", "Promise.all(files.map(f=>window.parent.NikkiApp.prepareImage(f))).then(prepared=>sample.json('', { images: prepared, signal: ctl.signal }))");
 intake=append(intake,await read('app/intake-extension.js'));
 let shop=extract('shop-source');
-shop=replaceOnce(shop,'Math.max(...PIECES.map(p=>p.id))+1','Math.max(0,...PIECES.map(p=>p.id))+1');
+shop=replaceOnce(shop,'Math.max(...PIECES.map(p=>p.id))+1','record.displayId');
 shop=replaceOnce(shop,"    var p = byId(current); if($('condition-example'))", "    var p = byId(current); if(!p) return; if($('condition-example'))");
 shop=append(shop,await read('app/store-extension.js'));
 await mkdir(new URL('dist/cloud/',root),{recursive:true});

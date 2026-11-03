@@ -35,7 +35,7 @@ async function context(){
   if(u.pathname==='/rest/v1/rpc/save_garment'){
    assert.ok(auth);if(failSave){failSave=false;return json({error:'temporary'},503);}
    const b=req.postDataJSON();const old=db.get(b.p_id);assert.equal(b.p_version,old?.version||0);
-   const row={id:b.p_id,data:b.p_data,version:(old?.version||0)+1,status:old?.status||'published'};db.set(row.id,row);return json(row);
+   const row={id:b.p_id,display_id:old?.display_id||db.size+1,data:b.p_data,version:(old?.version||0)+1,status:old?.status||'published'};db.set(row.id,row);return json(row);
   }
   if(u.pathname==='/rest/v1/rpc/mark_garment_sold'){
    const b=req.postDataJSON();const row=db.get(b.p_id);row.status='sold';row.version++;return json(row);
@@ -65,6 +65,13 @@ await f.locator('#publish').click();await f.locator('#review-err').filter({hasTe
 await f.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
 assert.equal(db.size,1);assert.equal([...db.values()][0].data.measurements[0],56.5);assert.equal([...db.values()][0].data.priceMinor,12550);assert.equal([...db.values()][0].data.furClass,'Nee');assert.equal(photos.size,1);
 assert.equal(await shop().locator('#hero-track .slide').count(),1);assert.ok(await shop().locator('#hero-track img').first().evaluate(i=>i.complete&&i.naturalWidth>0));
+const originalId=[...db.values()][0].display_id;
+const originalKey=[...db.keys()][0];
+const extraId='44444444-4444-4444-8444-444444444444';
+db.set(extraId,{...structuredClone(db.get(originalKey)),id:extraId,display_id:2,data:{...structuredClone(db.get(originalKey).data),title:'Ander stuk'}});
+await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
+assert.equal(await shop().locator('#hero-track [data-open]').filter({hasText:title}).getAttribute('data-open'),String(originalId));
+db.delete(extraId);await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('shop').contentDocument.querySelectorAll('#hero-track .slide').length===1);
 const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
 await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#hero-track .slide').count(),1);
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),1);

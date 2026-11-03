@@ -59,6 +59,7 @@ end; $$;
 
 create table public.garments (
   id uuid primary key,
+  display_id bigint generated always as identity unique,
   data jsonb not null,
   status text not null default 'published' check(status in ('published','sold')),
   version integer not null default 1,

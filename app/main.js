@@ -13,7 +13,7 @@ function show(screen){
 }
 function controls(){ $('login').hidden=staff;$('new').hidden=!staff;$('logout').hidden=!api.session; }
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
-async function hydrate(row){return {...row.data,key:row.id,images:await Promise.all(row.data.images.map(async i=>({...i,src:await api.imageUrl(i.path)})))};}
+async function hydrate(row){return {...row.data,key:row.id,displayId:row.display_id,images:await Promise.all(row.data.images.map(async i=>({...i,src:await api.imageUrl(i.path)})))};}
 async function refresh(){
   const next=await api.list();
   const publicRecords=[];

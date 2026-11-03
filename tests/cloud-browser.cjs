@@ -3,6 +3,9 @@ const {chromium}=require('playwright');const fs=require('node:fs');const path=re
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
 try{
 const db=new Map(),photos=new Map();let failSave=true,analyses=0;
+// Hold the sale response so the test cannot accidentally pass before saving finishes.
+let releaseSoldResponse;
+const soldResponse=new Promise(resolve=>{releaseSoldResponse=resolve;});
 const errors=[];
 async function context(){
  const c=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
@@ -38,6 +41,7 @@ async function context(){
    const row={id:b.p_id,display_id:old?.display_id||db.size+1,data:b.p_data,version:(old?.version||0)+1,status:old?.status||'published'};db.set(row.id,row);return json(row);
   }
   if(u.pathname==='/rest/v1/rpc/mark_garment_sold'){
+   await soldResponse;
    const b=req.postDataJSON();const row=db.get(b.p_id);row.status='sold';row.version++;return json(row);
   }
   if(u.pathname==='/functions/v1/analyse'){
@@ -75,7 +79,16 @@ db.delete(extraId);await p.locator('#reload').click();await p.waitForFunction(()
 const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
 await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#hero-track .slide').count(),1);
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),1);
-await p.locator('[data-screen=manage]').click();await p.getByRole('button',{name:'Markeer verkocht'}).click();await p.locator('#items').filter({hasText:'Verkocht'}).waitFor();assert.equal(await shop().locator('#hero-track .slide').count(),0);
+await p.locator('[data-screen=manage]').click();
+const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold',{timeout:10000});
+await p.getByRole('button',{name:'Markeer verkocht'}).click();
+await soldRequest;
+assert.equal(await shop().locator('#hero-track .slide').count(),1);
+assert.equal(await p.locator('#items li > span').innerText(),title+' — Beschikbaar');
+releaseSoldResponse();
+await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
+assert.equal(await p.locator('#items li > span').innerText(),title+' — Verkocht');
+assert.equal(await shop().locator('#hero-track .slide').count(),0);
 await p.getByRole('button',{name:'Bewerken',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
 const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.locator('#t-titel').fill('Gewijzigde verkochte jas');await edit.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);

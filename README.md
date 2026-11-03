@@ -1,5 +1,9 @@
 # Nikki Vintage
 
+## Cloudpilot — 3 november 2026
+
+De verbonden proefapp is uitgebreid met code voor Supabase-opslag, beheerderslogin en optionele Gemini-fotoanalyse. Begin bij [de begeleide installatie](docs/SUPABASE-START.md). [De modulaire cloudapp](app/README.md) bouw je met `npm run build`. Supabase en Gemini zijn nog niet live verbonden; checkout blijft buiten deze pilot. De oudere architectuur en toegangsstatus hieronder zijn historische uitgangspunten.
+
 Projectstart voor Nikki's gecureerde webshop met unieke vintage kledingstukken van bont, leer en shearling. ‘Nikki Vintage’ is een werknaam.
 
 ## Stand op 1 november 2026

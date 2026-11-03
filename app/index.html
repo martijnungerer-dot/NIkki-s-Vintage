@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nikki’s Boetiek</title><link rel="stylesheet" href="style.css"></head>
+<body><header><strong>Nikki’s Boetiek</strong><nav aria-label="Schermen"><button data-screen="shop" aria-pressed="true">Boetiek</button><button data-screen="manage" aria-pressed="false">Beheer</button><button data-screen="intake" id="new" hidden aria-pressed="false">Nieuw stuk</button></nav><button id="reload">Collectie vernieuwen</button><button id="logout" hidden>Uitloggen</button></header>
+<p id="status" role="status">Collectie laden…</p><p class="notice">Proefversie met opgeslagen collectie. Afrekenen en bestellingen zijn nog niet aangesloten.</p>
+<main><iframe id="shop" title="Boetiek"></iframe><iframe id="intake" title="Kledingstuk invoeren" hidden></iframe>
+<section id="manage" hidden><h1>Jouw collectie</h1>
+<form id="login"><p>Log in om kledingstukken toe te voegen en aan te passen.</p><label>E-mailadres<input id="email" type="email" autocomplete="username" required></label><label>Wachtwoord<input id="password" type="password" autocomplete="current-password" required></label><button>Inloggen</button></form>
+<p id="empty" hidden>Nog geen stukken toegevoegd. Begin bij Nieuw stuk.</p><ul id="items"></ul></section></main>
+<script type="module" src="main.js"></script></body></html>

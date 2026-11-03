@@ -4,7 +4,7 @@ import {prepareImage} from './images.js';
 import {shopSource,intakeSource} from './views.js';
 const api=new Api(config);
 const $=id=>document.getElementById(id);
-const editVersions=new Map(); let rows=[],staff=false,busy=false;
+const editVersions=new Map(); let rows=[],staff=false,busy=false,lastRefresh=0,skipped=0;
 const say=message=>{$('status').textContent=message;};
 function show(screen){
   if(screen==='intake'&&!staff)screen='manage';
@@ -13,12 +13,27 @@ function show(screen){
 }
 function controls(){ $('login').hidden=staff;$('new').hidden=!staff;$('logout').hidden=!api.session; }
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
-async function hydrate(row){return {...row.data,key:row.id,displayId:row.display_id,images:await Promise.all(row.data.images.map(async i=>({...i,src:await api.imageUrl(i.path)})))};}
+function withPhotos(row,urls){
+  const images=row.data.images.filter(i=>urls.has(i.path)).map(i=>({...i,src:urls.get(i.path)}));
+  if(!images.length)return null;
+  // If only the main photo is unreachable, show the first reachable one instead of hiding the piece.
+  if(!images.some(i=>i.main))images[0]={...images[0],main:true};
+  return {...row.data,key:row.id,displayId:row.display_id,images};
+}
+// Editing needs every photo, otherwise saving would silently drop the missing ones.
+async function hydrate(row){
+  const record=withPhotos(row,await api.imageUrls(row.data.images.map(i=>i.path)));
+  if(!record||record.images.length!==row.data.images.length)throw Error('Niet alle foto’s van dit stuk konden worden geopend. Probeer het later opnieuw.');
+  return record;
+}
+const loaded=base=>base+(staff&&skipped?' '+skipped+(skipped===1?' stuk wordt':' stukken worden')+' niet getoond omdat de foto’s niet bereikbaar zijn.':'');
 async function refresh(){
   const next=await api.list();
-  const publicRecords=[];
-  for(const row of next.filter(r=>r.status==='published')) publicRecords.push(await hydrate(row));
-  rows=next;
+  const published=next.filter(r=>r.status==='published');
+  const urls=await api.imageUrls(published.flatMap(r=>r.data.images.map(i=>i.path)));
+  const publicRecords=[];let missing=0;
+  for(const row of published){const record=withPhotos(row,urls);if(record)publicRecords.push(record);else missing++;}
+  rows=next;skipped=missing;lastRefresh=Date.now();
   $('shop').contentWindow.NikkiStore.replace(publicRecords.reverse());
   $('items').replaceChildren();$('empty').hidden=!staff||rows.length>0;
   if(staff)for(const row of rows){
@@ -58,7 +73,7 @@ window.NikkiApp={
   }
 };
 document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.screen)));
-$('reload').addEventListener('click',()=>action(async()=>{await refresh();say('Collectie vernieuwd.');}));
+$('reload').addEventListener('click',()=>action(async()=>{await refresh();say(loaded('Collectie vernieuwd.'));}));
 $('login').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
   await api.login($('email').value,$('password').value);$('password').value='';staff=true;controls();await refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
 });});
@@ -68,7 +83,10 @@ if(!api.configured()){
   say('Deze versie moet nog worden verbonden. Volg docs/SUPABASE-START.md in de projectmap.');$('login').querySelector('button').disabled=true;
 }else await action(async()=>{
   if(api.session){try{await api.request('/rest/v1/rpc/require_staff',{method:'POST',body:{}});staff=true;}catch{api.keep(null);}}
-  controls();await refresh();say('Collectie geladen.');
+  controls();await refresh();say(loaded('Collectie geladen.'));
 });
-// Renew expiring image URLs; don't overwrite the in-progress intake form.
-setInterval(()=>{if(!document.hidden&&!busy)action(refresh);},45*60*1000);
+// Renew photo links (valid for one hour) before they expire; don't overwrite the in-progress intake form.
+// A tab that was in the background longer than that is refreshed as soon as it is visible again.
+const renew=()=>{if(api.configured()&&!document.hidden&&!busy&&Date.now()-lastRefresh>40*60*1000)action(refresh);};
+setInterval(renew,5*60*1000);
+document.addEventListener('visibilitychange',renew);

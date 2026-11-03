@@ -6,9 +6,18 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 - Fase: P0 afgerond; P1 (productkeuzes en proefinvoer) en concept-brainstorm lopen.
 - Airtable (`appcR1TGKaoc4XAU4`): 0 records in Garments op 1 november 2026.
-- Webshop: nog niet gebouwd; wel een statisch skelet in `concept/`.
+- Webshop: nog geen winkelplatform of checkout. Wel een statisch skelet in `concept/` en een cloudpilot (Supabase + Gemini) in `app/` en `supabase/`, lokaal getest met nagebootste diensten; nog niet live verbonden.
 
 ## Logboek
+
+### 3 november 2026 — review cloudpilot verwerkt
+- Claude-review van PR #10. Opgelost: één onbereikbare foto blokkeerde de hele collectie (foto's worden nu in één batch getekend; een stuk zonder bereikbare foto wordt overgeslagen en staff ziet een melding); elke verversing zette bezoekers terug op de startpagina (weergave, carrouselpositie en scroll blijven nu staan); fotolinks verliepen in een tabblad dat lang op de achtergrond stond (verversen bij terugkeer); validatiefouten bij opslaan geven nu een concrete melding; een niet-beheerder wordt ook op de server uitgelogd.
+- Gecontroleerd met `npm test` (unit- en databasetests) en `npm run test:browser` (Chromium, nagebootste diensten). De verversing bij een zichtbaar geworden tabblad is niet automatisch getest. Geen live Supabase of Gemini gebruikt.
+
+### 3 november 2026 — Supabase/Gemini-cloudpilot voorbereid
+- Martijn heeft ingestemd met de volgende bouwstap: veilige AI-voorstellen en gezamenlijke opslag. Code toegevoegd in `app/` en `supabase/`, met [starthandleiding](SUPABASE-START.md). De bestaande vijf stijlen, invoer en carrousel worden hergebruikt. Nieuwe beheerfuncties: opgeslagen stukken openen, wijzigen en verkocht markeren.
+- Supabase is de proefrichting voor deze catalogus; Airtable is niet gewijzigd en er is nog geen winkelplatform aangesloten. De SQL-status is geen checkout-voorraad. Geen betaald abonnement, deployment, migratie op afstand of echte AI-aanroep uitgevoerd.
+- Lokale controle: PostgreSQL-testengine voor de echte migratie en rechten; servertests met nagebootste diensten; mobiele browserworkflow met nagebootste opslag en AI. Na accountconfiguratie zijn echte verbindingstests vereist.
 
 ### 1 november 2026 — voorbereiding voor Nikki en Gemini
 - Scope bevestigd door Martijn: uitsluitend een skelet om gevoel bij te krijgen. Keuze Airtable versus direct contentbeheer in een winkelplatform wordt onderzocht; geen integratie gebouwd.
@@ -54,13 +63,3 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Brainstorm over verkoopervaring vastgelegd in [CONCEPT.md](CONCEPT.md): pasprofiel, dossier per kledingstuk, omgekeerd winkelen en swipen. Paspop on hold.
 - Startroutine voor Claude toegevoegd aan `CLAUDE.md`.
 - Gezien in deze omgeving: Node.js 22, niet 24 zoals de README noemt. De huidige projectcheck slaagt daarmee.
-
-
-
-## 3 november 2026 — Supabase/Gemini-cloudpilot voorbereid
-
-Martijn heeft ingestemd met de volgende bouwstap: veilige AI-voorstellen en gezamenlijke opslag. Code toegevoegd in `app/` en `supabase/`, met [starthandleiding](SUPABASE-START.md). De bestaande vijf stijlen, invoer en carrousel worden hergebruikt. Nieuwe beheerfuncties: opgeslagen stukken openen, wijzigen en verkocht markeren.
-
-Supabase is de proefrichting voor deze catalogus; Airtable is niet gewijzigd en er is nog geen winkelplatform aangesloten. De SQL-status is geen checkout-voorraad. Geen betaald abonnement, deployment, migratie op afstand of echte AI-aanroep uitgevoerd.
-
-Lokale controle: PostgreSQL-testengine voor de echte migratie en rechten; servertests met nagebootste diensten; mobiele browserworkflow met nagebootste opslag en AI. Na accountconfiguratie zijn echte verbindingstests vereist.

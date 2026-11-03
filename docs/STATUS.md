@@ -55,3 +55,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Startroutine voor Claude toegevoegd aan `CLAUDE.md`.
 - Gezien in deze omgeving: Node.js 22, niet 24 zoals de README noemt. De huidige projectcheck slaagt daarmee.
 
+
+
+## 3 november 2026 — Supabase/Gemini-cloudpilot voorbereid
+
+Martijn heeft ingestemd met de volgende bouwstap: veilige AI-voorstellen en gezamenlijke opslag. Code toegevoegd in `app/` en `supabase/`, met [starthandleiding](SUPABASE-START.md). De bestaande vijf stijlen, invoer en carrousel worden hergebruikt. Nieuwe beheerfuncties: opgeslagen stukken openen, wijzigen en verkocht markeren.
+
+Supabase is de proefrichting voor deze catalogus; Airtable is niet gewijzigd en er is nog geen winkelplatform aangesloten. De SQL-status is geen checkout-voorraad. Geen betaald abonnement, deployment, migratie op afstand of echte AI-aanroep uitgevoerd.
+
+Lokale controle: PostgreSQL-testengine voor de echte migratie en rechten; servertests met nagebootste diensten; mobiele browserworkflow met nagebootste opslag en AI. Na accountconfiguratie zijn echte verbindingstests vereist.

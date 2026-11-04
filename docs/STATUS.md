@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 4 november 2026 — opgeslagen foto's hergebruikt
+- Opvolging bouw-PR: bestaande fotopaden slaan hercoderen en data-URL-inlezen over; nieuwe foto's blijven hergecodeerd. Productfotopositie blijft bij verversen behouden; setup-node vastgezet op de geverifieerde v4.4.0-SHA. Alleen nagebootste diensten, geen schema- of voorraadwijzigingen.
+- Build, unit-/databasetests, browsercontrole en projectcheck geslaagd; nieuwe browserproeven bewijzen EXIF-verwijdering, nul herverwerking bij tekstwijziging en linkvernieuwing bij terugkeer naar een oud tabblad.
+
 ### 4 november 2026 — bouwankers gecontroleerd
 - Vanaf main c21247b: vaste invoegmarkeringen, expliciete aantallen voor alle bronvervangingen en fouttests voor ontbrekende/dubbele ankers. Cloudbuild leest de gedeelde bronweergaven rechtstreeks. Geen live diensten of schemawijzigingen.
 

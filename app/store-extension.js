@@ -7,6 +7,7 @@ window.NikkiStore.replace = function(records) {
   const pressed = visible && visible.querySelector('[data-press]');
   const shownId = pressed ? Number(pressed.getAttribute('data-press')) : null;
   const pageY = window.scrollY, previous = current;
+  const galleryTrack = $('gal-track'), photoX = galleryTrack.scrollLeft;
   PIECES.splice(0); Object.keys(PHOTOS).forEach(k=>delete PHOTOS[k]);
   records.forEach(p=>window.NikkiStore.put(p,false));
   const exists = id => PIECES.some(p => p.id === id);
@@ -18,7 +19,13 @@ window.NikkiStore.replace = function(records) {
     return;
   }
   // A product page whose piece is gone (sold) falls back to the start page.
-  if(view === 'product') { if(exists(previous)) renderProduct(); else { location.hash = 'home'; return; } }
+  if(view === 'product') {
+    if(exists(previous)) {
+      renderProduct();
+      galleryTrack.scrollTo({left: photoX, behavior: 'instant'});
+      gallery.paint();
+    } else { location.hash = 'home'; return; }
+  }
   if(shownId !== null && exists(shownId)) track.scrollTo({left: PIECES.findIndex(p => p.id === shownId) * track.clientWidth, behavior: 'instant'});
   window.scrollTo({top: pageY, behavior: 'instant'});
 };

@@ -2,7 +2,9 @@
 
 Deze handleiding hoort bij de cloudpilot in `app/`. De bestaande zelfstandige proefapp blijft werken. De nieuwe versie gebruikt Supabase voor gegevens, foto's, inloggen en de serveraanroep naar Gemini. Nikki werkt uitsluitend in de boetiek-app, niet in de Supabase-tabellen.
 
-**Begin alleen bij stap 1.** De overige stappen zijn vastgelegd zodat we ze daarna samen kunnen uitvoeren. Er is vanuit deze repository nog geen project aangemaakt, migratie uitgevoerd, AI-aanroep gedaan of website gepubliceerd.
+**Stand 4 november 2026:** het bestaande project `naxjrskfdedwvoeltigs` heeft nu de catalogustabellen en privéfoto-opslag. De website draait bij Cloudflare Workers op `nikki-s-vintage.martijnungerer.workers.dev`. De publieke verbinding staat in `app/config.js`; na merge en Cloudflare-deployment is die actief op de website. Er zijn nog geen beheerdersaccounts of kledingstukken aangemaakt en Gemini is nog niet aangesloten.
+
+Voor dit project begin je bij **stap 4**. Maak geen nieuw project en voer de reeds geregistreerde migraties niet opnieuw uit. De stappen hieronder blijven bruikbaar voor een afzonderlijk nieuw testproject.
 
 ## 1. Maak een gratis testproject
 
@@ -30,13 +32,17 @@ Open `http://localhost:4173`. Zonder configuratie meldt de app dat de verbinding
 
 Alleen uitvoeren in het nieuwe lege testproject. Dit wijzigt de database; niet op een bestaande productieomgeving uitproberen.
 
-Open in Supabase de **SQL Editor**, maak een nieuw script en plak de volledige inhoud van [de migratie](../supabase/migrations/202611030001_catalog.sql). Voer het één keer uit. Het script maakt onder andere `garments`, `staff`, `analysis_usage` en de private fotobucket `garment-photos` aan, met toegangsregels.
+Voor een nieuw leeg project: voer alle SQL-bestanden in [supabase/migrations](../supabase/migrations/) eenmaal in bestandsnaamvolgorde uit. De eerste migratie maakt `garments`, `staff`, `analysis_usage` en de private fotobucket `garment-photos` aan; de opvolgende migratie beperkt ook de rechtstreeks door Supabase toegekende aanroeprechten. Alleen `PUBLIC` intrekken is op zulke projecten niet voldoende.
 
-De migratie staat ook klaar voor gebruik via de Supabase CLI (`db push`). Kies één route. Als je de SQL Editor gebruikt, herhaal dezelfde migratie niet later automatisch via de CLI zonder eerst de migratiehistorie gelijk te trekken.
+De migraties kunnen ook via de Supabase CLI worden uitgevoerd. Controleer versie en `--help` voordat je remote commando's gebruikt: CLI v3 richt databasecommando's standaard op lokaal. Als je de SQL Editor gebruikt, herhaal dezelfde migraties niet later automatisch via de CLI zonder eerst de migratiehistorie gelijk te trekken.
+
+De huidige pilot is via de Supabase-koppeling ingericht. De geregistreerde versies zijn `20261104193047_catalog` en `20261104193519_restrict_catalog_access`; de bestandsnamen volgen die remote historie. Het eerste bestand heette eerder `202611030001_catalog.sql` en is inhoudelijk gelijk gebleven. Heb je dat bestand zelf al in een ander project toegepast, stem dan eerst de historie af voordat je latere migraties toepast.
+
+Na inrichting blijven twee typen Advisor-meldingen bewust staan: [authenticated SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), omdat de drie beheer-RPC's eerst de staff-whitelist controleren, en [RLS zonder policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) op `analysis_usage`, omdat alleen de serverfunctie die tabel gebruikt. Anon heeft geen EXECUTE op de beheer-RPC's; browserrollen hebben geen tabelrechten op de analysequota. Deze weigeringen zijn ook in de echte database gecontroleerd. De performance-advisor meldt na de policy-aanpassing geen bevindingen.
 
 ## 4. Nikki als beheerder toevoegen
 
-1. Maak onder **Authentication → Users** een testgebruiker met e-mailadres en wachtwoord. Gebruik de optie om deze gebruiker te bevestigen. Accountregistratie is niet ingebouwd in de app.
+1. Open [Authentication → Users](https://supabase.com/dashboard/project/naxjrskfdedwvoeltigs/auth/users). Kies **Add user → Create new user** en maak een testgebruiker met e-mailadres en wachtwoord. Gebruik de optie om deze gebruiker te bevestigen (**Auto Confirm User**). Bewaar het wachtwoord zelf; deel het niet in de chat. Accountregistratie is niet ingebouwd in de app.
 2. Kopieer de UUID van die gebruiker.
 3. Voer in de SQL Editor uit, met de echte UUID op de aangegeven plek:
 
@@ -49,7 +55,7 @@ Die UUID is een identifier, geen wachtwoord. Alleen een account in Authenticatio
 
 ## 5. Alleen publieke projectgegevens invullen
 
-Open [app/config.js](../app/config.js). Vul de **Project URL** en **Publishable key** uit Supabase in. Een legacy **anon key** werkt ook. Deze gegevens mogen in de browser en in Git; de databaseregels bepalen de toegang.
+Voor de huidige pilot zijn de **Project URL** en actieve **Publishable key** al ingevuld in [app/config.js](../app/config.js). Voor een ander project gebruik je diens eigen gegevens uit Supabase. Een legacy **anon key** werkt ook. Deze gegevens mogen in de browser en in Git; de databaseregels bepalen de toegang.
 
 Vul hier **nooit** een `service_role`, `sb_secret_...` of Gemini API-sleutel in. De Gemini-sleutel hoort uitsluitend bij stap 6.
 
@@ -87,9 +93,9 @@ Bij een storing kun je altijd **Liever zelf invullen** gebruiken. De AI vult mat
 
 ## 7. Online proefomgeving
 
-Voorstel: Cloudflare Pages met deze GitHub-repository, buildopdracht `npm run build`, uitvoermap `dist/cloud`, Node.js 24. De Edge Function draait bij Supabase. Een gewone statische websitehost is daarom voldoende voor het scherm zelf.
+De huidige proefomgeving gebruikt Cloudflare Workers Static Assets: [Nikki's boetiek](https://nikki-s-vintage.martijnungerer.workers.dev). De GitHub-koppeling bouwt `main` met `npm run build` en publiceert `dist/cloud`. Production workers.dev is ingeschakeld; een eigen domein is niet nodig. Cloudflare Pages blijft een alternatief voor een nieuwe omgeving. De latere Gemini Edge Function draait bij Supabase.
 
-Er is nog niets gehost. Controleer vóór publicatie de publieke configuratie en voeg de exacte site-origin toe aan `ALLOWED_ORIGINS`. De collectie is na publicatie leesbaar voor bezoekers; alleen de invoer vraagt beheerrechten. Gebruik in de testomgeving uitsluitend stukken en foto's die als test zichtbaar mogen zijn.
+Na merge van de verbindingsconfiguratie moet Cloudflare opnieuw succesvol bouwen. Controleer daarna dat **Collectie geladen.** verschijnt. Bij het aansluiten van Gemini voeg je de exacte origin `https://nikki-s-vintage.martijnungerer.workers.dev` toe aan `ALLOWED_ORIGINS`. De collectie is leesbaar voor bezoekers; alleen de invoer vraagt beheerrechten. Gebruik in de testomgeving uitsluitend stukken en foto's die als test zichtbaar mogen zijn.
 
 Preview-URL's zijn niet automatisch toegestaan voor AI. Voeg alleen een concrete test-origin toe; gebruik geen wildcard. Bewaar productiesleutels buiten een Gemini Canvas-export. De cloudapp wordt als website gebruikt; Gemini blijft een hulpmiddel voor ontwerp en code.
 
@@ -108,7 +114,7 @@ Pas na de controles met echte Supabase- en Gemini-verbindingen noemen we de clou
 
 Checkout, betaling, orders, reserveringen, klantaccounts, e-mail, retouren, volledige back-up/herstelprocedure en synchronisatie met een winkelplatform. `sold` is in deze pilot een handmatige catalogusstatus; het voorkomt geen dubbelverkoop via een betaalproces. Daarvoor blijft later een winkelplatform leidend.
 
-Niet-opgeslagen invoer vervalt bij verversen of uitloggen. De app vernieuwt de collectie op aanvraag en elke 45 minuten als het tabblad zichtbaar is; dit is geen realtime voorraadgarantie. Getekende foto-URL's kunnen na verkocht markeren nog tot één uur geldig blijven. Ongebruikte uploads na een afgebroken invoer blijven privé; automatische opruiming volgt later. Bestaande foto's worden bij bewerken hergebruikt. Er is nog geen automatische import van de lokale demoartikelen.
+Niet-opgeslagen invoer vervalt bij verversen of uitloggen. De app controleert elke vijf minuten en bij terugkeer naar het tabblad of de fotolinks ouder zijn dan veertig minuten; zo nodig wordt de collectie vernieuwd. Dit is geen realtime voorraadgarantie. Getekende foto-URL's kunnen na verkocht markeren nog tot één uur geldig blijven. Ongebruikte uploads na een afgebroken invoer blijven privé; automatische opruiming volgt later. Bestaande foto's worden bij bewerken hergebruikt. Er is nog geen automatische import van de lokale demoartikelen.
 
 ## Raming
 

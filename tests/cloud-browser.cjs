@@ -59,6 +59,9 @@ const c=await context(),p=await c.newPage();p.setDefaultTimeout(10000);await p.g
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.').catch(async e=>{console.error(await p.locator('#status').innerText());throw e;});
 const shop=()=>p.frames().find(f=>f.name()==='shop');const intake=()=>p.frames().find(f=>f.name()==='intake');
 assert.equal(await shop().locator('#hero-track .slide').count(),0);
+assert.equal(await shop().locator('[data-view-panel=home] .collection-empty').isVisible(),true);
+assert.equal(await shop().locator('#hero-prev').isVisible(),false);
+assert.equal(await shop().locator('.alsonew').isVisible(),false);
 await p.locator('[data-screen=manage]').click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login button').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
 const png=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;c.getContext('2d').fillRect(0,0,20,20);return c.toDataURL().split(',')[1];});
 // Exercise the real browser encoder with a JPEG containing synthetic EXIF metadata.
@@ -90,6 +93,15 @@ assert.equal(db.size,1);assert.equal([...db.values()][0].data.measurements[0],56
 assert.equal(await shop().locator('#hero-track .slide').count(),1);assert.ok(await shop().locator('#hero-track img').first().evaluate(i=>i.complete&&i.naturalWidth>0));
 const originalId=[...db.values()][0].display_id;
 const originalKey=[...db.keys()][0];
+assert.equal(await shop().locator('[data-view-panel=home] .collection-empty').isVisible(),false);
+// The desktop hero stays bounded; the frame fills the available height without a second page scrollbar.
+for(const width of [1440,1920]) {
+ await p.setViewportSize({width,height:1000});
+ assert.ok((await shop().locator('[data-view-panel=home] > .hero').boundingBox()).width<=800);
+ assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight));
+ assert.ok(await shop().evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+}
+await p.setViewportSize({width:390,height:844});
 const extraId='44444444-4444-4444-8444-444444444444';
 db.set(extraId,{...structuredClone(db.get(originalKey)),id:extraId,display_id:2,data:{...structuredClone(db.get(originalKey).data),title:'Ander stuk'}});
 await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
@@ -107,6 +119,7 @@ await shop().evaluate(()=>{location.hash='browse';});await p.locator('#reload').
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
 assert.equal(await shop().evaluate(()=>location.hash),'#browse');await shop().evaluate(()=>{location.hash='home';});
 const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
+await p.waitForFunction(()=>getComputedStyle(document.body).backgroundColor===getComputedStyle(document.getElementById('shop').contentDocument.body).backgroundColor);
 // Product-photo position survives renewal, including an old tab becoming visible again.
 const row=db.get(originalKey),savedImages=row.data.images;
 const detailPath=originalKey+'/'+'c'.repeat(64)+'.jpg';photos.set(detailPath,photos.get(savedImages[0].path));

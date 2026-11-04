@@ -81,8 +81,18 @@ $('login').addEventListener('submit',event=>{event.preventDefault();action(async
 });});
 $('logout').addEventListener('click',()=>action(async()=>{try{await api.logout();}finally{location.reload();}}));
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
+// Keep the outer controls in the same palette as the selected boutique style.
+const shopRoot=$('shop').contentDocument.documentElement;
+const syncStyle=()=>{
+  const style=$('shop').contentWindow.getComputedStyle(shopRoot);
+  for(const name of ['bg','surface','fg','muted','line'])document.documentElement.style.setProperty('--'+name,style.getPropertyValue('--'+name));
+  document.documentElement.style.colorScheme=style.colorScheme;
+};
+new MutationObserver(syncStyle).observe(shopRoot,{attributes:true,attributeFilter:['data-style','data-theme']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncStyle);
+syncStyle();
 if(!api.configured()){
-  say('Deze versie moet nog worden verbonden. Volg docs/SUPABASE-START.md in de projectmap.');$('login').querySelector('button').disabled=true;
+  say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.');$('login').querySelector('button').disabled=true;$('reload').disabled=true;
 }else await action(async()=>{
   if(api.session){try{await api.request('/rest/v1/rpc/require_staff',{method:'POST',body:{}});staff=true;}catch{api.keep(null);}}
   controls();await refresh();say(loaded('Collectie geladen.'));

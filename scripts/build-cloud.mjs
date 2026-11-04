@@ -28,6 +28,7 @@ intake=patchIntake(intake,"}[e && e.code] || 'Er ging iets mis. Probeer het opni
 intake=patchIntake(intake,"sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })", "Promise.all(files.map(f=>window.parent.NikkiApp.prepareImage(f))).then(prepared=>sample.json('', { images: prepared, signal: ctl.signal }))");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 let shop=shopSource;
+shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
 shop=patchShop(shop,'Math.max(...PIECES.map(p=>p.id))+1','record.displayId');
 shop=patchShop(shop,"    var p = byId(current); if($('condition-example'))", "    var p = byId(current); if(!p) return; if($('condition-example'))");
 shop=injectAt(shop,'CLOUD_STORE_EXTENSION',await read('app/store-extension.js'),'demo/store-bridge.js');

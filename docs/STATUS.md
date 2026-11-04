@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 4 november 2026 — cloudopmaak voor desktop en lege collectie
+- Vanaf main 52d5bcd: begrensde desktopcarrousel, schermvullend winkelvenster, stijlafhankelijke bediening en een verzorgde lege-collectieweergave zonder losse pijlen. Foto's ontbreken nog in de repository; geen voorbeeldvoorraad, Supabase-inrichting of live publicatie toegevoegd.
+- Lokaal gecontroleerd op 390, 1440 en 1920 pixels breed; build, unit-/databasetests, browserworkflow en projectcheck slagen. Het workers.dev-adres was vanuit het browserhulpmiddel niet bereikbaar; controle uitgevoerd met de repositorycode en nagebootste diensten.
+
 ### 4 november 2026 — opgeslagen foto's hergebruikt
 - Opvolging bouw-PR: bestaande fotopaden slaan hercoderen en data-URL-inlezen over; nieuwe foto's blijven hergecodeerd. Productfotopositie blijft bij verversen behouden; setup-node vastgezet op de geverifieerde v4.4.0-SHA. Alleen nagebootste diensten, geen schema- of voorraadwijzigingen.
 - Build, unit-/databasetests, browsercontrole en projectcheck geslaagd; nieuwe browserproeven bewijzen EXIF-verwijdering, nul herverwerking bij tekstwijziging en linkvernieuwing bij terugkeer naar een oud tabblad.

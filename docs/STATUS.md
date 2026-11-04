@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 4 november 2026 — bouwankers gecontroleerd
+- Vanaf main c21247b: vaste invoegmarkeringen, expliciete aantallen voor alle bronvervangingen en fouttests voor ontbrekende/dubbele ankers. Cloudbuild leest de gedeelde bronweergaven rechtstreeks. Geen live diensten of schemawijzigingen.
+
 ### 3 november 2026 — review cloudpilot verwerkt
 - Claude-review van PR #10. Opgelost: één onbereikbare foto blokkeerde de hele collectie (foto's worden nu in één batch getekend; een stuk zonder bereikbare foto wordt overgeslagen en staff ziet een melding); elke verversing zette bezoekers terug op de startpagina (weergave, carrouselpositie en scroll blijven nu staan); fotolinks verliepen in een tabblad dat lang op de achtergrond stond (verversen bij terugkeer); validatiefouten bij opslaan geven nu een concrete melding; een niet-beheerder wordt ook op de server uitgelogd.
 - Gecontroleerd met `npm test` (unit- en databasetests) en `npm run test:browser` (Chromium, nagebootste diensten). De verversing bij een zichtbaar geworden tabblad is niet automatisch getest. Geen live Supabase of Gemini gebruikt.

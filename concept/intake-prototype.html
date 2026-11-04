@@ -513,6 +513,7 @@ textarea { min-height: 72px; resize: vertical; }
   // ---------- start ----------
   function off(msg) { sample = null; $('ai-off').textContent = msg; $('ai-off').hidden = false; renderThumbs(); }
   resetItem(); renderThumbs(); step(1);
+/* NIKKI:CLAUDE_SETUP:START */
   if (!(window.claude && window.claude.use)) {
     off('Automatisch invullen werkt alleen als je deze pagina opent via claude.ai, ingelogd met je Claude-account. Nu kun je zelf invullen.');
   } else {
@@ -527,6 +528,8 @@ textarea { min-height: 72px; resize: vertical; }
       }, function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
     }).catch(function () { off('Automatisch invullen kon niet starten. Vernieuw de pagina of vul zelf in.'); });
   }
+/* NIKKI:CLAUDE_SETUP:END */
+/* NIKKI:INTAKE_EXTENSION */
 })();
 </script>
 

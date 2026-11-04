@@ -1,28 +1,31 @@
 import {readFile,writeFile} from 'node:fs/promises';
 const read=p=>readFile(new URL('../'+p,import.meta.url),'utf8');
-const inject=(html,js)=>html.replace(/\}\)\(\);\s*<\/script>/,js+'\n})();\n</script>');
+import {replaceExactly,replaceRegion,injectAt} from './build-anchors.mjs';
+const patchShop=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'concept/site-skeleton.html',count});
+const patchIntake=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'concept/intake-prototype.html',count});
 let shop=await read('concept/site-skeleton.html');
 // Escape editable strings at markup boundaries, while preserving raw data for textContent.
-shop=shop.replaceAll("+ p.title +", "+ escapeAttribute(p.title) +")
- .replaceAll("+ t.key +", "+ escapeAttribute(t.key) +")
- .replaceAll("+ t.value +", "+ escapeAttribute(t.value) +")
- .replaceAll("€ [PRICE]</span>", "' + demoPrice(p) + '</span>")
- .replace("' · € [PRICE]</a>'", "' · ' + demoPrice(p) + '</a>'");
-shop=shop.replace("document.querySelectorAll('[data-like-tag=\"' + key + '\"]')", "Array.from(document.querySelectorAll('[data-like-tag]')).filter(b=>b.dataset.likeTag===key)");
-shop=shop.replace("    $('p-title').textContent = p.title;", "    $('p-title').textContent = p.title; $('p-price').textContent=demoPrice(p); $('p-description').textContent=p.description||'Voorbeeldbeschrijving'; $('p-details').textContent=(p.details||[]).join(', ');");
-shop=shop.replace('<div class="measure" id="p-measure">','<p id="p-description"></p><p id="p-details"></p><div class="measure" id="p-measure">');
-shop=shop.replace("    $('gal-track').innerHTML =", "    if(p.images) shots=p.images.map(i=>'<img class=\"photo\" src=\"'+escapeAttribute(i.src)+'\" alt=\"'+escapeAttribute(i.role||'Foto')+'\">');\n    $('gal-track').innerHTML =");
+shop=patchShop(shop,"+ p.title +", "+ escapeAttribute(p.title) +",6);
+shop=patchShop(shop,"+ t.key +", "+ escapeAttribute(t.key) +");
+shop=patchShop(shop,"+ t.value +", "+ escapeAttribute(t.value) +",2);
+shop=patchShop(shop,"€ [PRICE]</span>", "' + demoPrice(p) + '</span>",2);
+shop=patchShop(shop,"' · € [PRICE]</a>'", "' · ' + demoPrice(p) + '</a>'");
+shop=patchShop(shop,"document.querySelectorAll('[data-like-tag=\"' + key + '\"]')", "Array.from(document.querySelectorAll('[data-like-tag]')).filter(b=>b.dataset.likeTag===key)");
+shop=patchShop(shop,"    $('p-title').textContent = p.title;", "    $('p-title').textContent = p.title; $('p-price').textContent=demoPrice(p); $('p-description').textContent=p.description||'Voorbeeldbeschrijving'; $('p-details').textContent=(p.details||[]).join(', ');");
+shop=patchShop(shop,'<div class="measure" id="p-measure">','<p id="p-description"></p><p id="p-details"></p><div class="measure" id="p-measure">');
+shop=patchShop(shop,"    $('gal-track').innerHTML =", "    if(p.images) shots=p.images.map(i=>'<img class=\"photo\" src=\"'+escapeAttribute(i.src)+'\" alt=\"'+escapeAttribute(i.role||'Foto')+'\">');\n    $('gal-track').innerHTML =");
 // Do not show a fabricated defect on newly entered garments.
-shop=shop.replace('<details><summary>Staat', '<details id="condition-example"><summary>Staat');
-shop=shop.replace("    var p = byId(current);", "    var p = byId(current); if($('condition-example')) $('condition-example').hidden=!!p.demoKey;");
-shop=shop.replace("  function likesOf(id) { return", "  function likesOf(id) { if(byId(id).demoKey) return liked[id]?1:0; return");
-shop=shop.replace('.photo-caption {', '.photo-caption { pointer-events:none;');
-shop=shop.replace("    var ph = PHOTOS[p.id];", "    var ph = PHOTOS[p.id]; if(p.demoKey && ph) return '<img class=\"photo\" src=\"'+escapeAttribute(ph.src)+'\" alt=\"'+escapeAttribute(p.title)+'\">';");
-shop=inject(shop,await read('demo/store-bridge.js'));
+shop=patchShop(shop,'<details><summary>Staat', '<details id="condition-example"><summary>Staat');
+shop=patchShop(shop,"    var p = byId(current);", "    var p = byId(current); if($('condition-example')) $('condition-example').hidden=!!p.demoKey;");
+shop=patchShop(shop,"  function likesOf(id) { return", "  function likesOf(id) { if(byId(id).demoKey) return liked[id]?1:0; return");
+shop=patchShop(shop,'.photo-caption {', '.photo-caption { pointer-events:none;');
+shop=patchShop(shop,"    var ph = PHOTOS[p.id];", "    var ph = PHOTOS[p.id]; if(p.demoKey && ph) return '<img class=\"photo\" src=\"'+escapeAttribute(ph.src)+'\" alt=\"'+escapeAttribute(p.title)+'\">';");
+shop=injectAt(shop,'STORE_EXTENSION',await read('demo/store-bridge.js'),'concept/site-skeleton.html');
 let intake=await read('concept/intake-prototype.html');
-intake=intake.replace('Je kledingstuk wordt niet bewaard of naar de winkel gestuurd.', 'Na jouw controle kun je het stuk in de proefwinkel bekijken.');
-intake=intake.replace(/  if \(!\(window.claude[\s\S]*?\n\}\)\(\);/, "  off('Vul je stuk zelf in. Automatische fotoanalyse is in deze proef niet aangesloten.');\n})();");
-intake=inject(intake,await read('demo/intake-bridge.js'));
+intake=patchIntake(intake,'Je kledingstuk wordt niet bewaard of naar de winkel gestuurd.', 'Na jouw controle kun je het stuk in de proefwinkel bekijken.');
+intake=replaceRegion(intake,'CLAUDE_SETUP',"  off('Vul je stuk zelf in. Automatische fotoanalyse is in deze proef niet aangesloten.');",'concept/intake-prototype.html');
+intake=injectAt(intake,'INTAKE_EXTENSION',await read('demo/intake-bridge.js'),'concept/intake-prototype.html');
+export {shop,intake};
 const json=s=>JSON.stringify(s).replace(/</g,'\\u003c');
 const result=`<!doctype html><html lang="nl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nikki — boetiek en invoer</title><style>
 *{box-sizing:border-box}body{margin:0;font:15px/1.4 system-ui;background:#faf4ed;color:#39262c}header{padding:10px 16px;border-bottom:1px solid #cbb;display:flex;flex-wrap:wrap;gap:8px;align-items:center}button{font:inherit;padding:10px 14px;cursor:pointer;border:1px solid #713d50;border-radius:8px;color:#713d50;background:white}button[aria-pressed=true]{background:#713d50;color:white}p{margin:6px 16px}iframe{width:100%;height:calc(100dvh - 150px);border:0;min-height:480px}[hidden]{display:none!important}#status{font-size:13px}#count{margin-left:auto}</style>

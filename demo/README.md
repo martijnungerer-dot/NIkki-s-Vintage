@@ -31,3 +31,11 @@ Getest in Chromium: foto-upload → handmatige checklist → carrousel → produ
 Gemini Canvas zelf is niet getest. De uitvoeromgeving moet scripts, srcdoc-frames, bestandskeuze en downloads ondersteunen. Als Canvas onderdelen blokkeert of je Gemini-limiet bereikt is, werkt het HTML-bestand zelfstandig in een gewone browser. Voor AI-fotovoorstellen is later een afzonderlijke gecontroleerde integratie nodig.
 
 Testcommando met Playwright geïnstalleerd: `CHROMIUM_PATH=/usr/bin/chromium node tests/connected-demo.cjs`. Pas het browserpad aan waar nodig.
+
+## Bron aanpassen in Gemini
+
+Behoud de `/* NIKKI:... */`-markeringen in de bron-HTML en brugbestanden. Ze markeren vaste invoegpunten binnen de JavaScript-functies; witruimte eromheen mag veranderen. De fototransfer en Claude-initialisatie hebben een START/END-paar. De cloudbuild gebruikt de bronweergaven van de demobuild rechtstreeks, niet de gegenereerde HTML als invoer.
+
+Andere aanpassingen gebruiken nog letterlijke ankers met een expliciet verwacht aantal treffers. Een wijziging in zo'n fragment stopt de build met bestandsnaam, anker en verwacht/gevonden aantal. Herstel het anker of pas de integratie bewust aan en draai de tests. Dit is nog geen volledige AST-gebaseerde compiler: willekeurige Gemini-herstructurering wordt niet automatisch ondersteund. Het voorkomt wel dat bijvoorbeeld tekstescaping stil wegvalt.
+
+Voer `npm run build`, `npm test`, `npm run test:browser` en `node tests/connected-demo.cjs` uit na bronwijzigingen. Gebruik zo nodig `CHROMIUM_PATH` voor de geïnstalleerde browser. De gegenereerde HTML/TXT worden opnieuw opgebouwd; bewerk de bronbestanden.

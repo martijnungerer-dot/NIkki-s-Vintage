@@ -27,3 +27,5 @@ window.NikkiStore.exportSource = function(){
  return '<!doctype html>\n'+doc.documentElement.outerHTML;
 };
 $('save-photos').addEventListener('click',event=>{event.stopImmediatePropagation();window.parent.document.getElementById('download').click();},true);
+
+/* NIKKI:CLOUD_STORE_EXTENSION */

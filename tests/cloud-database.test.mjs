@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile,readdir} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
 const staff='11111111-1111-4111-8111-111111111111', outsider='22222222-2222-4222-8222-222222222222', id='33333333-3333-4333-8333-333333333333';
 const photo=id+'/'+ 'a'.repeat(64)+'.jpg';
@@ -13,12 +13,20 @@ test('actual PostgreSQL migration: RLS, photos, conflicts, sold preservation, al
       grant usage on schema public,auth to anon,authenticated,service_role;
       create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
       create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text,primary key(bucket_id,name));alter table storage.objects enable row level security;
-      grant usage on schema storage to anon,authenticated;grant select,insert on storage.objects to anon,authenticated;`);
-    await db.exec(await readFile(new URL('../supabase/migrations/202611030001_catalog.sql',import.meta.url),'utf8'));
+      grant usage on schema storage to anon,authenticated;grant select,insert on storage.objects to anon,authenticated;
+      -- Existing hosted projects grant privileges directly as well as through PUBLIC.
+      alter default privileges in schema public grant execute on functions to anon,authenticated,service_role;
+      alter default privileges in schema public grant all on tables to anon,authenticated,service_role;`);
+    const migrations=new URL('../supabase/migrations/',import.meta.url);
+    for(const file of (await readdir(migrations)).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile(new URL(file,migrations),'utf8'));
+    for(const fn of ['require_staff()','save_garment(uuid,jsonb,integer)','mark_garment_sold(uuid,integer)']) {
+      assert.equal((await db.query("select has_function_privilege('anon',$1,'EXECUTE') as allowed",['public.'+fn])).rows[0].allowed,false);
+      assert.equal((await db.query("select has_function_privilege('authenticated',$1,'EXECUTE') as allowed",['public.'+fn])).rows[0].allowed,true);
+    }
     await db.query('insert into auth.users values($1),($2)',[staff,outsider]);await db.query('insert into public.staff values($1)',[staff]);
     async function as(role,user,fn){await db.exec('set role '+role);await db.query("select set_config('request.jwt.claim.sub',$1,false)",[user||'']);try{return await fn();}finally{await db.exec('reset role');}}
     const save=(data=product,version=0)=>db.query('select public.save_garment($1,$2,$3) as item',[id,data,version]);
-    await as('anon',null,async()=>{assert.equal((await db.query('select * from public.staff')).rows.length,0);await assert.rejects(save);});
+    await as('anon',null,async()=>{assert.equal((await db.query('select * from public.staff')).rows.length,0);await assert.rejects(save,/permission denied/);await assert.rejects(()=>db.query('select * from public.analysis_usage'),/permission denied/);});
     await as('authenticated',outsider,async()=>{await assert.rejects(save,/STAFF_REQUIRED/);await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',photo]));});
     await as('authenticated',staff,async()=>{
       await assert.rejects(save,/PHOTO_NOT_UPLOADED/);

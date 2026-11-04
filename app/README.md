@@ -13,7 +13,7 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 | `intake-extension.js` | Bestaande checklist hergebruiken, opgeslagen stuk openen |
 | `store-extension.js` | Bestaande carrousel vullen met de gedeelde collectie |
 | `config.js` | Alleen publieke Supabase-projectgegevens |
-| `../supabase/migrations/202611030001_catalog.sql` | Datacontract, rechten, gecontroleerde mutaties, daglimieten |
+| `../supabase/migrations/` | Datacontract, gecontroleerde mutaties, daglimieten en expliciete toegangsrechten |
 | `../supabase/functions/analyse/handler.mjs` | Auth-controle, aanvraaggrenzen, Gemini-aanroep en resultaatfilter |
 
 `npm run build` herbouwt eerst de zelfstandige demo en leidt daarvan de twee bestaande schermen af. De bestaande bron-HTML blijft voorlopig groot; de nieuwe functies zijn losse modules. Integratieankers worden gecontroleerd en de browserproef doorloopt de daadwerkelijke schermen. De uitvoer staat in de genegeerde map `dist/cloud`. Er is geen bundler of runtime-CDN afhankelijkheid.

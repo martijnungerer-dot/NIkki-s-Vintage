@@ -6,9 +6,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 - Fase: P0 afgerond; P1 (productkeuzes en proefinvoer) en concept-brainstorm lopen.
 - Airtable (`appcR1TGKaoc4XAU4`): 0 records in Garments op 1 november 2026.
-- Webshop: nog geen winkelplatform of checkout. Wel een statisch skelet in `concept/` en een cloudpilot (Supabase + Gemini) in `app/` en `supabase/`, lokaal getest met nagebootste diensten; nog niet live verbonden.
+- Webshop: cloudpilot gepubliceerd op Cloudflare Workers; nog geen winkelplatform of checkout. Supabase-tabellen en privéfoto-opslag zijn ingericht en database-rechten live gecontroleerd. Websiteverbinding staat klaar in code; login en volledige invoerroute wachten op een beheerder en deployment. Gemini is nog niet aangesloten.
 
 ## Logboek
+
+### 4 november 2026 — Supabase-pilot ingericht
+- Bestaand project `naxjrskfdedwvoeltigs`: catalogus, staff, analysequota en privébucket aangemaakt; 0 stukken en 0 gebruikers bij controle. Alleen project-URL en bestaande publishable key naar de websiteconfiguratie.
+- Supabase gaf standaard rechtstreekse functieaanroeprechten aan anon. Aanvullende migratie trekt die in; de bestaande staffcontrole blijft staan. Live SQL-proeven blokkeren anonieme wijzigingen en RPC-aanroepen en weigeren authenticated zonder staff. Alle drie tabellen hebben RLS; bucket is privé, maximaal 2 MB per JPG/PNG/WebP.
+- Migratiebestandsnamen volgen de werkelijke remote registraties `20261104193047` en `20261104193519`. Lokale tests simuleren nu ook de standaard Supabase-grants. Build, unit-/databasetests, browsertests en projectcheck slagen; echte Auth-login, Storage-upload en de volledige invoerroute zijn nog niet getest. Geen Gemini-aanroep gedaan.
 
 ### 4 november 2026 — cloudopmaak voor desktop en lege collectie
 - Vanaf main 52d5bcd: begrensde desktopcarrousel, schermvullend winkelvenster, stijlafhankelijke bediening en een verzorgde lege-collectieweergave zonder losse pijlen. Foto's ontbreken nog in de repository; geen voorbeeldvoorraad, Supabase-inrichting of live publicatie toegevoegd.

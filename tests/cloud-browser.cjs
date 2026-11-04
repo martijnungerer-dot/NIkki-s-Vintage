@@ -28,7 +28,7 @@ async function context(){
   if(u.pathname==='/rest/v1/garments')return json([...db.values()].filter(row=>auth||row.status==='published'));
   if(u.pathname==='/storage/v1/object/sign/garment-photos'&&req.method()==='POST'){
    signBatches++;
-   return json(req.postDataJSON().paths.map(name=>photos.has(name)?{error:null,path:name,signedURL:'/object/sign/garment-photos/'+name+'?token=test'}:{error:'Either the object does not exist or you do not have access to it',path:name,signedURL:null}));
+   return json(req.postDataJSON().paths.map(name=>photos.has(name)?{error:null,path:name,signedURL:'/object/sign/garment-photos/'+name+'?token=test-'+signBatches}:{error:'Either the object does not exist or you do not have access to it',path:name,signedURL:null}));
   }
   if(u.pathname.startsWith('/storage/v1/object/sign/garment-photos/')){
    const name=u.pathname.split('/garment-photos/')[1];
@@ -61,6 +61,21 @@ const shop=()=>p.frames().find(f=>f.name()==='shop');const intake=()=>p.frames()
 assert.equal(await shop().locator('#hero-track .slide').count(),0);
 await p.locator('[data-screen=manage]').click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login button').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
 const png=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;c.getContext('2d').fillRect(0,0,20,20);return c.toDataURL().split(',')[1];});
+// Exercise the real browser encoder with a JPEG containing synthetic EXIF metadata.
+const jpeg=Buffer.from(await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;return c.toDataURL('image/jpeg').split(',')[1];}),'base64');
+const marker=Buffer.from('NIKKI-SYNTHETIC-PRIVATE-METADATA\0');
+const tiff=Buffer.alloc(26);tiff.write('II');tiff.writeUInt16LE(42,2);tiff.writeUInt32LE(8,4);
+tiff.writeUInt16LE(1,8);tiff.writeUInt16LE(0x010e,10);tiff.writeUInt16LE(2,12);tiff.writeUInt32LE(marker.length,14);tiff.writeUInt32LE(26,18);
+const exif=Buffer.concat([Buffer.from('Exif\0\0'),tiff,marker]);const app1=Buffer.from([0xff,0xe1,0,0]);app1.writeUInt16BE(exif.length+2,2);
+const original=Buffer.concat([jpeg.subarray(0,2),app1,exif,jpeg.subarray(2)]);assert.ok(original.includes(marker));
+const cleaned=await p.evaluate(async bytes=>{
+ const {prepareImage}=await import('/images.js');const {transferPhotos}=await import('/photo-transfer.js');
+ const photo={file:new File([Uint8Array.from(bytes)],'original.jpg',{type:'image/jpeg'})};
+ const [result]=await transferPhotos([photo],photo,{prepareImage});
+ return {src:result.src,main:result.main};
+},[...original]);
+assert.ok(cleaned.src.startsWith('data:image/jpeg;base64,'));assert.equal(cleaned.main,true);
+const encoded=Buffer.from(cleaned.src.split(',')[1],'base64');assert.ok(!encoded.includes(marker));assert.ok(!encoded.includes(Buffer.from('Exif\0\0')));assert.notDeepEqual(encoded,original);
 const f=intake();
 await f.locator('#gallery').setInputFiles({name:'jas.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
 await f.locator('#analyse').click();await f.locator('#step-review').waitFor({state:'visible'});assert.equal(analyses,1);
@@ -92,6 +107,27 @@ await shop().evaluate(()=>{location.hash='browse';});await p.locator('#reload').
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
 assert.equal(await shop().evaluate(()=>location.hash),'#browse');await shop().evaluate(()=>{location.hash='home';});
 const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
+// Product-photo position survives renewal, including an old tab becoming visible again.
+const row=db.get(originalKey),savedImages=row.data.images;
+const detailPath=originalKey+'/'+'c'.repeat(64)+'.jpg';photos.set(detailPath,photos.get(savedImages[0].path));
+row.data.images=[...savedImages,{path:detailPath,role:'Detail',main:false}];
+await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
+await shop().locator('#hero-track [data-open]').first().click();
+await shop().locator('#gal-next').click();
+const secondPhoto=()=>shop().waitForFunction(()=>{const t=document.getElementById('gal-track');return Math.abs(t.scrollLeft-t.clientWidth)<1&&document.querySelector('#gal-dots span:nth-child(2).on');});
+await secondPhoto();
+let nextBatch=signBatches+1;await p.locator('#reload').click();
+await shop().waitForFunction(n=>document.querySelector('#gal-track img')?.src.endsWith('token=test-'+n),nextBatch);
+await secondPhoto();assert.equal(await shop().evaluate(()=>location.hash),'#product');
+await p.clock.setFixedTime(new Date(Date.now()+41*60*1000));
+const beforeHidden=signBatches;
+await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+assert.equal(signBatches,beforeHidden);
+await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+await shop().waitForFunction(n=>document.querySelector('#gal-track img')?.src.endsWith('token=test-'+n),beforeHidden+1);
+await secondPhoto();assert.equal(await shop().evaluate(()=>location.hash),'#product');
+await p.evaluate(()=>{document.dispatchEvent(new Event('visibilitychange'));delete document.hidden;});assert.equal(signBatches,beforeHidden+1);
+await p.clock.setFixedTime(new Date());row.data.images=savedImages;photos.delete(detailPath);
 await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#hero-track .slide').count(),1);
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),1);
 await p.locator('[data-screen=manage]').click();
@@ -105,9 +141,16 @@ await p.waitForFunction(()=>document.getElementById('status').textContent==='Als
 assert.equal(await p.locator('#items li > span').innerText(),title+' — Verkocht');
 assert.equal(await shop().locator('#hero-track .slide').count(),0);
 await p.getByRole('button',{name:'Bewerken',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
+// Once opened, changing text must not decode a saved image or read it as a data URL again.
+await p.evaluate(()=>{
+ window.photoWork={decode:0,read:0};
+ const decode=window.createImageBitmap;window.createImageBitmap=function(...args){window.photoWork.decode++;return decode.apply(this,args);};
+ const read=FileReader.prototype.readAsDataURL;FileReader.prototype.readAsDataURL=function(...args){window.photoWork.read++;return read.apply(this,args);};
+});
 const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.locator('#t-titel').fill('Gewijzigde verkochte jas');await edit.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
+assert.deepEqual(await p.evaluate(()=>window.photoWork),{decode:0,read:0});
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
 await v.locator('#reload').click();await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),0);
-assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view, analysis adapter, photos, failed save/retry, durable reload, guest catalog, five styles, edit sold without resurrection. Remote services mocked.');
+assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, five styles, edit sold without resurrection. Remote services mocked.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

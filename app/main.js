@@ -1,6 +1,7 @@
 import {config} from './config.js';
 import {Api} from './api.js';
 import {prepareImage} from './images.js';
+import {transferPhotos} from './photo-transfer.js';
 import {shopSource,intakeSource} from './views.js';
 const api=new Api(config);
 const $=id=>document.getElementById(id);
@@ -60,6 +61,7 @@ async function action(task){
 }
 window.NikkiApp={
   prepareImage,
+  preparePhotos:(photos,primary)=>transferPhotos(photos,primary,{prepareImage}),
   async analyse(files,signal){
     if(!staff)throw Error('Log eerst in.');
     try{return await api.analyse(files,signal);}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}

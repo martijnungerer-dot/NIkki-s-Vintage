@@ -4,7 +4,7 @@
   "scripts": {
     "build": "node scripts/build-cloud.mjs",
     "serve": "node scripts/serve-cloud.mjs",
-    "test": "node --test tests/cloud-server.test.mjs tests/cloud-database.test.mjs tests/cloud-api.test.mjs",
+    "test": "node --test tests/cloud-server.test.mjs tests/cloud-database.test.mjs tests/cloud-api.test.mjs tests/build-anchors.test.mjs",
     "test:browser": "node tests/cloud-browser.cjs",
     "check": "node scripts/check-project.mjs"
   },

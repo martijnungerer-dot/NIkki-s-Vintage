@@ -6,49 +6,55 @@ for(const view of ['home','browse']) {
   document.querySelector('[data-view-panel="'+view+'"]').prepend(empty);
 }
 document.querySelector('footer .wrap').firstElementChild.textContent='Nikki’s Boetiek · proefversie';
-// Keep all photographs reachable from the arrival carousel.
-const photoPositions = new Map();
+// Piece navigation and photo selection have separate controls.
+let visiblePhotoPiece = null, selectedPhoto = 0;
 const thumbs = document.createElement('div');
 thumbs.id = 'hero-thumbnails'; thumbs.className = 'photo-thumbnails';
+thumbs.setAttribute('role', 'group');
 thumbs.setAttribute('aria-label', 'Foto’s van dit kledingstuk');
-$('hero-dots').after(thumbs);
+const pieceCounter = document.createElement('span');
+pieceCounter.id = 'hero-piece-count';
+$('hero-track').parentElement.append(thumbs, pieceCounter);
 function visiblePiece() {
   const track = $('hero-track');
   const slide = track.children[Math.round(track.scrollLeft / (track.clientWidth || 1))];
   return byId(Number(slide?.querySelector('[data-press]')?.dataset.press));
 }
-function paintPhotos() {
+function paintPhotos(rebuild = false) {
   const p = visiblePiece();
-  thumbs.replaceChildren();
-  if(!p?.images?.length) return;
-  const selected = Math.min(photoPositions.get(p.id) || 0, p.images.length - 1);
-  photoPositions.set(p.id, selected);
-  const image = $('hero-track').querySelector('[data-press="' + p.id + '"] img.photo');
-  if(image) { image.src = p.images[selected].src; image.alt = p.images[selected].role || p.title; }
-  p.images.forEach((photo, index) => {
-    const button = document.createElement('button'); button.type = 'button';
-    button.setAttribute('aria-label', 'Foto ' + (index + 1) + ': ' + (photo.role || p.title));
-    button.setAttribute('aria-pressed', String(index === selected));
-    const img = document.createElement('img'); img.src = photo.src; img.alt = ''; button.append(img);
-    button.addEventListener('click', () => { photoPositions.set(p.id, index); paintPhotos(); });
-    thumbs.append(button);
-  });
+  const changed = visiblePhotoPiece !== p?.id;
+  const multiple = PIECES.length > 1;
+  $('hero-prev').hidden = $('hero-next').hidden = !multiple;
+  pieceCounter.hidden = !multiple;
+  pieceCounter.textContent = p ? 'Stuk ' + (PIECES.indexOf(p) + 1) + ' van ' + PIECES.length : '';
+  if(changed) {
+    visiblePhotoPiece = p?.id;
+    selectedPhoto = Math.max(0, p?.images?.findIndex(photo => photo.main) ?? 0);
+  }
+  if(!p?.images?.length) { thumbs.replaceChildren(); return; }
+  selectedPhoto = Math.min(selectedPhoto, p.images.length - 1);
+  const photo = p.images[selectedPhoto];
+  const picture = $('hero-track').querySelector('[data-press="' + p.id + '"]');
+  for(const image of picture.querySelectorAll('img.photo, img.photo-bg')) {
+    if(image.getAttribute('src') !== photo.src) image.src = photo.src;
+    if(image.classList.contains('photo')) image.alt = photo.role || p.title;
+  }
+  if(changed || rebuild) {
+    thumbs.replaceChildren();
+    p.images.forEach((photo, index) => {
+      const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('aria-label', 'Foto ' + (index + 1) + ': ' + (photo.role || p.title));
+      const img = document.createElement('img'); img.src = photo.src; img.alt = ''; button.append(img);
+      button.addEventListener('click', () => { selectedPhoto = index; paintPhotos(); });
+      thumbs.append(button);
+    });
+    thumbs.scrollTop = thumbs.scrollLeft = 0;
+  }
+  Array.from(thumbs.children).forEach((button, index) => button.setAttribute('aria-pressed', String(index === selectedPhoto)));
 }
 const originalRenderHero = renderHero;
-renderHero = function() { originalRenderHero(); paintPhotos(); };
-$('hero-track').addEventListener('scroll', () => requestAnimationFrame(paintPhotos), {passive:true});
-for(const [id, direction] of [['hero-prev', -1], ['hero-next', 1]]) {
-  $(id).addEventListener('click', event => {
-    const p = visiblePiece();
-    if(!p?.images?.length) return;
-    const selected = photoPositions.get(p.id) || 0;
-    const next = selected + direction;
-    if(next >= 0 && next < p.images.length || PIECES.length === 1) {
-      event.stopImmediatePropagation();
-      photoPositions.set(p.id, (next + p.images.length) % p.images.length); paintPhotos();
-    }
-  }, true);
-}
+renderHero = function() { originalRenderHero(); paintPhotos(true); };
+$('hero-track').addEventListener('scroll', () => requestAnimationFrame(() => paintPhotos()), {passive:true});
 window.NikkiStore.replace = function(records) {
   document.documentElement.dataset.catalogEmpty=String(records.length===0);
   const track = $('hero-track');

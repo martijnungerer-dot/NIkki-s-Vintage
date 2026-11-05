@@ -125,6 +125,50 @@ const row=db.get(originalKey),savedImages=row.data.images;
 const detailPath=originalKey+'/'+'c'.repeat(64)+'.jpg';photos.set(detailPath,photos.get(savedImages[0].path));
 row.data.images=[...savedImages,{path:detailPath,role:'Detail',main:false}];
 await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
+await shop().locator('#hero-thumbnails button').nth(1).waitFor();
+assert.equal(await shop().locator('#hero-thumbnails button').count(),2);
+// A single garment has photo choices but no garment arrows.
+assert.equal(await shop().locator('#hero-next').isVisible(),false);
+assert.equal(await shop().locator('#hero-prev').isVisible(),false);
+await shop().locator('#hero-thumbnails button').nth(1).click();
+assert.equal(await shop().locator('#hero-thumbnails button').nth(1).getAttribute('aria-pressed'),'true');
+assert.ok((await shop().locator('#hero-track img.photo').getAttribute('src')).includes(detailPath));
+// Keyboard selection retains focus on the thumbnail.
+await shop().locator('#hero-thumbnails button').first().focus();
+await p.keyboard.press('Enter');
+assert.equal(await shop().locator('#hero-thumbnails button').first().getAttribute('aria-pressed'),'true');
+assert.equal(await shop().locator('#hero-thumbnails button').first().evaluate(el=>el===document.activeElement),true);
+// A second garment has its main photo second in the stored list.
+db.set(extraId,{...structuredClone(row),id:extraId,display_id:2,data:{...structuredClone(row.data),title:'Ander stuk',images:row.data.images.map((image,index)=>({...image,main:index===1}))}});
+await p.locator('#reload').click();
+await shop().waitForFunction(()=>document.querySelectorAll('#hero-track .slide').length===2);
+await shop().locator('#hero-thumbnails button').nth(1).click();
+await shop().locator('#hero-next').click();
+await shop().waitForFunction(()=>{const t=document.getElementById('hero-track');return Math.abs(t.scrollLeft-t.clientWidth)<1;});
+assert.equal(await shop().locator('#hero-thumbnails button').nth(1).getAttribute('aria-pressed'),'true');
+assert.equal(await shop().locator('#hero-piece-count').innerText(),'Stuk 2 van 2');
+await shop().locator('#hero-prev').click();
+await shop().waitForFunction(()=>document.getElementById('hero-track').scrollLeft===0);
+assert.equal(await shop().locator('#hero-thumbnails button').first().getAttribute('aria-pressed'),'true');
+assert.ok((await shop().locator('#hero-track img.photo').first().getAttribute('src')).includes(savedImages[0].path));
+// Phone thumbnails sit to the right; desktop thumbnails sit below. Arrows stay inside the photo.
+for(const width of [320,390,1440]) {
+ await p.setViewportSize({width,height:900});
+ const track=await shop().locator('#hero-track').boundingBox(), strip=await shop().locator('#hero-thumbnails').boundingBox();
+ if(width<=600) { assert.ok(strip.x>=track.x+track.width); assert.ok(Math.abs(strip.y-track.y)<2); }
+ else assert.ok(strip.y>=track.y+track.height);
+ for(const id of ['hero-prev','hero-next']) {
+  const arrow=await shop().locator('#'+id).boundingBox();
+  assert.ok(arrow.width>=44&&arrow.height>=44);
+  assert.ok(arrow.x>=track.x&&arrow.x+arrow.width<=track.x+track.width+1);
+  assert.ok(arrow.y>track.y+track.height/2&&arrow.y+arrow.height<=track.y+track.height);
+ }
+ assert.ok(await shop().evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+}
+await p.setViewportSize({width:390,height:844});
+await p.screenshot({path:'/tmp/nikki-carousel-mobile.png'});
+db.delete(extraId);await p.locator('#reload').click();
+await shop().waitForFunction(()=>document.querySelectorAll('#hero-track .slide').length===1);
 await shop().locator('#hero-track [data-open]').first().click();
 await shop().locator('#gal-next').click();
 const secondPhoto=()=>shop().waitForFunction(()=>{const t=document.getElementById('gal-track');return Math.abs(t.scrollLeft-t.clientWidth)<1&&document.querySelector('#gal-dots span:nth-child(2).on');});

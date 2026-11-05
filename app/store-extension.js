@@ -6,6 +6,55 @@ for(const view of ['home','browse']) {
   document.querySelector('[data-view-panel="'+view+'"]').prepend(empty);
 }
 document.querySelector('footer .wrap').firstElementChild.textContent='Nikki’s Boetiek · proefversie';
+// Piece navigation and photo selection have separate controls.
+let visiblePhotoPiece = null, selectedPhoto = 0;
+const thumbs = document.createElement('div');
+thumbs.id = 'hero-thumbnails'; thumbs.className = 'photo-thumbnails';
+thumbs.setAttribute('role', 'group');
+thumbs.setAttribute('aria-label', 'Foto’s van dit kledingstuk');
+const pieceCounter = document.createElement('span');
+pieceCounter.id = 'hero-piece-count';
+$('hero-track').parentElement.append(thumbs, pieceCounter);
+function visiblePiece() {
+  const track = $('hero-track');
+  const slide = track.children[Math.round(track.scrollLeft / (track.clientWidth || 1))];
+  return byId(Number(slide?.querySelector('[data-press]')?.dataset.press));
+}
+function paintPhotos(rebuild = false) {
+  const p = visiblePiece();
+  const changed = visiblePhotoPiece !== p?.id;
+  const multiple = PIECES.length > 1;
+  $('hero-prev').hidden = $('hero-next').hidden = !multiple;
+  pieceCounter.hidden = !multiple;
+  pieceCounter.textContent = p ? 'Stuk ' + (PIECES.indexOf(p) + 1) + ' van ' + PIECES.length : '';
+  if(changed) {
+    visiblePhotoPiece = p?.id;
+    selectedPhoto = Math.max(0, p?.images?.findIndex(photo => photo.main) ?? 0);
+  }
+  if(!p?.images?.length) { thumbs.replaceChildren(); return; }
+  selectedPhoto = Math.min(selectedPhoto, p.images.length - 1);
+  const photo = p.images[selectedPhoto];
+  const picture = $('hero-track').querySelector('[data-press="' + p.id + '"]');
+  for(const image of picture.querySelectorAll('img.photo, img.photo-bg')) {
+    if(image.getAttribute('src') !== photo.src) image.src = photo.src;
+    if(image.classList.contains('photo')) image.alt = photo.role || p.title;
+  }
+  if(changed || rebuild) {
+    thumbs.replaceChildren();
+    p.images.forEach((photo, index) => {
+      const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('aria-label', 'Foto ' + (index + 1) + ': ' + (photo.role || p.title));
+      const img = document.createElement('img'); img.src = photo.src; img.alt = ''; button.append(img);
+      button.addEventListener('click', () => { selectedPhoto = index; paintPhotos(); });
+      thumbs.append(button);
+    });
+    thumbs.scrollTop = thumbs.scrollLeft = 0;
+  }
+  Array.from(thumbs.children).forEach((button, index) => button.setAttribute('aria-pressed', String(index === selectedPhoto)));
+}
+const originalRenderHero = renderHero;
+renderHero = function() { originalRenderHero(); paintPhotos(true); };
+$('hero-track').addEventListener('scroll', () => requestAnimationFrame(() => paintPhotos()), {passive:true});
 window.NikkiStore.replace = function(records) {
   document.documentElement.dataset.catalogEmpty=String(records.length===0);
   const track = $('hero-track');
@@ -34,6 +83,7 @@ window.NikkiStore.replace = function(records) {
     } else { location.hash = 'home'; return; }
   }
   if(shownId !== null && exists(shownId)) track.scrollTo({left: PIECES.findIndex(p => p.id === shownId) * track.clientWidth, behavior: 'instant'});
+  paintPhotos();
   window.scrollTo({top: pageY, behavior: 'instant'});
 };
 window.NikkiStore.replace([]);

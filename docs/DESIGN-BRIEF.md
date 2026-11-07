@@ -5,7 +5,7 @@ Datum: 7 november 2026. Status: analyse en ontwerpafspraken; nog geen goedgekeur
 ## Vastgelegd met Martijn
 
 - De frontend krijgt een veel minimalistischere mobiele winkelervaring. Kleding en foto's krijgen de meeste ruimte; de eerdere schetsen bevatten te veel knoppen.
-- Ontdekken is de landingspagina. De bezoeker wordt meegenomen van kledingstuk naar kledingstuk, met een ervaring geïnspireerd op Instagram en rondkijken in een echte boetiek.
+- Ontdekken is de landingspagina. De bezoeker wordt meegenomen van kledingstuk naar kledingstuk, met een ervaring geïnspireerd op Instagram en rondkijken in een echte boetiek. Martijn kiest één kledingstuk per scherm zoals Reels, met linksonder een kleine preview van het volgende kledingstuk. Die preview is geen extra foto van het huidige stuk.
 - Niet direct aan winkelen gerelateerde zaken komen achter het accounticoon, waaronder beheer. Het openen van algemene informatie mag geen beheerderslogin vereisen.
 - Eerst skills beschikbaar maken en projectafspraken vastleggen, daarna het ontwerp samen beoordelen, daarna pas de frontend bouwen. Het totale bereik van de functionele vernieuwing is nog niet definitief afgesproken.
 - Eigen branches en PR's; Martijn beslist over merge en release.
@@ -39,7 +39,7 @@ Bronnen: [app/index.html](../app/index.html), [store-extension.js](../app/store-
 | Navigeren | Tik op compact menu linksonder of rechtsonder | Opent een kort paneel met tekstlabels |
 | Terug naar ontdekken | Sluit details/menu of keer terug vanuit collectie | Zelfde kledingstuk, foto en positie |
 
-Geen definitieve vormgeving of schermhoogte vastgesteld. De eerdere miniaturen en schetsen worden niet automatisch eisen voor deze nieuwe ervaring.
+Eén kledingstuk per scherm is gekozen. Twee nieuwe visuele voorstellen zijn gemaakt: A beeldvullend en B met lichte omlijsting. De keuze tussen die twee staat nog open; het Shop-menu rechtsonder is een voorstel. De eerdere miniaturen en schetsen worden niet automatisch eisen voor deze nieuwe ervaring.
 
 ## Klein winkelmenu
 
@@ -57,7 +57,7 @@ Een verborgen menu bespaart ruimte, maar maakt routes minder zichtbaar en kost e
 
 ## Open vragen — één voor één
 
-1. Verticale beweging: vloeiend scrollen met de volgende kaart gedeeltelijk zichtbaar, of één kledingstuk per scherm zoals Reels? Gevraagd, antwoord nog niet vastgelegd.
+1. Verticale beweging is beantwoord: één kledingstuk per scherm zoals Reels, plus preview van het volgende stuk linksonder. Visuele uitwerking A (beeldvullend) of B (licht omlijst) is nog te kiezen.
 2. Wat betekent Mijn items: alleen favorieten of ook mand/aankopen?
 3. Welke informatie moet permanent zichtbaar zijn bij de foto: alleen naam/prijs of ook maat/beschikbaarheid?
 4. Waar voelt het winkelmenu bereikbaar zonder te storen? Account als aparte ingang of via dit menu?

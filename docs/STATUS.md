@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 7 november 2026 — ontwerpskills en afspraken voor Ontdekken
+- Martijn heeft gekozen voor eerst projectlokale ontwerpskills en vastgelegde werkafspraken, daarna samen het ontwerp beoordelen en pas daarna bouwen. Frontend Design, UI UX Pro Max en Web Design Guidelines opgenomen onder `.agents/skills`, met broncommits en hashes; verwijzingen toegevoegd aan AGENTS.md.
+- [Ontwerpbrief](DESIGN-BRIEF.md) beschrijft de bestaande functies, de minimalistische Instagramachtige richting voor de landingspagina en het voorgestelde compacte winkelmenu. Definitieve scrollbediening, betekenis van Mijn items en functionele scope staan nog open. De huidige pilot heeft geen checkout; een betaalroute vraagt apart werk.
+- Geen applicatiecode of live diensten gewijzigd. De lokale skillzoekfunctie is uitgevoerd; een volledige frontend- of toegankelijkheidsreview hoort bij de latere bouwfase.
+
 ### 5 november 2026 — fotonavigatie op de startpagina hersteld
 - Eigen branch `codex/carousel-photo-navigation`, gebaseerd op gecontroleerde `origin/main` `3050a02455066d623f6f501eb9f60563ded68c33`. De startpijlen bladerden alleen tussen kledingstukken; bij één stuk waren andere opgeslagen foto's daar niet bereikbaar. Na afstemming blijven de pijlen uitsluitend voor kledingstukken. Ze staan onderaan in de foto en verdwijnen bij één stuk. Foto’s kies je via miniaturen: rechts op telefoon, onder de foto op desktop. Een ander kledingstuk begint bij zijn hoofdfoto; de teller vermeldt het kledingstuk.
 - Build, projectcheck, 23 unit-/databasetests en de browserworkflow met systeem-Chromium geslaagd. Browsercontrole dekt beide pijlen tussen stukken, miniatuurselectie met muis en toetsenbord, de hoofdfoto bij wisselen en de plaatsing op 320, 390 en 1440 pixels breed. Externe diensten nagebootst; geen live publicatie of Gemini-analyse uitgevoerd.

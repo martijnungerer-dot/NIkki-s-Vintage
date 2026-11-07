@@ -19,3 +19,12 @@ Lees eerst README.md, docs/ACCESS.md, docs/PLAN.md en relevante onderdelen van d
 
 Controleer vooral dubbelverkoop, herhaald initialiseren van voorraad, lekken van privévelden/secrets, onbetrouwbare materiaalclaims, verborgen veranderingen in meeteenheden en productieacties vanuit previews.
 
+## Frontend vernieuwen: eerst ontwerp, daarna bouw
+
+- Lees vóór ontwerp- of frontendwerk [de ontwerpbrief](docs/DESIGN-BRIEF.md). Ontdekken is de landingspagina: een minimalistische, mobiele winkelbeleving met kleding centraal. De concrete interactiekeuzes in de brief hebben een expliciete status; behandel voorstellen niet als goedgekeurde besluiten.
+- Martijn heeft afgesproken: eerst samen het ontwerp beoordelen, daarna pas de frontend bouwen. Voorbereiding, analyse en schetsen mogen binnen die opdracht doorgaan. Maak vóór implementatie de te beoordelen schermen, bediening en functionele scope concreet. Een goedgekeurde schets is geen toestemming voor automatische merge, release of nieuwe betaalfuncties.
+- Gebruik [Frontend Design](.agents/skills/frontend-design/SKILL.md) voor de visuele richting, [UI UX Pro Max](.agents/skills/ui-ux-pro-max/SKILL.md) als aanvullende mobiele UX-richtlijn en [Web Design Guidelines](.agents/skills/web-design-guidelines/SKILL.md) voor de controle van gebouwde UI. Lees relevante skills bij gebruik; alleen hun naam noemen is geen toepassing.
+- Gebruikerskeuzes en projectafspraken gaan vóór algemene skilladviezen. Een skill autoriseert geen frameworkmigratie, productiewijzigingen of nieuwe functionaliteit. Bestaande gegevens en functies moeten per wijziging expliciet behouden, verplaatst of na akkoord vervangen worden.
+- Stel ontwerpvragen één voor één. Leg antwoorden vast in de ontwerpbrief. De eerdere beeldschetsen zijn richtinggevend, maar de gebruiker vindt ze te druk; kopieer hun knoppen en navigatie niet zonder herbeoordeling.
+- Zie [skillbeheer](.agents/skills/README.md) voor bronversies, lokale aanpassingen en gebruik. Deze bestanden staan in de repository zodat volgende sessies dezelfde basis hebben.
+

@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 9 november 2026 — ontwerp Ontdekken optie B vastgelegd
+- Martijn heeft in het Claude Design-canvas optie B gekozen voor het shopscherm. Overgenomen als zelfstandig bestand `concept/ontdekken-optie-b.html`, met beschrijving in [concept/README.md](../concept/README.md), zodat ChatGPT/Codex verder kan.
+- Sfeerfoto's niet in Git: het bestand toont getekende jassen; lokale foto's kunnen in de genegeerde map `concept/fotos/`. Prijzen, verkooptekst en maten zijn plaatshouders.
+- Gecontroleerd met `node tests/ontdekken-optie-b.cjs` (Chromium, offline, 390 en 320 px). Niet getest op een echte telefoon; de cloudpilot in `app/` is niet aangepast.
+
 ### 5 november 2026 — fotonavigatie op de startpagina hersteld
 - Eigen branch `codex/carousel-photo-navigation`, gebaseerd op gecontroleerde `origin/main` `3050a02455066d623f6f501eb9f60563ded68c33`. De startpijlen bladerden alleen tussen kledingstukken; bij één stuk waren andere opgeslagen foto's daar niet bereikbaar. Na afstemming blijven de pijlen uitsluitend voor kledingstukken. Ze staan onderaan in de foto en verdwijnen bij één stuk. Foto’s kies je via miniaturen: rechts op telefoon, onder de foto op desktop. Een ander kledingstuk begint bij zijn hoofdfoto; de teller vermeldt het kledingstuk.
 - Build, projectcheck, 23 unit-/databasetests en de browserworkflow met systeem-Chromium geslaagd. Browsercontrole dekt beide pijlen tussen stukken, miniatuurselectie met muis en toetsenbord, de hoofdfoto bij wisselen en de plaatsing op 320, 390 en 1440 pixels breed. Externe diensten nagebootst; geen live publicatie of Gemini-analyse uitgevoerd.

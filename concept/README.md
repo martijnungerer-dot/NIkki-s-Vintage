@@ -19,6 +19,20 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 - Minimalistisch en bewust neutraal: kleur, letters en sfeer bepaalt Nikki. Paginateksten in het Nederlands. Gele notities (Nederlands) verschijnen via de knop *Notes*.
 - Er is geen checkout of e-mailverzending. Stijlkeuzes worden lokaal onthouden. Foto’s kunnen in een privé-HTML worden ingesloten via Sfeerfoto’s.
 
+## Ontdekken, optie B (gekozen ontwerp, november 2026)
+
+[ontdekken-optie-b.html](ontdekken-optie-b.html) is het gekozen ontwerp voor het shopscherm, overgenomen uit het Claude Design-canvas. Eén zelfstandig bestand, werkt offline. Dit is het uitgangspunt voor verder werk (ook in ChatGPT/Codex); verander de indeling niet zonder overleg met Martijn.
+
+- **Indeling (van boven naar onder):** merknaam links met accounticoon rechts; grote omlijste foto; daaronder naam en prijs als twee subtiele knoppen van 44 px; onderaan in een zacht eigen vlak het vorige stuk (met terugpijltje), de drie volgende stukken en de menuknop.
+- **Foto:** opzij vegen of de pijltjes in de foto voor andere foto's van hetzelfde stuk; omhoog/omlaag vegen (of scrollen) voor een ander stuk; twee keer tikken om in te zoomen. Hartje en delen staan rechtsonder in de foto, de bolletjes onderin.
+- **Naam:** opent een venster dat uit de knop groeit, met verkooptekst en platte maten (plaatshouders).
+- **Prijs:** één tik legt het stuk in de winkelmand of haalt het eruit. Bevestiging: de knop kleurt donkerder en het mandje achter het bedrag krijgt een vinkje. Geen venster.
+- **Menu:** Collectie, Mijn items, Winkelmand. De winkelmand toont de gekozen stukken met totaal; afrekenen doet nog niets.
+- **Ontwerpregels:** geen tekst over foto's; knoppen minstens 44 px; universele iconen zonder woorden; alles op elk scherm op dezelfde plek; tekst minstens 16 px; geen verzonnen materiaal-, maat- of herkomstclaims.
+- **Stijl:** lichte, warme basis (achtergrond `#FAF6F0`, tekst `#2E2420`, knoppen `#F3ECE3`), lettertype Newsreader met Georgia als terugval. Andere stijlen voor Nikki staan alleen in een privé-artifact.
+- **Foto's:** de sfeerfoto's uit het ontwerp staan niet in Git (beeldrechten, herkenbare personen). Het bestand toont getekende jassen. Eigen foto's kunnen lokaal in `concept/fotos/` (genegeerd door Git) via het veld `foto` in de lijst met stukken.
+- **Controle:** `node tests/ontdekken-optie-b.cjs` (Playwright) op 390 en 320 px, offline.
+
 ## Invoerprototype voor Nikki
 
 [intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met automatische voorstellen gaat. Scherm 1: foto's maken of kiezen in willekeurige volgorde, dan *Verwerken*. Scherm 2: één compacte checklist met het hele pad tot publiceren (Foto's, Wat is het, Bontsoort, Maten, Bijzonderheden, Titel en prijs). Tik aan wat klopt; het voorstel staat al aan. Een keuze die nog niet bestaat typ je via *+ nieuw* en die staat de volgende keer klaar. Daarna *Publiceren (proef)* en zie je welke voorbeeldklanten een mail zouden krijgen.

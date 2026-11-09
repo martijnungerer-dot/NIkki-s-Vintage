@@ -5,12 +5,14 @@ import {transferPhotos} from './photo-transfer.js';
 import {shopSource,intakeSource} from './views.js';
 const api=new Api(config);
 const $=id=>document.getElementById(id);
+document.body.dataset.screen='shop';
 const editVersions=new Map(); let rows=[],staff=false,busy=false,lastRefresh=0,skipped=0;
-const say=message=>{$('status').textContent=message;};
+const say=message=>{$('status').textContent=message;$('shop').contentWindow.NikkiStore?.status(message);};
 function show(screen){
   if(screen==='intake'&&!staff)screen='manage';
+  document.body.dataset.screen=screen;
   for(const name of ['shop','intake','manage'])$(name).hidden=name!==screen;
-  document.querySelectorAll('[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
+  document.querySelectorAll('button[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
 }
 function controls(){ $('login').hidden=staff;$('new').hidden=!staff;$('logout').hidden=!api.session; }
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
@@ -60,6 +62,7 @@ async function action(task){
   try{await task();}catch(error){say(error.message);}finally{busy=false;controls();}
 }
 window.NikkiApp={
+  openAccount:()=>show('manage'),
   prepareImage,
   preparePhotos:(photos,primary)=>transferPhotos(photos,primary,{prepareImage}),
   async analyse(files,signal){
@@ -74,22 +77,20 @@ window.NikkiApp={
     catch{say('Het stuk is opgeslagen. De collectie kon niet worden vernieuwd; probeer Collectie vernieuwen.');}
   }
 };
-document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.screen)));
+document.querySelectorAll('button[data-screen]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.screen)));
 $('reload').addEventListener('click',()=>action(async()=>{await refresh();say(loaded('Collectie vernieuwd.'));}));
 $('login').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
   await api.login($('email').value,$('password').value);$('password').value='';staff=true;controls();await refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
 });});
 $('logout').addEventListener('click',()=>action(async()=>{try{await api.logout();}finally{location.reload();}}));
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
-// Keep the outer controls in the same palette as the selected boutique style.
+// The management shell uses the palette of the chosen storefront.
 const shopRoot=$('shop').contentDocument.documentElement;
 const syncStyle=()=>{
   const style=$('shop').contentWindow.getComputedStyle(shopRoot);
-  for(const name of ['bg','surface','fg','muted','line'])document.documentElement.style.setProperty('--'+name,style.getPropertyValue('--'+name));
+  for(const name of ['bg','fg','muted','line'])document.documentElement.style.setProperty('--'+name,style.getPropertyValue('--'+name));
   document.documentElement.style.colorScheme=style.colorScheme;
 };
-new MutationObserver(syncStyle).observe(shopRoot,{attributes:true,attributeFilter:['data-style','data-theme']});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncStyle);
 syncStyle();
 if(!api.configured()){
   say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.');$('login').querySelector('button').disabled=true;$('reload').disabled=true;

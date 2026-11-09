@@ -1,6 +1,14 @@
 # Architectuurvoorstel
 
-Status: voorstel voor implementatie; alleen Airtable en de documentatiefundering zijn nu ingericht.
+Status: onderstaande commerce-architectuur is een voorstel voor een latere verkoopfase. De huidige cloudpilot gebruikt Supabase; zie [app/README.md](../app/README.md) en [SUPABASE-START.md](SUPABASE-START.md).
+
+## Huidige cloudpilot: winkelweergave
+
+`app/` gebruikt de bestaande Supabase-catalogus, private fotobucket en getekende fotolinks. `main.js` geeft uitsluitend gepubliceerde stukken met bereikbare foto's door aan `NikkiStore.replace()`; de winkel projecteert alleen publieke titel, verkooptekst, prijs, platte maten en fotogegevens. Databasecontract, rechten, invoer en opslag zijn ongewijzigd.
+
+De build leest indeling en CSS rechtstreeks uit `concept/ontdekken-optie-b.html`. `app/store-extension.js` vervangt de voorbeeldgegevens en koppelt dezelfde bediening aan NikkiStore. Naam opent verkooptekst en maten uit de bestaande velden; ontbrekende maten blijven leeg. Prijs wisselt alleen een lokale selectie van stuk-UUID's. Er is geen reservering, voorraadmutatie of checkout. Collectie, Mijn items en Winkelmand blijven plaatshouders; account opent het bestaande beheer.
+
+De browsercontrole vergelijkt app en ontwerpbron op 390, 320 en 280 px. Op smalle schermen blijft de onderste rij minimaal 44 × 44 px, met 6 px tussenruimte en zo nodig twee volgende stukken. Zie [visuele vergelijking en testgrenzen](screenshots/README.md).
 
 ## Gegevensstroom
 

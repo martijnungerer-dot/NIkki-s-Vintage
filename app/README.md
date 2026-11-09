@@ -11,12 +11,17 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 | `api.js` | Sessies, REST-opslag, foto-overdracht en AI-aanroep |
 | `images.js` | Foto verkleinen en metadata uit de upload verwijderen |
 | `intake-extension.js` | Bestaande checklist hergebruiken, opgeslagen stuk openen |
-| `store-extension.js` | Bestaande carrousel vullen met de gedeelde collectie |
+| `store-extension.js` | Optie B bedienen met de publieke NikkiStore-catalogus |
+| `store-layout.css` | Alleen lege catalogus en lange verkooptekst opvangen |
 | `config.js` | Alleen publieke Supabase-projectgegevens |
 | `../supabase/migrations/` | Datacontract, gecontroleerde mutaties, daglimieten en expliciete toegangsrechten |
 | `../supabase/functions/analyse/handler.mjs` | Auth-controle, aanvraaggrenzen, Gemini-aanroep en resultaatfilter |
 
-`npm run build` herbouwt eerst de zelfstandige demo en leidt daarvan de twee bestaande schermen af. De bestaande bron-HTML blijft voorlopig groot; de nieuwe functies zijn losse modules. Integratieankers worden gecontroleerd en de browserproef doorloopt de daadwerkelijke schermen. De uitvoer staat in de genegeerde map `dist/cloud`. Er is geen bundler of runtime-CDN afhankelijkheid.
+`npm run build` herbouwt de zelfstandige demo voor het invoerscherm. Het winkelscherm gebruikt rechtstreeks de HTML en CSS van [Ontdekken, optie B](../concept/ontdekken-optie-b.html); alleen het voorbeeldscript wordt vervangen door `store-extension.js`. Geen voorbeeldstukken in de cloudbuild: gegevens komen via `Api.list()`, getekende fotolinks en `NikkiStore.replace()`. De build controleert zijn ankers en schrijft naar de genegeerde map `dist/cloud`. Geen bundler of runtime-JavaScript-CDN; Newsreader komt zoals in de referentie van Google Fonts, met Georgia als offline terugval.
+
+Naam opent de bestaande verkooptekst en platte maten; ontbrekende waarden blijven leeg. Prijs wisselt de lokale selectie in `localStorage.nikki-cart` (alleen permanente UUID's, geen foto's of productkopieën). Hartjes gebruiken de bestaande `gsf-liked` met vaste `display_id`. Vernieuwing behoudt stuk, fotopositie en open venster; verdwenen stukken worden uit het lokale mandje verwijderd. Deze selectie reserveert niets en schrijft niet naar Supabase.
+
+Collectie, Mijn items en Winkelmand zijn uitsluitend plaatshouders in de referentiestijl. Het accounticoon opent het bestaande beheer. De oude stijlkiezer is geen onderdeel van optie B; de zelfstandige prototypes behouden hem.
 
 ## Contract
 
@@ -43,6 +48,7 @@ Voor een aanwezige systeembrowser: `CHROMIUM_PATH=/usr/bin/chromium npm run test
 
 - PostgreSQL via PGlite: echte migratie, rollen, RLS, fotoverwijzingen, publieke/privé-scheiding, versies, dubbele aanvragen, verkocht-status en quota. Auth/Storage-tabellen zijn testdubbels van de relevante interfaces; de Supabase-diensten zelf worden hiermee niet getest.
 - Node: authenticatie vóór AI, afwijzen van ongeldige beelden, CORS, quotafouten en filteren van modelresultaten.
-- Chromium: echte invoer op mobiel formaat, login, analysevoorstellen, verkleinen/upload, opslagfout en herhaling, herladen, tweede browser, vijf stijlen, verkocht en bewerken. Netwerkdiensten zijn nagebootst.
+- Chromium: echte invoer op mobiel formaat, login, analysevoorstellen, verkleinen/upload, opslagfout en herhaling, herladen, tweede browser, verkocht en bewerken. Netwerkdiensten zijn nagebootst.
+- `tests/storefront-layout.cjs`: geometrie en berekende stijlen rechtstreeks vergeleken met optie B op 390/320/280 px; foto → naam/prijs → onderrij, minimaal 44 px, geen tekst over de foto, verhoudingen/gaps en geen overlap. Ook lokale mand, ontbrekende maten, onbetrouwbare tekst, hoofd-/detailfoto, vegen, zoom, menuplaatshouders en lege catalogus. Schermafbeeldingen in `work/option-b-screenshots`; [vastgelegde vergelijking](../docs/screenshots/README.md).
 
 Er zijn geen productiediensten of secrets nodig voor deze tests. Live Supabase Auth/Storage en Gemini moeten na configuratie nog samen worden getest. Een verloren save-response kan bij herhaling een versieconflict opleveren: ververs dan de collectie en open het opgeslagen stuk opnieuw. Dat voorkomt een onbedoelde dubbele publicatie.

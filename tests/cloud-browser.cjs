@@ -58,11 +58,10 @@ async function context(){
 const c=await context(),p=await c.newPage();p.setDefaultTimeout(10000);await p.goto('https://app.test');
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.').catch(async e=>{console.error(await p.locator('#status').innerText());throw e;});
 const shop=()=>p.frames().find(f=>f.name()==='shop');const intake=()=>p.frames().find(f=>f.name()==='intake');
-assert.equal(await shop().locator('#hero-track .slide').count(),0);
-assert.equal(await shop().locator('[data-view-panel=home] .collection-empty').isVisible(),true);
-assert.equal(await shop().locator('#hero-prev').isVisible(),false);
-assert.equal(await shop().locator('.alsonew').isVisible(),false);
-await p.locator('[data-screen=manage]').click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login button').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
+assert.equal(await shop().locator('#track .slide').count(),0);
+assert.equal(await shop().locator('#ph').getAttribute('data-catalog-empty'),'true');
+assert.equal(await shop().locator('[data-act="prev-photo"]').isVisible(),false);
+await shop().getByRole('button',{name:'Mijn account'}).click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login button').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
 const png=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;c.getContext('2d').fillRect(0,0,20,20);return c.toDataURL().split(',')[1];});
 // Exercise the real browser encoder with a JPEG containing synthetic EXIF metadata.
 const jpeg=Buffer.from(await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;return c.toDataURL('image/jpeg').split(',')[1];}),'base64');
@@ -90,113 +89,82 @@ await f.locator('[data-open=tekst]').click();const title='<img src=x onerror=ale
 await f.locator('#publish').click();await f.locator('#review-err').filter({hasText:'niet afgerond'}).waitFor().catch(async e=>{console.error('SAVE ERROR:',await f.locator('#review-err').innerText());throw e;});assert.equal(db.size,0);assert.equal(await f.locator('#t-titel').inputValue(),title);
 await f.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
 assert.equal(db.size,1);assert.equal([...db.values()][0].data.measurements[0],56.5);assert.equal([...db.values()][0].data.priceMinor,12550);assert.equal([...db.values()][0].data.furClass,'Nee');assert.equal(photos.size,1);
-assert.equal(await shop().locator('#hero-track .slide').count(),1);assert.ok(await shop().locator('#hero-track img').first().evaluate(i=>i.complete&&i.naturalWidth>0));
-const originalId=[...db.values()][0].display_id;
+assert.equal(await shop().locator('#track .slide').count(),1);assert.ok(await shop().locator('#track img').first().evaluate(i=>i.complete&&i.naturalWidth>0));
 const originalKey=[...db.keys()][0];
-assert.equal(await shop().locator('[data-view-panel=home] .collection-empty').isVisible(),false);
-// The desktop hero stays bounded; the frame fills the available height without a second page scrollbar.
+assert.equal(await shop().locator('#ph').getAttribute('data-catalog-empty'),'false');
+assert.equal(await shop().locator('#title').textContent(),title,'markup in a title stays text');
+assert.equal(await shop().locator('#title img').count(),0);
+async function reloadCatalog(page=p) {
+ // Use the account entry point directly so a refresh can also exercise an open dialog.
+ if(await page.locator('#shop').isVisible())await page.evaluate(()=>window.NikkiApp.openAccount());
+ // Clear the previous status so repeated refreshes cannot pass on stale success.
+ await page.locator('#status').evaluate(el=>{el.textContent='';});
+ await page.locator('#reload').click();
+ await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Collectie vernieuwd.'));
+ await page.locator('[data-screen=shop]').click();
+}
 for(const width of [1440,1920]) {
  await p.setViewportSize({width,height:1000});
- assert.ok((await shop().locator('[data-view-panel=home] > .hero').boundingBox()).width<=800);
+ assert.ok((await shop().locator('#ph').boundingBox()).width<=390);
  assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight));
  assert.ok(await shop().evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 }
 await p.setViewportSize({width:390,height:844});
+await shop().locator('#price').click();await shop().locator('#like').click();
 const extraId='44444444-4444-4444-8444-444444444444';
 db.set(extraId,{...structuredClone(db.get(originalKey)),id:extraId,display_id:2,data:{...structuredClone(db.get(originalKey).data),title:'Ander stuk'}});
-await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
-assert.equal(await shop().locator('#hero-track [data-open]').filter({hasText:title}).getAttribute('data-open'),String(originalId));
-db.delete(extraId);await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('shop').contentDocument.querySelectorAll('#hero-track .slide').length===1);
-// One piece whose photo cannot be signed must not hide the rest of the collection; one batch request signs all photos.
+await reloadCatalog();
+assert.equal(await shop().locator('#title').textContent(),title,'reordering preserves the viewed garment');
+assert.equal(await shop().locator('#price').getAttribute('aria-pressed'),'true','cart follows the permanent ID');
+assert.equal(await shop().locator('#like').getAttribute('aria-pressed'),'true','likes follow display_id');
+db.delete(extraId);await reloadCatalog();
 const brokenId='55555555-5555-4555-8555-555555555555';
 db.set(brokenId,{...structuredClone(db.get(originalKey)),id:brokenId,display_id:3,data:{...structuredClone(db.get(originalKey).data),title:'Stuk zonder foto',images:[{path:brokenId+'/'+'a'.repeat(64)+'.jpg',role:'Voorkant',main:true}]}});
-const batchesBefore=signBatches;await p.locator('#reload').click();
-await p.waitForFunction(()=>document.getElementById('status').textContent.includes('niet getoond'));
-assert.equal(await p.locator('#status').innerText(),'Collectie vernieuwd. 1 stuk wordt niet getoond omdat de foto’s niet bereikbaar zijn.');assert.equal(signBatches-batchesBefore,1);
-assert.equal(await shop().locator('#hero-track .slide').count(),1);db.delete(brokenId);
-// A refresh keeps a visitor on the view they were reading instead of jumping back to the start page.
-await shop().evaluate(()=>{location.hash='browse';});await p.locator('#reload').click();
-await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
-assert.equal(await shop().evaluate(()=>location.hash),'#browse');await shop().evaluate(()=>{location.hash='home';});
-const styles=[];for(let i=0;i<5;i++){styles.push(await shop().locator('html').getAttribute('data-style'));await shop().locator('#style-next').click();}assert.equal(new Set(styles).size,5);
-await p.waitForFunction(()=>getComputedStyle(document.body).backgroundColor===getComputedStyle(document.getElementById('shop').contentDocument.body).backgroundColor);
-// Product-photo position survives renewal, including an old tab becoming visible again.
+const batchesBefore=signBatches;await reloadCatalog();
+assert.equal(await p.locator('#status').innerText(),'Collectie vernieuwd. 1 stuk wordt niet getoond omdat de foto’s niet bereikbaar zijn.');
+assert.equal(signBatches-batchesBefore,1);assert.equal(await shop().locator('#track .slide').count(),1);db.delete(brokenId);
+// Refresh keeps a menu destination, then the detail panel and its selected photo.
+await shop().locator('.shop').click();await shop().getByRole('menuitem',{name:'Collectie',exact:true}).click();
+await reloadCatalog();assert.ok(await shop().getByRole('dialog',{name:'Collectie',exact:true}).isVisible());
+await shop().locator('#cart [data-act=close]').click();
 const row=db.get(originalKey),savedImages=row.data.images;
 const detailPath=originalKey+'/'+'c'.repeat(64)+'.jpg';photos.set(detailPath,photos.get(savedImages[0].path));
 row.data.images=[...savedImages,{path:detailPath,role:'Detail',main:false}];
-await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');
-await shop().locator('#hero-thumbnails button').nth(1).waitFor();
-assert.equal(await shop().locator('#hero-thumbnails button').count(),2);
-// A single garment has photo choices but no garment arrows.
-assert.equal(await shop().locator('#hero-next').isVisible(),false);
-assert.equal(await shop().locator('#hero-prev').isVisible(),false);
-await shop().locator('#hero-thumbnails button').nth(1).click();
-assert.equal(await shop().locator('#hero-thumbnails button').nth(1).getAttribute('aria-pressed'),'true');
-assert.ok((await shop().locator('#hero-track img.photo').getAttribute('src')).includes(detailPath));
-// Keyboard selection retains focus on the thumbnail.
-await shop().locator('#hero-thumbnails button').first().focus();
-await p.keyboard.press('Enter');
-assert.equal(await shop().locator('#hero-thumbnails button').first().getAttribute('aria-pressed'),'true');
-assert.equal(await shop().locator('#hero-thumbnails button').first().evaluate(el=>el===document.activeElement),true);
-// A second garment has its main photo second in the stored list.
-db.set(extraId,{...structuredClone(row),id:extraId,display_id:2,data:{...structuredClone(row.data),title:'Ander stuk',images:row.data.images.map((image,index)=>({...image,main:index===1}))}});
-await p.locator('#reload').click();
-await shop().waitForFunction(()=>document.querySelectorAll('#hero-track .slide').length===2);
-await shop().locator('#hero-thumbnails button').nth(1).click();
-await shop().locator('#hero-next').click();
-await shop().waitForFunction(()=>{const t=document.getElementById('hero-track');return Math.abs(t.scrollLeft-t.clientWidth)<1;});
-assert.equal(await shop().locator('#hero-thumbnails button').nth(1).getAttribute('aria-pressed'),'true');
-assert.equal(await shop().locator('#hero-piece-count').innerText(),'Stuk 2 van 2');
-await shop().locator('#hero-prev').click();
-await shop().waitForFunction(()=>document.getElementById('hero-track').scrollLeft===0);
-assert.equal(await shop().locator('#hero-thumbnails button').first().getAttribute('aria-pressed'),'true');
-assert.ok((await shop().locator('#hero-track img.photo').first().getAttribute('src')).includes(savedImages[0].path));
-// Phone thumbnails sit to the right; desktop thumbnails sit below. Arrows stay inside the photo.
-for(const width of [320,390,1440]) {
- await p.setViewportSize({width,height:900});
- const track=await shop().locator('#hero-track').boundingBox(), strip=await shop().locator('#hero-thumbnails').boundingBox();
- if(width<=600) { assert.ok(strip.x>=track.x+track.width); assert.ok(Math.abs(strip.y-track.y)<2); }
- else assert.ok(strip.y>=track.y+track.height);
- for(const id of ['hero-prev','hero-next']) {
-  const arrow=await shop().locator('#'+id).boundingBox();
-  assert.ok(arrow.width>=44&&arrow.height>=44);
-  assert.ok(arrow.x>=track.x&&arrow.x+arrow.width<=track.x+track.width+1);
-  assert.ok(arrow.y>track.y+track.height/2&&arrow.y+arrow.height<=track.y+track.height);
- }
- assert.ok(await shop().evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-}
-await p.setViewportSize({width:390,height:844});
-await p.screenshot({path:'/tmp/nikki-carousel-mobile.png'});
-db.delete(extraId);await p.locator('#reload').click();
-await shop().waitForFunction(()=>document.querySelectorAll('#hero-track .slide').length===1);
-await shop().locator('#hero-track [data-open]').first().click();
-await shop().locator('#gal-next').click();
-const secondPhoto=()=>shop().waitForFunction(()=>{const t=document.getElementById('gal-track');return Math.abs(t.scrollLeft-t.clientWidth)<1&&document.querySelector('#gal-dots span:nth-child(2).on');});
-await secondPhoto();
-let nextBatch=signBatches+1;await p.locator('#reload').click();
-await shop().waitForFunction(n=>document.querySelector('#gal-track img')?.src.endsWith('token=test-'+n),nextBatch);
-await secondPhoto();assert.equal(await shop().evaluate(()=>location.hash),'#product');
+await reloadCatalog();
+await shop().locator('[data-act=next-photo]').click();
+assert.equal(await shop().locator('#dots').getAttribute('aria-label'),'Foto 2 van 2');
+assert.equal(await shop().locator('[data-act=next-photo]').evaluate(el=>el===document.activeElement),true);
+await shop().locator('[data-act=info]').click();
+assert.ok(await shop().locator('#info').isVisible());
+assert.equal(await shop().locator('#info .kv').first().innerText(),'Borstbreedte\n56,5 cm');
+let nextBatch=signBatches+1;await reloadCatalog();
+assert.ok((await shop().locator('#track img').first().getAttribute('src')).endsWith('token=test-'+nextBatch));
+assert.equal(await shop().locator('#dots').getAttribute('aria-label'),'Foto 2 van 2');
+assert.ok(await shop().locator('#info').isVisible());
+await shop().locator('#info [data-act=close]').focus();
 await p.clock.setFixedTime(new Date(Date.now()+41*60*1000));
 const beforeHidden=signBatches;
 await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
 assert.equal(signBatches,beforeHidden);
 await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
-await shop().waitForFunction(n=>document.querySelector('#gal-track img')?.src.endsWith('token=test-'+n),beforeHidden+1);
-await secondPhoto();assert.equal(await shop().evaluate(()=>location.hash),'#product');
+await shop().waitForFunction(n=>document.querySelector('#track img')?.src.endsWith('token=test-'+n),beforeHidden+1);
+assert.equal(await shop().locator('#dots').getAttribute('aria-label'),'Foto 2 van 2');
+assert.ok(await shop().locator('#info').isVisible());
+assert.equal(await shop().locator('#info [data-act=close]').evaluate(el=>document.activeElement===el),true,'photo renewal retains dialog focus');
 await p.evaluate(()=>{document.dispatchEvent(new Event('visibilitychange'));delete document.hidden;});assert.equal(signBatches,beforeHidden+1);
 await p.clock.setFixedTime(new Date());row.data.images=savedImages;photos.delete(detailPath);
-await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#hero-track .slide').count(),1);
-const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),1);
-await p.locator('[data-screen=manage]').click();
+await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#track .slide').count(),1);
+const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),1);
+await shop().getByRole('button',{name:'Mijn account'}).click();
 const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold',{timeout:10000});
 await p.getByRole('button',{name:'Markeer verkocht'}).click();
 await soldRequest;
-assert.equal(await shop().locator('#hero-track .slide').count(),1);
+assert.equal(await shop().locator('#track .slide').count(),1);
 assert.equal(await p.locator('#items li > span').innerText(),title+' — Beschikbaar');
 releaseSoldResponse();
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
 assert.equal(await p.locator('#items li > span').innerText(),title+' — Verkocht');
-assert.equal(await shop().locator('#hero-track .slide').count(),0);
+assert.equal(await shop().locator('#track .slide').count(),0);
 await p.getByRole('button',{name:'Bewerken',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
 // Once opened, changing text must not decode a saved image or read it as a data URL again.
 await p.evaluate(()=>{
@@ -207,7 +175,7 @@ await p.evaluate(()=>{
 const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.locator('#t-titel').fill('Gewijzigde verkochte jas');await edit.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
 assert.deepEqual(await p.evaluate(()=>window.photoWork),{decode:0,read:0});
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
-await v.locator('#reload').click();await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie vernieuwd.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#hero-track .slide').count(),0);
-assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, five styles, edit sold without resurrection. Remote services mocked.');
+await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),0);
+assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, option B, local cart/likes, edit sold without resurrection. Remote services mocked.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

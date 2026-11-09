@@ -1,54 +1,7 @@
-/* Cloud storefront presentation. All colours follow Nikki's five style choices. */
-.topbar { border-bottom: 1px solid var(--line); }
-.topbar .wrap { padding-block: 16px; gap: 8px 24px; }
-.topbar .nav { gap: 4px 20px; }
-[data-view-panel="home"] { max-width: 1120px; margin: 0 auto; padding: 24px 16px 0; }
-[data-view-panel="home"] > .hero { max-width: 800px; margin: auto; }
-.alsonew { padding: 32px 0 72px; }
-.gallery .track .pic { height: auto; min-height: 280px; }
-.gallery .slide img.photo { top: 0; height: 100%; }
-.stylebar { left: max(16px, calc((100vw - 1088px) / 2)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
-footer .wrap { padding-bottom: 88px; }
-.collection-empty { display: none; max-width: 1088px; margin: 12px auto 32px; min-height: 360px; border: 1px solid var(--line); background: var(--surface); grid-template-columns: 1fr 1fr; align-items: center; gap: 40px; padding: clamp(28px, 5vw, 72px); }
-.empty-mark { display: grid; place-items: center; aspect-ratio: 1; max-width: 280px; width: 100%; margin: auto; border: 1px solid var(--line); border-radius: 50% 50% 0 0; }
-.empty-mark svg { width: 60%; height: auto; fill: none; stroke: var(--fg); stroke-width: 1.2; }
-.empty-copy { max-width: 36ch; }
-.empty-copy .eyebrow { margin-bottom: 16px; color: var(--muted); font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; }
-.empty-copy h1 { margin-bottom: 18px; font-size: clamp(2rem, 4vw, 3.2rem); }
-.empty-copy p { color: var(--muted); }
-.empty-copy a { display: inline-block; margin-top: 24px; text-underline-offset: 5px; }
-[data-catalog-empty="true"] .collection-empty { display: grid; }
-[data-catalog-empty="true"] [data-view-panel="home"] > .hero,
-[data-catalog-empty="true"] #hero-dots,
-[data-catalog-empty="true"] .alsonew,
-[data-catalog-empty="true"] #rows { display: none; }
-[data-view-panel="browse"] > .collection-empty { width: calc(100% - 32px); margin-top: 36px; }
-@media (max-width: 600px) {
-  .topbar .wrap { padding-block: 12px; }
-  .topbar .nav { gap: 4px 16px; justify-content: flex-start; }
-  [data-view-panel="home"] { padding-top: 16px; }
-  .collection-empty { grid-template-columns: 1fr; gap: 24px; padding: 28px 24px; text-align: center; }
-  .empty-mark { max-width: 144px; }
-  .empty-copy { margin: auto; }
-}
-
-/* Pijlen kiezen een kledingstuk; miniaturen kiezen uitsluitend een foto. */
-.photo-thumbnails { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; padding: 4px; }
-.photo-thumbnails button { flex: 0 0 64px; height: 80px; padding: 3px; border: 2px solid transparent; background: var(--surface); cursor: pointer; }
-.photo-thumbnails button[aria-pressed="true"] { border-color: var(--fg); }
-.photo-thumbnails button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
-.photo-thumbnails img { width: 100%; height: 100%; object-fit: contain; }
-#hero-track ~ .arrow { top: calc(var(--hero-h) - 56px); transform: none; z-index: 3; width: 44px; height: 44px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); }
-#hero-track ~ .arrow[hidden], #hero-piece-count[hidden], #hero-dots { display: none; }
-#hero-piece-count { position: absolute; top: calc(var(--hero-h) - 50px); left: 50%; transform: translateX(-50%); padding: 6px 10px; border-radius: 20px; background: var(--bg); color: var(--fg); font-size: .8rem; white-space: nowrap; pointer-events: none; }
-#hero-track .overlay { bottom: 68px; left: 12px; right: 12px; }
-#hero-track .pic > .likebox { bottom: auto; top: 56px; }
-[data-catalog-empty="true"] #hero-thumbnails { display: none; }
-@media (max-width: 600px) {
-  [data-view-panel="home"] > .hero { display: grid; grid-template-columns: minmax(0, 1fr) 56px; gap: 8px; }
-  #hero-track { min-width: 0; }
-  .photo-thumbnails { flex-direction: column; overflow-x: hidden; overflow-y: auto; height: var(--hero-h); margin: 0; padding: 4px; box-sizing: border-box; }
-  .photo-thumbnails button { flex: 0 0 64px; width: 48px; min-height: 44px; }
-  #hero-next { right: 76px; }
-  #hero-piece-count { left: calc((100% - 64px) / 2); }
-}
+/* Geometry, palette and typography come from ontdekken-optie-b.html. */
+button:disabled { cursor: default; }
+.info .ptitle, .info p { overflow-wrap: anywhere; }
+.info p { white-space: pre-wrap; }
+[data-catalog-empty="true"] .photo > button,
+[data-catalog-empty="true"] .photo-acts,
+[data-catalog-empty="true"] .back-badge { visibility: hidden; }

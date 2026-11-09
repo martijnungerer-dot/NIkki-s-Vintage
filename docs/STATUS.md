@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 9 november 2026 — cloudwinkel volgt optie B
+- De cloudbuild gebruikt de HTML/CSS van `concept/ontdekken-optie-b.html` rechtstreeks. De bestaande publieke Supabase-catalogus, NikkiStore en beveiligde fotolinks vullen de winkel; prijs wisselt alleen lokale stuk-ID's, naam toont verkooptekst en bestaande platte maten. Menu-bestemmingen zijn plaatshouders.
+- De afgesproken smalle-schermregel geldt in referentie en app: minimaal 44 × 44 px, dezelfde verhouding, 8 naar 6 px tussenruimte, zo nodig twee volgende stukken. Op 390 px blijft de onderrij gelijk.
+- Build, 23 unit-/database-/opslagtests, cloudbrowserworkflow en nieuwe vergelijkingstest op 390/320/280 px geslaagd. Ook de zelfstandige optie-B-test slaagt. [Schermafbeeldingen naast de referentie](screenshots/README.md) gebruiken testgegevens en de offline fontterugval. Geen live Supabase/Gemini-test, schemawijziging of deployment.
+
 ### 9 november 2026 — optie B vastgelegd als ontwerpbron
 - Op verzoek van Martijn staat in AGENTS.md dat `concept/ontdekken-optie-b.html` leidend is voor de winkelinterface, dat nieuwe schermen dezelfde stijl volgen en dat de bestaande architectuur in `app/` en `supabase/` wordt hergebruikt.
 

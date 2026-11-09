@@ -24,6 +24,7 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 [ontdekken-optie-b.html](ontdekken-optie-b.html) is het gekozen ontwerp voor het shopscherm, overgenomen uit het Claude Design-canvas. Eén zelfstandig bestand, werkt offline. Dit is het uitgangspunt voor verder werk (ook in ChatGPT/Codex); verander de indeling niet zonder overleg met Martijn.
 
 - **Indeling (van boven naar onder):** merknaam links met accounticoon rechts; grote omlijste foto; daaronder naam en prijs als twee subtiele knoppen van 44 px; onderaan in een zacht eigen vlak het vorige stuk (met terugpijltje), de drie volgende stukken en de menuknop.
+- **Smalle schermen (akkoord Martijn):** onderste knoppen blijven minimaal 44 × 44 px met dezelfde verhouding 52:64. De tussenruimte mag van 8 naar 6 px; past de rij dan niet, blijven twee volgende stukken over. Op 390 px verandert niets. Deze regel geldt voor de referentie én de cloudpilot.
 - **Foto:** opzij vegen of de pijltjes in de foto voor andere foto's van hetzelfde stuk; omhoog/omlaag vegen (of scrollen) voor een ander stuk; twee keer tikken om in te zoomen. Hartje en delen staan rechtsonder in de foto, de bolletjes onderin.
 - **Naam:** opent een venster dat uit de knop groeit, met verkooptekst en platte maten (plaatshouders).
 - **Prijs:** één tik legt het stuk in de winkelmand of haalt het eruit. Bevestiging: de knop kleurt donkerder en het mandje achter het bedrag krijgt een vinkje. Geen venster.
@@ -32,6 +33,7 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 - **Stijl:** lichte, warme basis (achtergrond `#FAF6F0`, tekst `#2E2420`, knoppen `#F3ECE3`), lettertype Newsreader met Georgia als terugval. Andere stijlen voor Nikki staan alleen in een privé-artifact.
 - **Foto's:** de sfeerfoto's uit het ontwerp staan niet in Git (beeldrechten, herkenbare personen). Het bestand toont getekende jassen. Eigen foto's kunnen lokaal in `concept/fotos/` (genegeerd door Git) via het veld `foto` in de lijst met stukken.
 - **Controle:** `node tests/ontdekken-optie-b.cjs` (Playwright) op 390 en 320 px, offline.
+- **Cloudpilot:** de build in `app/` leest deze HTML/CSS rechtstreeks en vult hem via de bestaande NikkiStore met de publieke catalogus en beveiligde fotolinks. De menu-bestemmingen zijn daar alleen plaatshouders; het mandje bewaart lokaal stuk-ID's, zonder checkout. `npm run test:browser` vergelijkt de app met deze referentie op 390, 320 en 280 px. Zie [schermafbeeldingen](../docs/screenshots/README.md).
 
 ## Invoerprototype voor Nikki
 

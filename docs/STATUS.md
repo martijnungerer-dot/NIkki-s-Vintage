@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 9 november 2026 — optie B vastgelegd als ontwerpbron
+- Op verzoek van Martijn staat in AGENTS.md dat `concept/ontdekken-optie-b.html` leidend is voor de winkelinterface, dat nieuwe schermen dezelfde stijl volgen en dat de bestaande architectuur in `app/` en `supabase/` wordt hergebruikt.
+
 ### 9 november 2026 — ontwerp Ontdekken optie B vastgelegd
 - Martijn heeft in het Claude Design-canvas optie B gekozen voor het shopscherm. Overgenomen als zelfstandig bestand `concept/ontdekken-optie-b.html`, met beschrijving in [concept/README.md](../concept/README.md), zodat ChatGPT/Codex verder kan.
 - Sfeerfoto's niet in Git: het bestand toont getekende jassen; lokale foto's kunnen in de genegeerde map `concept/fotos/`. Prijzen, verkooptekst en maten zijn plaatshouders.

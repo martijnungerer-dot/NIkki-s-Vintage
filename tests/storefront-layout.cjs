@@ -10,7 +10,7 @@ const output=path.resolve(process.env.NIKKI_SCREENSHOTS || path.join(root,'work/
 const names=['Bruine vintage jas','Gevlekte jas met sjaalkraag','Korte zwarte jas','Korte jas met reverskraag','Lange jas met capuchon'];
 const colours=['#8A5A3C','#B9A58E','#3B3431','#C9B8A6','#A08672'];
 const drawing=(colour)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420"><rect width="300" height="420" fill="#E9E1D6"/><path d="M120 70 L150 95 L180 70 L222 92 L240 220 L222 228 L214 150 L210 390 L90 390 L86 150 L78 228 L60 220 L78 92 Z" fill="'+colour+'"/><path d="M120 70 L150 140 L180 70" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="3"/><path d="M150 140 L150 390" stroke="rgba(0,0,0,0.18)" stroke-width="2"/></svg>';
-function catalog() {return names.map((title,i)=>({id:'00000000-0000-4000-8000-'+String(i+1).padStart(12,'0'),display_id:i+1,version:1,status:'published',data:{title,description:'Nikki’s eigen verkooptekst. <img src=x onerror=alert(1)>',priceMinor:15000+i*1000,material:i===3?'':'Leer <img src=x onerror=alert(1)>',species:i===3?null:'Vos <b>testwaarde</b>',furClass:['Ja','Nee','Alleen kraag of rand','Ja',''][i],measurements:[55.5,null,null,100],images:Array.from({length:i===0?3:2},(_,j)=>({path:i+'-'+j+'.jpg',role:['Voorkant','Achterkant','Detail'][j],main:j===(i===1?1:0)}))}}));}
+function catalog() {return names.map((title,i)=>({id:'00000000-0000-4000-8000-'+String(i+1).padStart(12,'0'),display_id:i+1,version:1,status:'published',data:{title,description:'Nikki’s eigen verkooptekst. <img src=x onerror=alert(1)>',priceMinor:15000+i*1000,material:['Leer <img src=x onerror=alert(1)>','Wol','Leer','','Suède'][i],species:i===3?null:'Vos <b>testwaarde</b>',furClass:['Ja','Nee','Alleen kraag of rand','Ja',''][i],measurements:[55.5,null,null,100],images:Array.from({length:i===0?3:2},(_,j)=>({path:i+'-'+j+'.jpg',role:['Voorkant','Achterkant','Detail'][j],main:j===(i===1?1:0)}))}}));}
 async function geometry(frame) {return frame.evaluate(()=>{
  const origin=document.getElementById('ph').getBoundingClientRect(), names=['.ph','.top','.brand','#photo','#row','.chip.title','.chip.price','#band','#prev-th','#nexts','.shop'];
  return Object.fromEntries(names.map(s=>{const el=document.querySelector(s),r=el.getBoundingClientRect(),c=getComputedStyle(el);return [s,{x:r.x-origin.x,y:r.y-origin.y,w:r.width,h:r.height,bg:c.backgroundColor,color:c.color,font:c.fontFamily,size:c.fontSize,radius:c.borderRadius,padding:c.padding,gap:c.gap}];}));
@@ -153,13 +153,11 @@ async function layout(frame,width) {
    await page.keyboard.press('Escape');
    await again.locator('#prev-th').click();assert.equal(await again.locator('#title').textContent(),names[0]);
    await again.locator('#photo').hover();await page.mouse.wheel(0,80);await again.locator('#title').filter({hasText:names[1]}).waitFor();
-   for(const name of ['Collectie','Mijn items','Winkelmand']) {
-    await again.locator('.shop').click();await again.getByRole('menuitem',{name,exact:true}).click();
-    assert.ok(await again.getByRole('dialog',{name,exact:true}).isVisible());
-    assert.equal(await again.locator('#cart .line, #cart .checkout').count(),0,'placeholder has no new screen design or checkout');
-    assert.equal(await again.locator('#cart p').innerText(),name==='Winkelmand'?'Proefboetiek · bekijken en uitproberen, nog niet afrekenen.':'Binnenkort.');
-    await again.locator('#cart [data-act=close]').click();
-   }
+   await require('./storefront-collections.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
+   await again.locator('.shop').click();await again.getByRole('menuitem',{name:'Winkelmand',exact:true}).click();
+   assert.equal(await again.locator('#cart .line, #cart .checkout').count(),0,'cart remains a placeholder, without checkout');
+   assert.equal(await again.locator('#cart p').innerText(),'Proefboetiek · bekijken en uitproberen, nog niet afrekenen.');
+   await again.locator('#cart [data-act=close]').click();
    async function refresh(fails=false) {
     await page.evaluate(()=>window.NikkiApp.openAccount());
     await page.locator('#status').evaluate(el=>{el.textContent='';});
@@ -219,9 +217,15 @@ async function layout(frame,width) {
    assert.equal(await again.locator('#nexts .th').count(),3,'empty catalogue keeps its empty slots');assert.ok(await again.locator('#prev-th').isVisible());
    assert.ok(await again.locator('#bag-full').isHidden(),'withdrawn last garment clears SVG checkmark');
    assert.deepEqual(await again.evaluate(()=>JSON.parse(localStorage.getItem('nikki-cart'))),{},'unavailable garments leave the local basket');
+   for(const name of ['Collectie','Mijn items']) {
+    await again.locator('.shop').click();await again.getByRole('menuitem',{name,exact:true}).click();
+    assert.equal(await again.locator('.catalog-item').count(),0,'empty catalog never creates sample items');
+    assert.ok(await again.locator('.catalog-empty').isVisible());
+    await again.locator('#cart [data-act=close]').click();
+   }
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('PASS option B storefront: fullscreen/reference interior, mobile/desktop/breakpoints, 44px controls, stable loading/error status, basket survives photo loss, sold/withdrawn removal, previous fallback, SVG reset, safe material/species, gestures, placeholders, no writes. Screenshots: '+output);
+  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -83,18 +83,109 @@
         return '<div class="kv"><span>'+s[0]+'</span><span>'+(typeof value==='number' && Number.isFinite(value)?value.toLocaleString('nl-NL')+' cm':'')+'</span></div>';
       }).join('') + '</div>' + (characteristics?'<div>'+characteristics+'</div>':'');
   }
-  // Destination screens remain placeholders. Cart changes only store public garment IDs locally.
-  var placeholder='', returnFocus=null;
+  // Collection and saved pieces use the same public catalog and local hearts as the shop.
+  var destination='', returnFocus=null, infoOrigin=null;
+  var lists={
+    'Collectie':{query:'',material:'',sort:'order',scroll:0},
+    'Mijn items':{query:'',material:'',sort:'order',scroll:0}
+  };
+  function fold(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('nl-NL'); }
+  function listItems() {
+    var state=lists[destination], words=fold(state.query).trim().split(/\s+/).filter(Boolean);
+    var items=ITEMS.filter(it=>(destination!=='Mijn items' || S.liked[it.displayId]) &&
+      (!state.material || it.material===state.material) &&
+      words.every(word=>fold([it.title,it.description,it.material,['Ja','Alleen kraag of rand'].includes(it.furClass)?it.species:''].join(' ')).includes(word)));
+    if(state.sort==='price-up')items.sort((a,b)=>a.priceMinor-b.priceMinor);
+    if(state.sort==='price-down')items.sort((a,b)=>b.priceMinor-a.priceMinor);
+    if(state.sort==='name')items.sort((a,b)=>a.title.localeCompare(b.title,'nl-NL',{sensitivity:'base'}));
+    return items;
+  }
+  function bagIcon(selected) {
+    var icon=$(selected?'bag-full':'bag-empty').cloneNode(true);
+    icon.removeAttribute('id');icon.removeAttribute('hidden');return icon.outerHTML;
+  }
+  function heartIcon(selected) {
+    var icon=$('like').querySelector('svg').cloneNode(true);
+    icon.setAttribute('stroke','currentColor');icon.setAttribute('fill',selected?'currentColor':'none');return icon.outerHTML;
+  }
+  function listFocus(key,act) {
+    var target=Array.from($('cart').querySelectorAll('[data-key]')).find(b=>b.dataset.key===key && b.dataset.act===act);
+    (target || $('catalog-search') || $('cart').querySelector('button')).focus({preventScroll:true});
+  }
+  function renderResults(resetScroll=false) {
+    var state=lists[destination], results=$('catalog-results'), active=document.activeElement;
+    var focused=results.contains(active), oldButtons=Array.from(results.querySelectorAll('button')).filter(b=>b.dataset.act===active.dataset.act);
+    var position=oldButtons.indexOf(active), scroll=resetScroll?0:results.scrollTop, items=listItems();
+    $('catalog-count').textContent=items.length+(items.length===1?' stuk':' stukken');
+    $('catalog-reset').disabled=!state.query && !state.material && state.sort==='order';
+    if(!items.length) {
+      var message=state.query || state.material?'Geen stukken gevonden. Pas je zoekopdracht of filters aan.':
+        destination==='Mijn items'?'Er zijn nu geen beschikbare stukken met een hartje.':'Er zijn nu geen stukken beschikbaar.';
+      results.innerHTML='<li class="catalog-empty muted">'+message+'</li>';
+    } else results.innerHTML=items.map(it=>{
+      var key=esc(it.key), selected=!!S.cart[it.key], liked=!!S.liked[it.displayId];
+      return '<li class="line catalog-item" data-item-key="'+key+'">'+
+        '<button type="button" class="face catalog-photo" data-act="list-photo" data-key="'+key+'" aria-label="Bekijk foto’s van '+esc(it.title)+'">'+face(it)+'</button>'+
+        '<div class="txt"><button type="button" class="catalog-title" data-act="list-info" data-key="'+key+'" aria-label="Meer over '+esc(it.title)+'">'+esc(it.title)+'</button>'+
+        '<div class="catalog-actions"><button type="button" class="chip price catalog-price" data-act="list-cart" data-key="'+key+'" aria-pressed="'+selected+'" aria-label="'+esc(it.price)+', '+esc(it.title)+(selected?', verwijder uit winkelmand':', toevoegen aan winkelmand')+'">'+esc(it.price)+bagIcon(selected)+'</button>'+
+        '<button type="button" class="ic" data-act="list-like" data-key="'+key+'" aria-pressed="'+liked+'" aria-label="'+(liked?'Verwijder uit Mijn items: ':'Bewaar in Mijn items: ')+esc(it.title)+'">'+heartIcon(liked)+'</button></div></div></li>';
+    }).join('');
+    results.scrollTop=scroll;state.scroll=results.scrollTop;
+    if(focused) {
+      var buttons=Array.from(results.querySelectorAll('button')).filter(b=>b.dataset.act===active.dataset.act);
+      var target=buttons.find(b=>b.dataset.key===active.dataset.key) || buttons[Math.min(Math.max(position,0),buttons.length-1)] || $('catalog-search');
+      target.focus({preventScroll:true});
+    }
+  }
   function renderCart() {
-    $('cart').setAttribute('aria-label',placeholder);
-    var message=placeholder==='Winkelmand'?'Proefboetiek · bekijken en uitproberen, nog niet afrekenen.':'Binnenkort.';
-    $('cart').innerHTML='<div class="head" style="padding-bottom:10px"><button type="button" class="ic" data-act="close" aria-label="Terug naar de winkel" style="margin-left:-8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span style="font-size:26px">'+esc(placeholder)+'</span><span style="width:44px"></span></div><p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">'+message+'</p>';
+    $('cart').setAttribute('aria-label',destination);
+    $('cart').classList.toggle('catalog-window',!!lists[destination]);
+    var header='<div class="head" style="padding-bottom:10px"><button type="button" class="ic" data-act="close" aria-label="Terug naar de winkel" style="margin-left:-8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span style="font-size:26px">'+esc(destination)+'</span><span style="width:44px"></span></div>';
+    if(!lists[destination]) {
+      $('cart').innerHTML=header+'<p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Proefboetiek · bekijken en uitproberen, nog niet afrekenen.</p>';
+      return;
+    }
+    var state=lists[destination], materials=Array.from(new Set(ITEMS.map(it=>it.material).concat(state.material).filter(v=>typeof v==='string' && v.trim()))).sort((a,b)=>a.localeCompare(b,'nl-NL'));
+    $('cart').innerHTML=header+
+      (destination==='Mijn items'?'<p class="catalog-note muted">Je hartjes worden alleen in deze browser bewaard.</p>':'')+
+      '<div class="catalog-tools"><div class="catalog-search"><input id="catalog-search" data-field="query" type="search" autocomplete="off" aria-label="Zoek in '+destination+'" placeholder="Zoek een stuk" value="'+esc(state.query)+'">'+
+      '<button id="catalog-reset" type="button" class="ic" data-act="list-reset" aria-label="Wis zoekopdracht, filters en sortering">'+CLOSE+'</button></div>'+
+      '<div class="catalog-filters"><select data-field="material" aria-label="Materiaal"><option value="">Elk materiaal</option>'+
+      materials.map(m=>'<option value="'+esc(m)+'"'+(m===state.material?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select>'+
+      '<select data-field="sort" aria-label="Sorteer stukken">'+[['order','Boetiek'],['price-up','Prijs laag–hoog'],['price-down','Prijs hoog–laag'],['name','Naam A–Z']]
+        .map(([value,label])=>'<option value="'+value+'"'+(state.sort===value?' selected':'')+'>'+label+'</option>').join('')+'</select></div></div>'+
+      '<p id="catalog-count" class="catalog-count muted" role="status"></p><ul id="catalog-results" class="catalog-results"></ul>';
+    var scroll=state.scroll;renderResults();state.scroll=scroll;
+  }
+  function refreshList() {
+    if(S.open!=='cart' || !lists[destination])return;
+    var active=document.activeElement, field=active.dataset.field, key=active.dataset.key, act=active.dataset.act;
+    var selection=field==='query'?[active.selectionStart,active.selectionEnd]:null;
+    lists[destination].scroll=$('catalog-results').scrollTop;
+    var scroll=lists[destination].scroll;
+    renderCart();
+    if(field) {
+      var control=$('cart').querySelector('[data-field="'+field+'"]');control.focus({preventScroll:true});
+      if(selection)control.setSelectionRange(...selection);
+    } else if(key)listFocus(key,act);
+    else ($('cart').querySelector('[data-act="'+act+'"]') || $('cart').querySelector('button')).focus({preventScroll:true});
+    $('catalog-results').scrollTop=scroll;
+  }
+  function selectFromList(key,detail) {
+    var index=ITEMS.findIndex(it=>it.key===key);if(index<0)return;
+    var origin={destination,key,act:detail?'list-info':'list-photo'};
+    closeAll(false);goItem(index);
+    if(detail){open('info');infoOrigin=origin;}
+    else ph.querySelector('[data-act="info"]').focus();
   }
 
   var OPENER = { info: '[data-act="info"]', menu: '.shop' };
   function closeAll(restore=true) {
+    var back=restore && S.open==='info'?infoOrigin:null;infoOrigin=null;
+    if(S.open==='cart' && lists[destination])lists[destination].scroll=$('catalog-results').scrollTop;
     ['info', 'menu', 'cart'].forEach(function (k) { $(k).hidden = true; if (OPENER[k]) ph.querySelector(OPENER[k]).setAttribute('aria-expanded', 'false'); });
     S.open = null;
+    if(back){destination=back.destination;open('cart');listFocus(back.key,back.act);return;}
     if(restore && returnFocus?.isConnected)returnFocus.focus();
   }
   function open(k) {
@@ -106,10 +197,11 @@
     if (k === 'cart') renderCart();
     $(k).hidden = false; S.open = k;
     $(k).querySelector('button')?.focus();
+    if(k==='cart' && lists[destination])$('catalog-results').scrollTop=lists[destination].scroll;
     if (OPENER[k]) ph.querySelector(OPENER[k]).setAttribute('aria-expanded', 'true');
   }
 
-  Array.from($('menu').children).forEach(b=>{b.dataset.act='placeholder';b.dataset.screen=b.textContent;});
+  Array.from($('menu').children).forEach(b=>{b.dataset.act='destination';b.dataset.screen=b.textContent;});
   ph.querySelector('[aria-label="Mijn account"]').addEventListener('click',()=>window.parent.NikkiApp.openAccount());
   ph.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
@@ -118,16 +210,35 @@
     else if (a === 'next-photo') goPhoto(1, true);
     else if (a === 'like') { S.liked[ITEMS[S.item].displayId] = !S.liked[ITEMS[S.item].displayId]; save('gsf-liked',S.liked); render(false); }
     else if (a === 'info' || a === 'menu') open(a);
-    else if (a === 'placeholder') { placeholder=b.dataset.screen; open('cart'); }
+    else if (a === 'destination') { destination=b.dataset.screen; open('cart'); }
+    else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
+    else if (a === 'list-like' || a === 'list-cart') {
+      var item=ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;
+      if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);}
+      else {if(S.cart[item.key])delete S.cart[item.key];else S.cart[item.key]=true;save('nikki-cart',S.cart);}
+      render(false);renderResults();
+    }
+    else if (a === 'list-reset') {
+      var state=lists[destination];state.query='';state.material='';state.sort='order';state.scroll=0;
+      renderCart();$('catalog-search').focus();
+    }
     else if (a === 'cart-toggle') { var key=ITEMS[S.item].key; if(S.cart[key])delete S.cart[key];else S.cart[key]=true; save('nikki-cart',S.cart); render(false); }
     else if (a === 'close') closeAll();
     else if (a === 'go') goItem(Number(b.getAttribute('data-idx')));
     else if (a === 'go-prev') goItem(S.prev);
   });
+  ph.addEventListener('input',function(e){
+    if(e.target.dataset.field!=='query')return;
+    lists[destination].query=e.target.value;renderResults(true);
+  });
+  ph.addEventListener('change',function(e){
+    var field=e.target.dataset.field;if(field!=='material' && field!=='sort')return;
+    lists[destination][field]=e.target.value;renderResults(true);
+  });
   ph.addEventListener('keydown', function (e) {
     if(e.key==='Escape' && S.open)closeAll();
     if(e.key==='Tab' && S.open) {
-      var buttons=Array.from($(S.open).querySelectorAll('button:not([disabled])')), first=buttons[0], last=buttons.at(-1);
+      var buttons=Array.from($(S.open).querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled])')), first=buttons[0], last=buttons.at(-1);
       if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}
       else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
     }
@@ -200,6 +311,7 @@
       save('nikki-cart',S.cart);
       var infoScroll=$('info').scrollTop, infoFocused=$('info').contains(document.activeElement); render(false);
       if(S.open==='info'){renderInfo();$('info').scrollTop=infoScroll;if(infoFocused)$('info').querySelector('button').focus();}
+      refreshList();
     },
     put(record,reveal=true) {
       this.replace([...ITEMS.filter(it=>it.key!==record.key),record]);

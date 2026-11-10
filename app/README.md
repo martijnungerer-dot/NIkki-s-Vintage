@@ -25,7 +25,11 @@ Prijs wisselt de lokale selectie in `localStorage.nikki-cart` (alleen permanente
 
 De echte winkel vult tot en met 480 px de viewport, zonder het presentatiekader van de referentie. Daarboven blijft de breedte 390 px, gecentreerd. De binnenindeling en container-breekpunten blijven uit de referentie komen, gerekend met de werkelijke beschikbare breedte. Veilige randen gebruiken `env(safe-area-inset-*)`. Status staat alleen bij laden of een probleem in de bestaande bovenruimte, zonder verschuiving.
 
-Collectie, Mijn items en Winkelmand zijn uitsluitend plaatshouders in de referentiestijl. Winkelmand vermeldt dat afrekenen nog niet kan. Het accounticoon opent het bestaande beheer. De oude stijlkiezer is geen onderdeel van optie B; de zelfstandige prototypes behouden hem.
+Collectie toont de beschikbare stukken uit dezelfde publieke NikkiStore-catalogus. Mijn items toont daarvan de stukken met een lokaal hartje (`gsf-liked`, vaste `display_id`). Beide gebruiken de bestaande paneelstijl en bieden zoeken in publieke tekst, filteren op ingevuld materiaal en sorteren op boetiekvolgorde, prijs of naam. De standaardvolgorde wordt niet als “nieuwste” gepresenteerd.
+
+Foto opent het gekozen stuk in de bestaande winkel; naam opent het bestaande informatievenster en keert bij sluiten terug naar dezelfde lijst, filters en scrollpositie. Prijs wisselt de bestaande lokale mand; het hartje bewaart/verwijdert het stuk in Mijn items. Vernieuwde fotolinks en verkochte stukken worden ook in een open lijst verwerkt. Een fotostoring verwijdert geen opgeslagen hartje. Zoekopdracht, filters en scroll staan alleen in het geheugen per venster; hartjes blijven in deze browser bewaard, zonder klantaccount of synchronisatie.
+
+Winkelmand blijft een plaatshouder en vermeldt dat afrekenen nog niet kan. Het accounticoon opent het bestaande beheer. De hoofdwinkel is in deze aanvulling ongewijzigd. Zie [functieoverzicht en resterend werk](../docs/FUNCTIONALITEIT.md) en [beelden voor/na](../docs/screenshots/collectie-mijn-items/README.md).
 
 ## Contract
 
@@ -54,5 +58,6 @@ Voor een aanwezige systeembrowser: `CHROMIUM_PATH=/usr/bin/chromium npm run test
 - Node: authenticatie vóór AI, afwijzen van ongeldige beelden, CORS, quotafouten en filteren van modelresultaten.
 - Chromium: echte invoer op mobiel formaat, login, analysevoorstellen, verkleinen/upload, opslagfout en herhaling, herladen, tweede browser, verkocht en bewerken. Netwerkdiensten zijn nagebootst.
 - `tests/storefront-layout.cjs`: binnenindeling en stijlen vergeleken met optie B bij gelijke beschikbare ruimte; het presentatiekader wordt uitsluitend in de test genormaliseerd. Viewports 280/283/284/320/331/332/390/480/481/1024 px bewaken ook de breekpunten en desktopcentrering. Controleert 44 px, volgorde, geen tekst over foto's, lokale mand bij foto-uitval/verkoop/terugtrekking, SVG-reset, vorige-stukfallback, materiaal/bontsoort, lege maten, veilige tekst, vaste laad-/foutstatus, gesimuleerde veilige randen en bestaande bediening. Schermafbeeldingen in `work/option-b-screenshots`; [vastgelegde vergelijking](../docs/screenshots/README.md).
+- `tests/storefront-collections.cjs` wordt door die browsertest aangeroepen: zoeken/filteren/sorteren, hartjes en lokale mand, tweede browserpagina, fotostoring, verkoop tijdens lezen, detail-terugkeer met scroll/focus, fotolinkvernieuwing tijdens typen, lege lijsten, toetsenbord en 44px-bediening. Ook lage schermen van 568 px hoog; geen extra backend-schrijfacties.
 
 Er zijn geen productiediensten of secrets nodig voor deze tests. Live Supabase Auth/Storage en Gemini moeten na configuratie nog samen worden getest. Een verloren save-response kan bij herhaling een versieconflict opleveren: ververs dan de collectie en open het opgeslagen stuk opnieuw. Dat voorkomt een onbedoelde dubbele publicatie.

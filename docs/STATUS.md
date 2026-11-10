@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — geldende versie van de winkel vastgelegd
+- Martijn heeft de cloudwinkel op `main` goedgekeurd. In AGENTS.md staat nu dat deze versie het uitgangspunt is voor elke agent, met de afgesproken afwijkingen van de referentie, en dat oude branches, previews en prototypes geen uitgangspunt meer zijn.
+
 ### 10 november 2026 — lege vakjes in de onderrij terug
 - Op verzoek van Martijn blijven de vier vakjes in de onderrij altijd staan, ook leeg. Bij één stuk is het vakje "vorige" leeg in plaats van een herhaling van het huidige stuk. De extra fotoruimte op lage schermen blijft.
 

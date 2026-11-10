@@ -1,12 +1,23 @@
 (function () {
   // Option B, using only the existing public NikkiStore catalog.
   var ITEMS = [];
+  // Personal order and lead photo per piece (docs/SMAAKPROFIEL.md, onderdeel 6); null = Nikki's order.
+  var PERSONAL = { order: null, lead: {} };
   var CLOSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
   function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function read(key) { try { var v=JSON.parse(localStorage.getItem(key)); return v && typeof v==='object' && !Array.isArray(v) ? v : {}; } catch { return {}; } }
   function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
-  function primary(it) { return Math.max(0, it.images.findIndex(i=>i.main)); }
+  function primary(it) {
+    var role=PERSONAL.lead[it.key], personal=role ? it.images.findIndex(i=>i.role===role) : -1;
+    return personal>=0 ? personal : Math.max(0, it.images.findIndex(i=>i.main));
+  }
+  // Pieces in the personal order first; anything else (new, over budget) keeps Nikki's order after them.
+  function ordered(items) {
+    if(!PERSONAL.order) return items;
+    var rank=new Map(PERSONAL.order.map((k,i)=>[k,i])), at=it=>rank.has(it.key)?rank.get(it.key):Infinity;
+    return items.map((it,i)=>[it,i]).sort((a,b)=>at(a[0])-at(b[0]) || a[1]-b[1]).map(x=>x[0]);
+  }
   function face(it, image=it.images[primary(it)]) { return '<img src="' + esc(image.src) + '" alt="' + esc(image.role || it.title) + '">'; }
 
   var $ = function (id) { return document.getElementById(id); };
@@ -298,7 +309,7 @@
     replace(records, publishedIds) {
       var current=ITEMS[S.item], previous=ITEMS[S.prev]?.key, selected=current?.images[S.photo]?.path;
       // Explicit public projection: no auth, raw model output or private notes.
-      ITEMS=records.filter(r=>r.images?.length).map(r=>({
+      ITEMS=records.filter(r=>r.images?.length).map((r,boutique)=>({boutique,
         key:r.key, displayId:r.displayId, title:r.title, description:r.description, priceMinor:r.priceMinor,
         material:r.material, species:r.species, furClass:r.furClass,
         // Public, human-checked characteristics for the taste profile (docs/SMAAKPROFIEL.md).
@@ -306,6 +317,7 @@
         price:new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:r.priceMinor%100?2:0}).format(r.priceMinor/100),
         measurements:r.measurements, images:r.images.map(i=>({src:i.src,path:i.path,role:i.role,main:i.main}))
       }));
+      ITEMS=ordered(ITEMS);
       N=ITEMS.length;
       var index=ITEMS.findIndex(it=>it.key===current?.key), same=index>=0;
       S.item=same?index:0; S.prev=ITEMS.findIndex(it=>it.key===previous);
@@ -356,6 +368,26 @@
     isLiked:it=>!!S.liked[it.displayId],
     show:key=>{var i=ITEMS.findIndex(it=>it.key===key);if(i<0)return false;closeAll(false);goItem(i);return true;},
     refresh:()=>{if(S.open==='cart' && SCREENS[destination])refreshList();},
+    // Applies a personal order and lead photos without moving the piece in view or its photo.
+    // order: garment keys (or null for Nikki's order); lead: {key: existing photo role};
+    // fromStart: true only while the catalog is first drawn, to open on the best match.
+    personalise(choice) {
+      var order=Array.isArray(choice?.order)?choice.order.filter(k=>typeof k==='string').slice(0,1000):null;
+      var lead={}; Object.entries(choice?.lead||{}).forEach(([k,v])=>{if(typeof v==='string' && v.length<=40)lead[k]=v;});
+      var current=ITEMS[S.item]?.key, previous=ITEMS[S.prev]?.key;
+      PERSONAL={order,lead};
+      // Rebuild from Nikki's order so that switching personalisation off restores it exactly.
+      ITEMS=ordered(ITEMS.slice().sort((a,b)=>a.boutique-b.boutique));N=ITEMS.length;
+      if(!N)return;
+      if(choice.fromStart) { // only before anything is painted: start at the best match
+        S.item=0;S.prev=N-1===0?0:N-1;S.photo=primary(ITEMS[0]);S.zoom=false;
+      } else {
+        S.item=Math.max(0,ITEMS.findIndex(it=>it.key===current));
+        S.prev=ITEMS.findIndex(it=>it.key===previous);if(S.prev<0 || S.prev===S.item)S.prev=N-1===S.item?0:N-1;
+      }
+      render(false); // without fromStart, S.photo is untouched: the photo in view stays
+      if(S.open==='cart')refreshList();
+    },
     status:(message,state)=>window.NikkiStore.status(message,state)
   };
   window.NikkiShop={

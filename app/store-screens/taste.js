@@ -50,8 +50,9 @@
   //   - Stijl van optie B en Collectie: .head, .line, .chip, .ic, var(--chip) enz.; tekst ≥ 16 px,
   //     knoppen ≥ 44 px, alles via esc() (labels komen uit opslag en zijn dus onbetrouwbaar).
   //   - Menuregel toevoegen via een anker in scripts/build-cloud.mjs (zoals "Mijn favorieten").
-  //   - Geen herordening en geen AI-aanroep: dat zijn onderdelen 5 en 6 (andere sessie,
-  //     bestand app/store-screens/personalise.js). Raak dat bestand niet aan.
+  //   - Herordenen en de AI-aanroep bestaan al (onderdelen 5 en 6, app/store-screens/personalise.js).
+  //     Roep na een expliciete wijziging, wissen of aan/uit window.NikkiPersonalise.refresh() aan.
+  //     Raak dat bestand niet aan.
   //   - Tests in tests/storefront-taste.cjs: leren via hartje/mand/meer/minder, terugdraaien,
   //     uit = niets leren, wissen houdt de uit-stand, één kenmerk vergeten, zoekfilter leert niets,
   //     veilige tekst, 44 px, geen netwerkverkeer behalve de bestaande catalogus.

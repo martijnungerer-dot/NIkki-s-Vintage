@@ -75,6 +75,8 @@ window.NikkiApp={
     if(!staff)throw Error('Log eerst in.');
     try{return await api.analyse(files,signal);}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
   },
+  // Taste ranking (docs/SMAAKPROFIEL.md): only the compact profile summary leaves the browser.
+  personalise:profile=>api.request('/functions/v1/personalise',{method:'POST',auth:false,body:{profile},signal:AbortSignal.timeout(15000)}),
   async publish(product){
     if(!staff)throw Error('Log eerst in.');
     const saved=await api.save(product,editVersions.get(product.key)||0);

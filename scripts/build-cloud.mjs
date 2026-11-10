@@ -1,5 +1,5 @@
 import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
-import {shop as shopSource,intake as intakeSource} from './build-connected-demo.mjs';
+import {intake as intakeSource} from './build-connected-demo.mjs';
 import {replaceExactly,replaceRegion,injectAt} from './build-anchors.mjs';
 const root=new URL('../',import.meta.url);
 const read=p=>readFile(new URL(p,root),'utf8');
@@ -11,7 +11,7 @@ if(config.supabasePublishableKey){
   if(!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)&&!legacyAnon)throw Error('config.js mag alleen een Supabase publishable key of legacy anon key bevatten.');
 }
 const patchIntake=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'cloud intake (concept/intake-prototype.html + demo/intake-bridge.js)',count});
-const patchShop=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'cloud store (concept/site-skeleton.html + demo/store-bridge.js)',count});
+const patchShop=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'cloud store (concept/ontdekken-optie-b.html)',count});
 let intake=intakeSource;
 intake=patchIntake(intake,"draftId ||= 'stuk-' + Date.now() + '-' + Math.random().toString(36).slice(2);","draftId ||= crypto.randomUUID();");
 intake=patchIntake(intake,'window.parent.NikkiApp.publish(product);','await window.parent.NikkiApp.publish(product);');
@@ -27,11 +27,14 @@ intake=patchIntake(intake,"}[e && e.code] || 'Er ging iets mis. Probeer het opni
 // Photo analysis uses the same resized images as storage.
 intake=patchIntake(intake,"sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })", "Promise.all(files.map(f=>window.parent.NikkiApp.prepareImage(f))).then(prepared=>sample.json('', { images: prepared, signal: ctl.signal }))");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
-let shop=shopSource;
+// The chosen design supplies the actual markup and CSS, not a second approximation.
+let shop=await read('concept/ontdekken-optie-b.html');
+const scripts=shop.match(/<script>[\s\S]*?<\/script>/g);
+if(scripts?.length!==1)throw Error('[build] concept/ontdekken-optie-b.html: expected one store script');
+shop=patchShop(shop,scripts[0],'<script>\n'+await read('app/store-extension.js')+'\n</script>');
+shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>Nikki’s Boetiek</title>');
+shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
-shop=patchShop(shop,'Math.max(...PIECES.map(p=>p.id))+1','record.displayId');
-shop=patchShop(shop,"    var p = byId(current); if($('condition-example'))", "    var p = byId(current); if(!p) return; if($('condition-example'))");
-shop=injectAt(shop,'CLOUD_STORE_EXTENSION',await read('app/store-extension.js'),'demo/store-bridge.js');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});
 for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));
 await writeFile(new URL('dist/cloud/views.js',root),'export const shopSource='+JSON.stringify(shop)+';\nexport const intakeSource='+JSON.stringify(intake)+';\n');

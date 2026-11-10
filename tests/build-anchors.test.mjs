@@ -27,7 +27,7 @@ const cases=[
  ['duplicated escaping anchor','concept/site-skeleton.html','+ t.key +','+ t.key + 0 + t.key +',/site-skeleton.html.*t.key.*expected 1.*found 2/],
  ['missing Claude region','concept/intake-prototype.html','/* NIKKI:CLAUDE_SETUP:END */','',/intake-prototype.html.*CLAUDE_SETUP:END.*found 0/],
  ['missing cloud hook','demo/intake-bridge.js','/* NIKKI:CLOUD_INTAKE_EXTENSION */','',/intake-bridge.js.*CLOUD_INTAKE_EXTENSION.*found 0/],
- ['duplicated cloud hook','demo/store-bridge.js','/* NIKKI:CLOUD_STORE_EXTENSION */','/* NIKKI:CLOUD_STORE_EXTENSION */ /* NIKKI:CLOUD_STORE_EXTENSION */',/store-bridge.js.*CLOUD_STORE_EXTENSION.*found 2/],
+ ['duplicate option B script','concept/ontdekken-optie-b.html','<script>','<script></script><script>',/ontdekken-optie-b.html.*expected one store script/],
  ['missing cloud literal','demo/intake-bridge.js','window.parent.NikkiApp.publish(product);','window.parent.NikkiApp.publish( product );',/cloud intake.*publish.*found 0/],
  ['duplicated cloud literal','demo/intake-bridge.js','window.parent.NikkiApp.publish(product);','window.parent.NikkiApp.publish(product);window.parent.NikkiApp.publish(product);',/cloud intake.*publish.*found 2/]
 ];

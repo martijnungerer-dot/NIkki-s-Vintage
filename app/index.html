@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nikki’s Boetiek</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="app-header"><div class="app-toolbar"><strong>Nikki’s Boetiek</strong><nav aria-label="Schermen"><button data-screen="shop" aria-pressed="true">Boetiek</button><button data-screen="manage" aria-pressed="false">Beheer</button><button data-screen="intake" id="new" hidden aria-pressed="false">Nieuw stuk</button></nav><div class="app-actions"><button id="reload">Collectie vernieuwen</button><button id="logout" hidden>Uitloggen</button></div></div></header>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Nikki’s Boetiek</title><link rel="stylesheet" href="style.css"></head>
+<body data-screen="shop"><header class="app-header"><div class="app-toolbar"><strong>Nikki’s Boetiek</strong><nav aria-label="Schermen"><button data-screen="shop" aria-pressed="true">Boetiek</button><button data-screen="manage" aria-pressed="false">Beheer</button><button data-screen="intake" id="new" hidden aria-pressed="false">Nieuw stuk</button></nav><div class="app-actions"><button id="reload">Collectie vernieuwen</button><button id="logout" hidden>Uitloggen</button></div></div></header>
 <div class="app-messages"><p id="status" role="status">Collectie laden…</p><p class="notice">Proefboetiek · bekijken en uitproberen, nog niet afrekenen.</p></div>
 <main><iframe id="shop" title="Boetiek"></iframe><iframe id="intake" title="Kledingstuk invoeren" hidden></iframe>
 <section id="manage" hidden><h1>Jouw collectie</h1>

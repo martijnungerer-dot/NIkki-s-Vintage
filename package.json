@@ -5,7 +5,7 @@
     "build": "node scripts/build-cloud.mjs",
     "serve": "node scripts/serve-cloud.mjs",
     "test": "node --test tests/cloud-server.test.mjs tests/cloud-database.test.mjs tests/cloud-api.test.mjs tests/build-anchors.test.mjs tests/photo-transfer.test.mjs",
-    "test:browser": "node tests/cloud-browser.cjs",
+    "test:browser": "node tests/cloud-browser.cjs && node tests/storefront-layout.cjs",
     "check": "node scripts/check-project.mjs"
   },
   "devDependencies": {

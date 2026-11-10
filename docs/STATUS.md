@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — review van PR #19 verwerkt
+- Gepubliceerde ID's staan los van fotobeschikbaarheid: de lokale mand overleeft tijdelijke foto-uitval, maar verwijdert verkochte/teruggetrokken stukken. Het SVG-vinkje wordt bij een lege weergave verborgen; de vorige-stukknop wijst niet naar het huidige stuk.
+- Met Martijns akkoord verdwijnt alleen in de app het presentatiekader. Mobiel tot 480 px schermvullend, daarboven 390 px gecentreerd; binnenindeling en onderrij gebruiken dezelfde referentieregels bij de werkelijke breedte. Status alleen bij laden of een probleem, zonder verschuiving.
+- Materiaal en toepasselijke bontsoort uit bestaande velden veilig getoond; Winkelmand vermeldt dat afrekenen nog niet kan. Geen schema-, rechten-, voorraad- of winkelschrijfacties toegevoegd.
+- Build, 23 unit-/databasetests, cloudbrowserworkflow, uitgebreide vergelijkingstest en zelfstandige optie-B-test geslaagd. Schermafbeeldingen op 390/320 px bijgewerkt. Veilige randen gesimuleerd; fysiek iOS/Safari en live Supabase/Gemini niet opnieuw getest. Merge blijft bij Martijn.
+
 ### 9 november 2026 — cloudwinkel volgt optie B
 - De cloudbuild gebruikt de HTML/CSS van `concept/ontdekken-optie-b.html` rechtstreeks. De bestaande publieke Supabase-catalogus, NikkiStore en beveiligde fotolinks vullen de winkel; prijs wisselt alleen lokale stuk-ID's, naam toont verkooptekst en bestaande platte maten. Menu-bestemmingen zijn plaatshouders.
 - De afgesproken smalle-schermregel geldt in referentie en app: minimaal 44 × 44 px, dezelfde verhouding, 8 naar 6 px tussenruimte, zo nodig twee volgende stukken. Op 390 px blijft de onderrij gelijk.

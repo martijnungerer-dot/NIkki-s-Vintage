@@ -12,16 +12,20 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 | `images.js` | Foto verkleinen en metadata uit de upload verwijderen |
 | `intake-extension.js` | Bestaande checklist hergebruiken, opgeslagen stuk openen |
 | `store-extension.js` | Optie B bedienen met de publieke NikkiStore-catalogus |
-| `store-layout.css` | Alleen lege catalogus en lange verkooptekst opvangen |
+| `store-layout.css` | Presentatiekader weglaten, veilige randen, vaste statusplek en lange verkooptekst |
 | `config.js` | Alleen publieke Supabase-projectgegevens |
 | `../supabase/migrations/` | Datacontract, gecontroleerde mutaties, daglimieten en expliciete toegangsrechten |
 | `../supabase/functions/analyse/handler.mjs` | Auth-controle, aanvraaggrenzen, Gemini-aanroep en resultaatfilter |
 
 `npm run build` herbouwt de zelfstandige demo voor het invoerscherm. Het winkelscherm gebruikt rechtstreeks de HTML en CSS van [Ontdekken, optie B](../concept/ontdekken-optie-b.html); alleen het voorbeeldscript wordt vervangen door `store-extension.js`. Geen voorbeeldstukken in de cloudbuild: gegevens komen via `Api.list()`, getekende fotolinks en `NikkiStore.replace()`. De build controleert zijn ankers en schrijft naar de genegeerde map `dist/cloud`. Geen bundler of runtime-JavaScript-CDN; Newsreader komt zoals in de referentie van Google Fonts, met Georgia als offline terugval.
 
-Naam opent de bestaande verkooptekst en platte maten; ontbrekende waarden blijven leeg. Prijs wisselt de lokale selectie in `localStorage.nikki-cart` (alleen permanente UUID's, geen foto's of productkopieën). Hartjes gebruiken de bestaande `gsf-liked` met vaste `display_id`. Vernieuwing behoudt stuk, fotopositie en open venster; verdwenen stukken worden uit het lokale mandje verwijderd. Deze selectie reserveert niets en schrijft niet naar Supabase.
+Naam opent de bestaande verkooptekst en platte maten; ontbrekende maten blijven leeg. Ingevuld `material` wordt als Materiaal getoond; ingevuld `species` alleen als `furClass` Ja of Alleen kraag of rand is. Deze waarden worden veilig als tekst weergegeven, zonder afleiding.
 
-Collectie, Mijn items en Winkelmand zijn uitsluitend plaatshouders in de referentiestijl. Het accounticoon opent het bestaande beheer. De oude stijlkiezer is geen onderdeel van optie B; de zelfstandige prototypes behouden hem.
+Prijs wisselt de lokale selectie in `localStorage.nikki-cart` (alleen permanente UUID's, geen foto's of productkopieën). Hartjes gebruiken de bestaande `gsf-liked` met vaste `display_id`. `NikkiStore.replace(records, publishedIds)` krijgt naast stukken met bereikbare foto's de ID's van **alle** gepubliceerde stukken. Alleen deze volledige lijst verwijdert niet meer gepubliceerde stukken uit de mand; ontbrekende fotolinks of een mislukte verversing doen dat niet. Een gedeeltelijke `put()` zonder publicatielijst verwijdert niets. Vernieuwing behoudt waar mogelijk stuk, fotopositie en open venster. Ontbreekt het vorige stuk, dan wijst de terugknop naar een ander stuk; bij één stuk is hij uitgeschakeld. Deze selectie reserveert niets en schrijft niet naar Supabase.
+
+De echte winkel vult tot en met 480 px de viewport, zonder het presentatiekader van de referentie. Daarboven blijft de breedte 390 px, gecentreerd. De binnenindeling en container-breekpunten blijven uit de referentie komen, gerekend met de werkelijke beschikbare breedte. Veilige randen gebruiken `env(safe-area-inset-*)`. Status staat alleen bij laden of een probleem in de bestaande bovenruimte, zonder verschuiving.
+
+Collectie, Mijn items en Winkelmand zijn uitsluitend plaatshouders in de referentiestijl. Winkelmand vermeldt dat afrekenen nog niet kan. Het accounticoon opent het bestaande beheer. De oude stijlkiezer is geen onderdeel van optie B; de zelfstandige prototypes behouden hem.
 
 ## Contract
 
@@ -49,6 +53,6 @@ Voor een aanwezige systeembrowser: `CHROMIUM_PATH=/usr/bin/chromium npm run test
 - PostgreSQL via PGlite: echte migratie, rollen, RLS, fotoverwijzingen, publieke/privé-scheiding, versies, dubbele aanvragen, verkocht-status en quota. Auth/Storage-tabellen zijn testdubbels van de relevante interfaces; de Supabase-diensten zelf worden hiermee niet getest.
 - Node: authenticatie vóór AI, afwijzen van ongeldige beelden, CORS, quotafouten en filteren van modelresultaten.
 - Chromium: echte invoer op mobiel formaat, login, analysevoorstellen, verkleinen/upload, opslagfout en herhaling, herladen, tweede browser, verkocht en bewerken. Netwerkdiensten zijn nagebootst.
-- `tests/storefront-layout.cjs`: geometrie en berekende stijlen rechtstreeks vergeleken met optie B op 390/320/280 px; foto → naam/prijs → onderrij, minimaal 44 px, geen tekst over de foto, verhoudingen/gaps en geen overlap. Ook lokale mand, ontbrekende maten, onbetrouwbare tekst, hoofd-/detailfoto, vegen, zoom, menuplaatshouders en lege catalogus. Schermafbeeldingen in `work/option-b-screenshots`; [vastgelegde vergelijking](../docs/screenshots/README.md).
+- `tests/storefront-layout.cjs`: binnenindeling en stijlen vergeleken met optie B bij gelijke beschikbare ruimte; het presentatiekader wordt uitsluitend in de test genormaliseerd. Viewports 280/283/284/320/331/332/390/480/481/1024 px bewaken ook de breekpunten en desktopcentrering. Controleert 44 px, volgorde, geen tekst over foto's, lokale mand bij foto-uitval/verkoop/terugtrekking, SVG-reset, vorige-stukfallback, materiaal/bontsoort, lege maten, veilige tekst, vaste laad-/foutstatus, gesimuleerde veilige randen en bestaande bediening. Schermafbeeldingen in `work/option-b-screenshots`; [vastgelegde vergelijking](../docs/screenshots/README.md).
 
 Er zijn geen productiediensten of secrets nodig voor deze tests. Live Supabase Auth/Storage en Gemini moeten na configuratie nog samen worden getest. Een verloren save-response kan bij herhaling een versieconflict opleveren: ververs dan de collectie en open het opgeslagen stuk opnieuw. Dat voorkomt een onbedoelde dubbele publicatie.

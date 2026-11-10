@@ -32,7 +32,7 @@
       $('track').replaceChildren(); place(0);
       $('title').textContent='Geen beschikbare stukken'; $('price-text').textContent='';
       $('price').setAttribute('aria-pressed','false'); $('price').setAttribute('aria-label','Geen stuk beschikbaar');
-      $('bag-empty').hidden=false; $('bag-full').hidden=true;
+      $('bag-empty').toggleAttribute('hidden',false); $('bag-full').toggleAttribute('hidden',true);
       $('prev-th').querySelector('.face').replaceChildren(); $('prev-th').setAttribute('aria-label','Vorig stuk');
       $('nexts').innerHTML=Array.from({length:3},()=>'<button type="button" class="th" disabled aria-label="Geen volgend stuk"><span class="face"></span></button>').join('');
       return;
@@ -68,6 +68,9 @@
 
   function renderInfo() {
     var it = ITEMS[S.item];
+    var characteristics=[['Materiaal',it.material],['Bontsoort',['Ja','Alleen kraag of rand'].includes(it.furClass)?it.species:null]]
+      .filter(([,value])=>typeof value==='string' && value.trim())
+      .map(([label,value])=>'<div class="kv"><span>'+label+'</span><span>'+esc(value)+'</span></div>').join('');
     $('info').innerHTML = '<div class="head"><span></span><button type="button" class="ic" data-act="close" aria-label="Sluiten">' + CLOSE + '</button></div>' +
       '<div class="head" style="align-items:baseline;gap:16px"><span class="ptitle">' + esc(it.title) + '</span><span style="font-size:22px;white-space:nowrap">' + esc(it.price) + '</span></div>' +
       '<p style="margin:0;font-size:17px;line-height:1.55">' + esc(it.description || '') + '</p>' +
@@ -75,13 +78,14 @@
       [['Borstbreedte',0],['Ruglengte',3],['Schouderbreedte',1],['Mouwlengte',2]].map(function (s) {
         var value=it.measurements?.[s[1]];
         return '<div class="kv"><span>'+s[0]+'</span><span>'+(typeof value==='number' && Number.isFinite(value)?value.toLocaleString('nl-NL')+' cm':'')+'</span></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' + (characteristics?'<div>'+characteristics+'</div>':'');
   }
   // Destination screens remain placeholders. Cart changes only store public garment IDs locally.
   var placeholder='', returnFocus=null;
   function renderCart() {
     $('cart').setAttribute('aria-label',placeholder);
-    $('cart').innerHTML='<div class="head" style="padding-bottom:10px"><button type="button" class="ic" data-act="close" aria-label="Terug naar de winkel" style="margin-left:-8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span style="font-size:26px">'+esc(placeholder)+'</span><span style="width:44px"></span></div><p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Binnenkort.</p>';
+    var message=placeholder==='Winkelmand'?'Proefboetiek · bekijken en uitproberen, nog niet afrekenen.':'Binnenkort.';
+    $('cart').innerHTML='<div class="head" style="padding-bottom:10px"><button type="button" class="ic" data-act="close" aria-label="Terug naar de winkel" style="margin-left:-8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span style="font-size:26px">'+esc(placeholder)+'</span><span style="width:44px"></span></div><p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">'+message+'</p>';
   }
 
   var OPENER = { info: '[data-act="info"]', menu: '.shop' };
@@ -167,23 +171,29 @@
   }, { passive: false });
 
   window.NikkiStore = {
-    replace(records) {
+    replace(records, publishedIds) {
       var current=ITEMS[S.item], previous=ITEMS[S.prev]?.key, selected=current?.images[S.photo]?.path;
       // Explicit public projection: no auth, raw model output or private notes.
       ITEMS=records.filter(r=>r.images?.length).map(r=>({
         key:r.key, displayId:r.displayId, title:r.title, description:r.description, priceMinor:r.priceMinor,
+        material:r.material, species:r.species, furClass:r.furClass,
         price:new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:r.priceMinor%100?2:0}).format(r.priceMinor/100),
         measurements:r.measurements, images:r.images.map(i=>({src:i.src,path:i.path,role:i.role,main:i.main}))
       }));
       N=ITEMS.length;
       var index=ITEMS.findIndex(it=>it.key===current?.key), same=index>=0;
-      S.item=same?index:0; S.prev=Math.max(0,ITEMS.findIndex(it=>it.key===previous));
-      if(!current && N)S.prev=N-1;
+      S.item=same?index:0; S.prev=ITEMS.findIndex(it=>it.key===previous);
+      if(S.prev<0 || S.prev===S.item)S.prev=N-1===S.item?0:N-1;
       var photoIndex=same?ITEMS[S.item].images.findIndex(i=>i.path===selected):-1;
       S.photo=photoIndex>=0?photoIndex:N?primary(ITEMS[S.item]):0; S.zoom=same && photoIndex>=0 && S.zoom;
       g.start=null;g.axis=null;$('track').classList.remove('dragging');
       if(!same && S.open==='info')closeAll();
-      S.cart=Object.fromEntries(Object.keys(S.cart).filter(key=>ITEMS.some(it=>it.key===key)).map(key=>[key,true]));
+      // Only an authoritative publication list can remove items; photo availability cannot.
+      // put() or other partial updates do not supply that list.
+      if(Array.isArray(publishedIds)) {
+        var published=new Set(publishedIds);
+        S.cart=Object.fromEntries(Object.keys(S.cart).filter(key=>published.has(key)).map(key=>[key,true]));
+      }
       save('nikki-cart',S.cart);
       var infoScroll=$('info').scrollTop, infoFocused=$('info').contains(document.activeElement); render(false);
       if(S.open==='info'){renderInfo();$('info').scrollTop=infoScroll;if(infoFocused)$('info').querySelector('button').focus();}
@@ -192,7 +202,10 @@
       this.replace([...ITEMS.filter(it=>it.key!==record.key),record]);
       if(reveal)goItem(ITEMS.findIndex(it=>it.key===record.key));
     },
-    status(message) { $('catalog-status').textContent=message; }
+    status(message, state='success') {
+      $('catalog-status').textContent=message; $('catalog-status').title=message;
+      $('catalog-status').hidden=state!=='loading' && state!=='error';
+    }
   };
   // Do not clear the saved local basket until the catalog has actually loaded.
   render(false);

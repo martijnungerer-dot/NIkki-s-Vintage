@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — Collectie en Mijn items ingevuld
+- Begonnen op de nieuwste goedgekeurde main d730413, inclusief PR #20–22; nieuwe branch voor deze aanvulling. Hoofdwinkel, onderrij en bestaande opslagarchitectuur behouden.
+- Collectie toont de publieke catalogus met zoeken, materiaalfilter en sortering; Mijn items toont lokale hartjes. Foto opent de bestaande winkel, naam opent details en keert terug naar dezelfde lijst; prijs en hartje gebruiken bestaande lokale opslag.
+- Build, 23 unit-/databasetests, cloudbrowserworkflow, collectie-/hartjestests en zelfstandige referentiecontrole geslaagd. De hoofdwinkel is visueel ongewijzigd en de geometriecontrole blijft groen. [Vensters voor/na](screenshots/collectie-mijn-items/README.md), [functieoverzicht en open punten](FUNCTIONALITEIT.md).
+- Geen schema-, rechten-, voorraad- of nieuwe backend-schrijfacties. Live Supabase/Gemini en fysieke iOS/Safari-apparaten niet opnieuw getest; merge blijft bij Martijn.
+
 ### 10 november 2026 — geldende versie van de winkel vastgelegd
 - Martijn heeft de cloudwinkel op `main` goedgekeurd. In AGENTS.md staat nu dat deze versie het uitgangspunt is voor elke agent, met de afgesproken afwijkingen van de referentie, en dat oude branches, previews en prototypes geen uitgangspunt meer zijn.
 

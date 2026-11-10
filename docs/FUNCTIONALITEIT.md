@@ -18,14 +18,14 @@ De schermen hergebruiken het bestaande volle paneel, productrijen, kleuren, lett
 
 | Functie | Vastgesteld in de huidige code | Afzonderlijke vervolgstap |
 |---|---|---|
-| Winkelmand-overzicht | Prijs-tik bewaart/verwijdert UUID's lokaal, maar het venster toont alleen de proefmelding. | Geselecteerde stukken, aantallen/totaal en verwijderen in het mandvenster tonen met dezelfde publicatie- en fotoregels. |
+| Winkelmand-overzicht | Gebouwd in `app/store-screens/cart.js` (10 november 2026): regels, verwijderen en totaal uit optie B; proefmelding in plaats van Afrekenen. | Klaar; zie [FRONTEND-PLAN.md](FRONTEND-PLAN.md), onderdeel A. |
 | Delen en stuklinks | Het deelicoon in de foto heeft geen handler. Het gekozen stuk zit alleen in de interne winkeltoestand. | Stabiele link op stuk-ID en een werkende deel-/kopieeractie; geen tijdelijke getekende fotolink delen. |
 | Klantaccount | Het accounticoon opent bestaand collectiebeheer voor Nikki. Er is geen bezoekersprofiel. | Alleen na productkeuze: klantaanmelding en bijbehorende rechten, met behoud van het aparte beheer. |
 | Hartjes op meerdere apparaten | Hartjes staan in lokale browseropslag. Nieuwe pagina's lezen die opslag; al geopende tabbladen krijgen geen directe synchronisatie. | Beslissen of tab-/account-/apparaatsynchronisatie gewenst is; dit vraagt apart gedrag en eventueel opslag/rechten. |
 | Checkout en reservering | De pilot bevat geen checkout, betaling, orderstatus of reservering. De status published/sold is geen transactionele winkelvoorraad. | Verkoopplatform kiezen en unieke voorraad/orderafhandeling uit het bestaande architectuurvoorstel uitwerken. |
 | Persoonlijke pasvorm en meldingen | Er is een meetvenster met bestaande platte maten, maar geen klantmaten, aanbevelingen of nieuwe-stukmeldingen. | Afzonderlijke productkeuze en datacontracten; niets afleiden uit hartjes of kledingfoto's. |
 
-Deze open punten zijn geïnventariseerd, niet stilzwijgend geïmplementeerd in de twee vensters.
+Deze open punten zijn geïnventariseerd, niet stilzwijgend geïmplementeerd in de twee vensters. Verdeling over losse bestanden en eigenaars: [FRONTEND-PLAN.md](FRONTEND-PLAN.md).
 
 ## Bestaand technisch aandachtspunt
 

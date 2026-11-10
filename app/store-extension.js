@@ -141,6 +141,7 @@
     $('cart').setAttribute('aria-label',destination);
     $('cart').classList.toggle('catalog-window',!!lists[destination]);
     var header='<div class="head" style="padding-bottom:10px"><button type="button" class="ic" data-act="close" aria-label="Terug naar de winkel" style="margin-left:-8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span style="font-size:26px">'+esc(destination)+'</span><span style="width:44px"></span></div>';
+    if(SCREENS[destination]) { $('cart').innerHTML=header+SCREENS[destination].render(api); return; }
     if(!lists[destination]) {
       $('cart').innerHTML=header+'<p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Proefboetiek · bekijken en uitproberen, nog niet afrekenen.</p>';
       return;
@@ -158,6 +159,13 @@
     var scroll=state.scroll;renderResults();state.scroll=scroll;
   }
   function refreshList() {
+    if(S.open==='cart' && SCREENS[destination]) {
+      var act=document.activeElement.dataset.act, key=document.activeElement.dataset.key;
+      renderCart();
+      var same=Array.from($('cart').querySelectorAll('button')).find(b=>b.dataset.act===act && b.dataset.key===key);
+      (same || $('cart').querySelector('button')).focus({preventScroll:true});
+      return;
+    }
     if(S.open!=='cart' || !lists[destination])return;
     var active=document.activeElement, field=active.dataset.field, key=active.dataset.key, act=active.dataset.act;
     var selection=field==='query'?[active.selectionStart,active.selectionEnd]:null;
@@ -208,24 +216,25 @@
     var a = b.getAttribute('data-act');
     if (a === 'prev-photo') goPhoto(-1, true);
     else if (a === 'next-photo') goPhoto(1, true);
-    else if (a === 'like') { S.liked[ITEMS[S.item].displayId] = !S.liked[ITEMS[S.item].displayId]; save('gsf-liked',S.liked); render(false); }
+    else if (a === 'like') { var it=ITEMS[S.item]; S.liked[it.displayId] = !S.liked[it.displayId]; save('gsf-liked',S.liked); render(false); emit(S.liked[it.displayId]?'like':'unlike',it); }
     else if (a === 'info' || a === 'menu') open(a);
     else if (a === 'destination') { destination=b.dataset.screen; open('cart'); }
     else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
     else if (a === 'list-like' || a === 'list-cart') {
       var item=ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;
-      if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);}
-      else {if(S.cart[item.key])delete S.cart[item.key];else S.cart[item.key]=true;save('nikki-cart',S.cart);}
+      if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);emit(S.liked[item.displayId]?'like':'unlike',item);}
+      else toggleCart(item.key);
       render(false);renderResults();
     }
     else if (a === 'list-reset') {
       var state=lists[destination];state.query='';state.material='';state.sort='order';state.scroll=0;
       renderCart();$('catalog-search').focus();
     }
-    else if (a === 'cart-toggle') { var key=ITEMS[S.item].key; if(S.cart[key])delete S.cart[key];else S.cart[key]=true; save('nikki-cart',S.cart); render(false); }
+    else if (a === 'cart-toggle') toggleCart(ITEMS[S.item].key);
     else if (a === 'close') closeAll();
     else if (a === 'go') goItem(Number(b.getAttribute('data-idx')));
     else if (a === 'go-prev') goItem(S.prev);
+    else if (S.open==='cart' && SCREENS[destination]?.action) SCREENS[destination].action(a, b, api);
   });
   ph.addEventListener('input',function(e){
     if(e.target.dataset.field!=='query')return;
@@ -234,6 +243,7 @@
   ph.addEventListener('change',function(e){
     var field=e.target.dataset.field;if(field!=='material' && field!=='sort')return;
     lists[destination][field]=e.target.value;renderResults(true);
+    if(field==='material' && e.target.value)emitSignal({type:'browse-filter',dimension:'material',value:e.target.value});
   });
   ph.addEventListener('keydown', function (e) {
     if(e.key==='Escape' && S.open)closeAll();
@@ -291,6 +301,8 @@
       ITEMS=records.filter(r=>r.images?.length).map(r=>({
         key:r.key, displayId:r.displayId, title:r.title, description:r.description, priceMinor:r.priceMinor,
         material:r.material, species:r.species, furClass:r.furClass,
+        // Public, human-checked characteristics for the taste profile (docs/SMAAKPROFIEL.md).
+        model:r.model, colour:r.colour, length:r.length, fit:r.fit, era:r.era, details:Array.isArray(r.details)?r.details.slice(0,30):[],
         price:new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:r.priceMinor%100?2:0}).format(r.priceMinor/100),
         measurements:r.measurements, images:r.images.map(i=>({src:i.src,path:i.path,role:i.role,main:i.main}))
       }));
@@ -312,6 +324,7 @@
       var infoScroll=$('info').scrollTop, infoFocused=$('info').contains(document.activeElement); render(false);
       if(S.open==='info'){renderInfo();$('info').scrollTop=infoScroll;if(infoFocused)$('info').querySelector('button').focus();}
       refreshList();
+      catalogListeners.forEach(fn=>fn(api));
     },
     put(record,reveal=true) {
       this.replace([...ITEMS.filter(it=>it.key!==record.key),record]);
@@ -321,6 +334,39 @@
       $('catalog-status').textContent=message; $('catalog-status').title=message;
       $('catalog-status').hidden=state!=='loading' && state!=='error';
     }
+  };
+  // Screens in app/store-screens/ plug in here, so each piece can be built in its own file.
+  // Contract and ownership: docs/FRONTEND-PLAN.md. Only public catalog fields are exposed.
+  var SCREENS={}, catalogListeners=[], signalListeners=[];
+  function toggleCart(key, value=!S.cart[key]) {
+    var was=!!S.cart[key]; if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false);
+    var it=ITEMS.find(x=>x.key===key); if(it && was!==!!value)emit(value?'cart':'uncart',it);
+  }
+  // Signals for the taste profile: only a copy of public fields, never photos or links.
+  function publicCopy(it) { return {key:it.key,priceMinor:it.priceMinor,material:it.material,model:it.model,colour:it.colour,length:it.length,fit:it.fit,era:it.era,details:it.details.slice(),furClass:it.furClass}; }
+  function emitSignal(signal) { signalListeners.forEach(fn=>{try{fn(signal,api);}catch(e){}}); }
+  function emit(type,it) { emitSignal({type,item:publicCopy(it)}); }
+  var api={
+    esc, face, CLOSE, bagIcon, heartIcon,
+    items:()=>ITEMS.slice(),
+    publicCopy,
+    current:()=>ITEMS[S.item] || null,
+    cartKeys:()=>Object.keys(S.cart),
+    toggleCart,
+    isLiked:it=>!!S.liked[it.displayId],
+    show:key=>{var i=ITEMS.findIndex(it=>it.key===key);if(i<0)return false;closeAll(false);goItem(i);return true;},
+    refresh:()=>{if(S.open==='cart' && SCREENS[destination])refreshList();},
+    status:(message,state)=>window.NikkiStore.status(message,state)
+  };
+  window.NikkiShop={
+    // render(api) returns the panel body below the shared header; action(act, button, api) handles its data-act clicks.
+    registerScreen(name, screen) { SCREENS[name]=screen; },
+    // Called with api after every catalog replacement (initial load and refresh).
+    onCatalog(fn) { catalogListeners.push(fn); },
+    // Called on like/unlike/cart/uncart (with a public copy of the piece) and browse-filter.
+    // A listener error never breaks the shop. Wiring to the taste profile: docs/SMAAKPROFIEL.md.
+    onSignal(fn) { signalListeners.push(fn); },
+    api
   };
   // Do not clear the saved local basket until the catalog has actually loaded.
   render(false);

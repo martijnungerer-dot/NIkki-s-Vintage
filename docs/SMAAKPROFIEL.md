@@ -26,7 +26,7 @@ Nikki vult per stuk deze publieke velden in en controleert ze (contract in `supa
 - Geleerde gewichten blijven tussen −3 en 3. Er worden hoogstens 60 kenmerken bewaard. De samenvatting voor de server bevat hoogstens 12 voorkeuren en 12 afkeren.
 - **Privacy:** het profiel staat alleen in `localStorage` (`nikki-taste`). Er staan geen stuk-ID's, foto's of persoonsgegevens in. Staat personalisatie uit, dan wordt er niets geleerd. Wissen laat de uit-stand staan.
 - **Stabiel:** de volgorde wordt bepaald bij het begin van een sessie of na een expliciete keuze. Tijdens het bladeren blijft alles op zijn plek; nieuwe stukken komen achteraan (`stableOrder`).
-- **Lokaal eerst:** `ranking.js` rangschikt zonder AI, voorspelbaar en zonder kosten. Bij gelijke score houdt het Nikki's volgorde. Dit is ook de terugval als de AI niet antwoordt. Misschien is lokaal al genoeg; dat moet de A/B-test uitwijzen.
+- **AI rangschikt, lokaal vangt op:** Martijn heeft gekozen voor AI (zie Besluiten). `ranking.js` is alleen de terugval als de AI niet antwoordt of nog niet is ingesteld, en vult stukken aan die de AI overslaat. Bij gelijke score houdt het Nikki's volgorde.
 - **Guardrails bij de AI:**
   - De server haalt zelf de gepubliceerde stukken op en filtert op budget en status vóór de aanroep.
   - De AI ziet geen prijzen of echte ID's, alleen `c1`, `c2`, … met kenmerken en fotorollen.
@@ -39,27 +39,35 @@ Nikki vult per stuk deze publieke velden in en controleert ze (contract in `supa
 | | Onderdeel | Bestanden | Status en eigenaar |
 |---|---|---|---|
 | 1 | **Datamodel** `TasteProfile`, opslag, schoonmaak, verval | `app/taste/types.d.ts`, `app/taste/profile.js` | **Klaar** (Claude Code, deze sessie) |
-| 2 | **Signaalverwerking** en lokale rangschikking | `app/taste/aggregate.js`, `app/taste/ranking.js` | **Klaar** (deze sessie) |
-| 3 | **Payload, systeemprompt en controle** van het AI-antwoord | `supabase/functions/personalise/prompt.mjs` | **Klaar als pure functies** (deze sessie). Niet uitgerold. |
-| 3b | Kernaansluiting: extra publieke velden in de winkelcatalogus en `NikkiShop.onSignal` | `app/store-extension.js` | **Klaar** (deze sessie). De winkel gedraagt zich nog hetzelfde. |
-| 4 | **Venster "Mijn smaak"** (inzien, aanpassen, wissen, uitzetten) en het leren koppelen | `app/store-screens/taste.js` (blauwdruk), `tests/storefront-taste.cjs` | **Volgende Claude Code-sessie.** Opdracht hieronder. |
-| 5 | Winkel herordenen met de stabiele sessievolgorde; eventueel een andere hoofdfoto | nieuw bestand in `app/store-screens/` | **Wacht op Martijn**: verandert wat bezoekers zien |
-| 6 | Server-proxy: handler (herkomst, grootte, limiet per bezoeker/dag, Gemini), migratie voor quota | `supabase/functions/personalise/handler.mjs`, `index.ts` | **Wacht op Martijn**: openbaar betaald eindpunt zonder login (kosten, misbruik) |
-| 7 | A/B-test: gepersonaliseerd tegenover Nikki's volgorde | — | **Wacht op besluit**: er wordt nu niets gemeten |
+| 2 | **Signaalverwerking** en lokale terugval-rangschikking | `app/taste/aggregate.js`, `app/taste/ranking.js` | **Klaar** (deze sessie) |
+| 3 | **Payload, systeemprompt en controle** van het AI-antwoord | `supabase/functions/personalise/prompt.mjs` | **Klaar als pure functies** (deze sessie) |
+| 3b | Kernaansluiting: extra publieke velden en `NikkiShop.onSignal` | `app/store-extension.js` | **Klaar** (deze sessie) |
+| 4 | **Venster "Mijn smaak"** in het Shop-menu, leren, en de knoppen **meer/minder zoals dit** in de foto | `app/store-screens/taste.js` (blauwdruk), `tests/storefront-taste.cjs` | **Volgende Claude Code-sessie.** Opdracht hieronder. |
+| 5 | **Server-proxy** `personalise`: herkomst, grootte, limiet per bezoeker per dag, catalogus ophalen, Gemini-aanroep met `prompt.mjs` | `supabase/functions/personalise/handler.mjs`, `index.ts`, migratie voor de limiet | **Claude Code (deze sessie), na merge van PR #24.** Testbaar met nagebootste diensten; live pas met Gemini-sleutel en uitrol door Martijn. |
+| 6 | **Winkel herordenen** met de AI-volgorde, en per stuk de **hoofdfoto** die bij de bezoeker past | nieuw bestand `app/store-screens/personalise.js` | **Claude Code (deze sessie), na 5.** Raakt `taste.js` niet. |
+| 7 | Meten (A/B: gepersonaliseerd tegenover Nikki's volgorde) | — | Later, vóór de test met Nikki en anderen (zie Besluiten, punt 8) |
 
 Getest in `tests/taste.test.mjs` (14 tests, onderdeel van `npm test`). De browsermodules draaien in de test precies zoals in de winkel. Ook bewaakt: dezelfde kenmerken in browser en server, geen privévelden of ID's in profiel en payload, verval, de uit-stand, gemanipuleerde opslag, budget- en statusfilter, de kandidaatgrens en de controle van het AI-antwoord. De browsertest controleert de signalen in de echte winkel, en dat er nog niets wordt opgeslagen. TypeScript-controle: `npx -p typescript@5.6.3 tsc --noEmit --allowJs --checkJs --target es2022 --lib es2022,dom app/taste/*.js app/taste/types.d.ts` gaf geen fouten. TypeScript is geen projectafhankelijkheid.
 
 ## Opdracht voor de volgende Claude Code-sessie (onderdeel 4)
 
-Kopieer dit als startbericht:
+Kopieer dit als startbericht (pas nadat PR #24 is gemerged):
 
-> Lees AGENTS.md, docs/SMAAKPROFIEL.md, `app/taste/types.d.ts` en de blauwdruk in `app/store-screens/taste.js`. Begin op de nieuwste `main` met een eigen branch. Bouw onderdeel 4: het venster "Mijn smaak" en het leren via `NikkiShop.onSignal`, alleen in `app/store-screens/taste.js`, met een eigen test `tests/storefront-taste.cjs`. Wijzig `app/taste/*` en `app/store-extension.js` niet; als het contract tekortschiet, stop dan en beschrijf wat nodig is. Nog geen herordening van de winkel en geen AI-aanroep. Stel de menuplek als vraag in de PR, met beelden op 390 en 320 px naast optie B.
+> Lees AGENTS.md, docs/SMAAKPROFIEL.md (vooral "Besluiten"), `app/taste/types.d.ts` en de blauwdruk in `app/store-screens/taste.js`. Begin op de nieuwste `main` met een eigen branch. Bouw onderdeel 4: het venster "Mijn smaak" als vierde regel in het Shop-menu, het leren via `NikkiShop.onSignal`, en de knoppen meer/minder zoals dit in de foto, aan de andere kant dan het hartje. Werk alleen in `app/store-screens/taste.js`, een eigen blok in `app/store-layout.css`, het menu-anker in `scripts/build-cloud.mjs` en een eigen test `tests/storefront-taste.cjs`. Wijzig `app/taste/*` en `app/store-extension.js` niet; als het contract tekortschiet, stop dan en beschrijf wat nodig is. Geen herordening en geen AI-aanroep: dat zijn onderdelen 5 en 6, die tegelijk in een andere sessie worden gebouwd. Lever een PR met beelden op 390 en 320 px naast optie B.
 
-## Vragen voor Martijn
+## Besluiten van Martijn (10 november 2026)
 
-1. **Menuplek** voor "Mijn smaak": een vierde regel in het Shop-menu, of een icoon in Mijn items? Optie B heeft nu drie regels.
-2. **Meer / minder zoals dit**: optie B heeft daar geen knoppen voor. Waar mogen ze komen, zonder tekst over de foto? Tot die tijd leert het profiel van hartjes en de mand.
-3. **Hoofdfoto**: mag de boetiek een andere foto van een stuk eerst tonen dan Nikki's hoofdfoto? Standaard niet.
-4. **AI of lokaal**: een openbaar AI-eindpunt kost geld per bezoek en vraagt misbruikbeperking. Voorstel: eerst lokaal (onderdeel 5) en meten, AI pas daarna.
-5. **Zoekfilters in Collectie**: nu tellen ze niet als voorkeur, omdat een eenmalige zoekopdracht geen smaak is. Akkoord?
-6. **Meten en toestemming**: voor de A/B-test zijn gebeurtenissen nodig (hartjes, mand, later bestellingen en retouren). Kies eerst waar en hoe anoniem. Laat ook nagaan of het lokale profiel en het meten een melding of toestemming vragen. Dit plan is geen juridische beoordeling.
+1. **Merge:** winkelmand en smaakprofiel blijven allebei in PR #24.
+2. **"Mijn smaak"** komt als regel in het Shop-menu. Alles erin vult zich door de keuzes van de bezoeker: niets voorgevuld, geen redactionele lijst. De bezoeker kan alles in één keer wissen, of één kenmerk tegelijk.
+3. **Zoekfilters in Collectie** tellen niet als voorkeur.
+4. **AI, zeker.** Geen tijd steken in een rangschikking zonder AI; de lokale rangschikking blijft alleen als terugval.
+5. **De winkel moet herordenen op smaak.** De ervaring sluit aan op de smaak van de koper, niet op die van de verkoper. Alles wat Nikki aanbiedt wordt geordend naar wat deze bezoeker interessant vindt. Nikki's volgorde geldt alleen zonder profiel of met personalisatie uit.
+6. **Meer / minder zoals dit:** in de foto, aan de andere kant dan het hartje. Iconen zonder tekst, minstens 44 px.
+7. **Hoofdfoto per bezoeker: ja.** Wie steeds "meer zoals dit" zegt bij kragen, mag als eerste de detailfoto van de kraag zien. Alleen bestaande foto's van dat stuk; Nikki's hoofdfoto blijft de standaard.
+8. **Meten en toestemming:** niet urgent. Wel regelen vóór Nikki en andere testers de app gebruiken. Tot die tijd wordt niets gemeten of verstuurd buiten de AI-aanroep.
+9. **Winkelplatform, klantaccount en hartjes op meerdere apparaten:** later. Eerst een werkend model met API's, database en website, getest door Nikki en anderen.
+10. **Delen:** een kort vinkje in het deelicoon na kopiëren. Het delen zelf mag eenvoudiger (onderdeel B in FRONTEND-PLAN.md).
+11. **Zo dicht mogelijk bij het artefact van optie B blijven.** Daarom geen CSS-wijziging aan de paneelmarges (onderdeel C vervalt).
+12. **Namen:** "Mijn favorieten" in plaats van "Mijn items", "Betalen" in plaats van "Afrekenen". Betalen doorloopt een voorbeeldbetaling: er wordt niets betaald of gereserveerd.
+
+Nog open, voor later: hoe anoniem het meten moet en of het een melding of toestemming vraagt. Laat dat nagaan; dit plan is geen juridische beoordeling.

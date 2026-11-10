@@ -30,15 +30,15 @@ Tot nu toe stond de hele winkel in één bestand, `app/store-extension.js`. Twee
 
 | | Onderdeel | Bestand | Status en eigenaar |
 |---|---|---|---|
-| A | **Winkelmand-overzicht**: regels uit optie B met foto, naam, prijs en verwijderen, plus het totaal. In plaats van de knop Afrekenen staat de bestaande proefmelding, want er is nog geen checkout. Een stuk waarvan de foto tijdelijk niet laadt, blijft in de mand en wordt als "tijdelijk niet te zien" gemeld. | `app/store-screens/cart.js`, `tests/storefront-cart.cjs` | **Klaar in deze PR** (Claude Code, deze sessie, overgenomen van Codex). [Beelden](screenshots/winkelmand/README.md) |
+| A | **Winkelmand-overzicht**: regels uit optie B met foto, naam, prijs en verwijderen, plus het totaal. De knop heet Betalen en doorloopt een voorbeeldbetaling zonder betaling of reservering (Martijn, 10 november). Een stuk waarvan de foto tijdelijk niet laadt, blijft in de mand en wordt als "tijdelijk niet te zien" gemeld. | `app/store-screens/cart.js`, `tests/storefront-cart.cjs` | **Klaar in deze PR** (Claude Code, deze sessie, overgenomen van Codex). [Beelden](screenshots/winkelmand/README.md) |
 | B | **Delen en stuklinks** (na het smaakprofiel): het deelicoon in de foto deelt een link naar het huidige stuk; wie de link opent, komt op dat stuk uit. | `app/store-screens/share.js` (startbestand met regels staat klaar, doet nog niets) | Daarna, of door een andere agent. Opdracht hieronder. |
-| C | **Paneelmarges op lage schermen**: in `app/store-layout.css` winnen de algemene `.info`/`.cart`-regels van de regels voor schermen lager dan 760 px. | `app/store-layout.css` | **Wacht op Martijn**: het verandert het beeld van goedgekeurde vensters. Pas na akkoord, met beelden voor/na. |
-| D | Klantaccount voor bezoekers | — | Wacht op productbesluit. Niet bouwen. |
-| E | Hartjes op meerdere apparaten of tabbladen | — | Wacht op besluit (alleen tabbladen, of account met opslag en rechten). |
-| F | Checkout en reservering | — | Wacht op keuze winkelplatform (P4 in [PLAN.md](PLAN.md)). De mand reserveert niets. |
-| G | Persoonlijke pasvorm en meldingen | — | Wacht op productkeuze en datacontract. Niets afleiden uit hartjes of foto's. |
+| C | ~~Paneelmarges op lage schermen~~ **Vervalt** (Martijn: zo dicht mogelijk bij het artefact blijven): in `app/store-layout.css` winnen de algemene `.info`/`.cart`-regels van de regels voor schermen lager dan 760 px. | `app/store-layout.css` | Niet aanpassen. |
+| D | Klantaccount voor bezoekers | — | Later (Martijn): eerst een werkende app testen. |
+| E | Hartjes op meerdere apparaten of tabbladen | — | Later (Martijn). |
+| F | Echte betaling en reservering | — | Later (Martijn): eerst het werkende model met Nikki en anderen testen. Nu alleen de voorbeeldbetaling. |
+| G | Persoonlijke pasvorm en meldingen | — | Later. Smaak loopt via [SMAAKPROFIEL.md](SMAAKPROFIEL.md). |
 
-Alleen A en B passen binnen de huidige bevoegdheden: lokaal in de browser, zonder nieuwe opslag, rechten of backend. C tot en met G vragen eerst een besluit van Martijn.
+A is klaar, B kan na het smaakprofiel. D tot en met G komen pas na de test met Nikki en anderen.
 
 ## Opdracht voor de volgende Claude Code-sessie (onderdeel B)
 
@@ -52,7 +52,7 @@ Regels voor B, ook te lezen in het startbestand:
 - Een onbekend, verkocht of ongeldig stuk in de link toont gewoon de winkel. Geen foutscherm en geen voorbeeldstuk.
 - De winkel draait in een iframe (`app/main.js`). De link hoort bij de buitenpagina; test dat expliciet.
 - Het deelicoon blijft op dezelfde plek, minstens 44 px, zonder tekst over de foto.
-- **Open vraag voor Martijn, in de PR stellen:** hoe laat je zien dat de link gekopieerd is? `api.status` toont volgens afspraak alleen laden en fouten. Voorstel: kort een vinkje in hetzelfde icoon, zonder tekst.
+- **Besloten door Martijn:** na kopiëren kort een vinkje in hetzelfde icoon, zonder tekst. Het delen mag ook eenvoudiger: één tik opent het deelmenu van de telefoon, anders wordt de link gekopieerd.
 
 ## Werkafspraken
 

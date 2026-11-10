@@ -8,7 +8,7 @@ Onderzocht op 10 november 2026 vanaf de goedgekeurde cloudwinkel op main d730413
 |---|---|
 | Collectie | Alle beschikbare gepubliceerde stukken met bereikbare foto's. Zoeken in titel, verkooptekst, materiaal en toepasselijke bontsoort; alle zoekwoorden moeten passen, hoofdletters en accenten maken geen verschil. |
 | Filters en sortering | Materiaalkeuzes komen uit ingevulde cataloguswaarden. Sorteren op dezelfde volgorde als de boetiek, prijs oplopend/aflopend of naam. Wisicoon zet zoeken, filter en sortering terug. |
-| Mijn items | Beschikbare stukken met het bestaande lokale hartje. Toevoegen/verwijderen werkt vanuit de winkel en beide lijsten. De uitleg vermeldt expliciet dat hartjes alleen in deze browser worden bewaard. |
+| Mijn favorieten (was Mijn items) | Beschikbare stukken met het bestaande lokale hartje. Toevoegen/verwijderen werkt vanuit de winkel en beide lijsten. De uitleg vermeldt expliciet dat hartjes alleen in deze browser worden bewaard. |
 | Foto / naam / prijs | Foto opent het stuk in de bestaande winkel. Naam opent bestaande verkooptekst en platte maten; sluiten brengt je terug naar je lijst en scrollpositie. Prijs wisselt alleen de lokale mand. |
 | Vernieuwing en lege lijsten | Open lijsten krijgen nieuwe fotolinks en beschikbaarheid. Zoeken, filters, sortering, focus en scroll blijven waar mogelijk behouden. Geen fictieve records bij leegte; een tijdelijke fotostoring verwijdert geen hartje. |
 

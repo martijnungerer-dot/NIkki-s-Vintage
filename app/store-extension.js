@@ -87,12 +87,12 @@
   var destination='', returnFocus=null, infoOrigin=null;
   var lists={
     'Collectie':{query:'',material:'',sort:'order',scroll:0},
-    'Mijn items':{query:'',material:'',sort:'order',scroll:0}
+    'Mijn favorieten':{query:'',material:'',sort:'order',scroll:0}
   };
   function fold(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('nl-NL'); }
   function listItems() {
     var state=lists[destination], words=fold(state.query).trim().split(/\s+/).filter(Boolean);
-    var items=ITEMS.filter(it=>(destination!=='Mijn items' || S.liked[it.displayId]) &&
+    var items=ITEMS.filter(it=>(destination!=='Mijn favorieten' || S.liked[it.displayId]) &&
       (!state.material || it.material===state.material) &&
       words.every(word=>fold([it.title,it.description,it.material,['Ja','Alleen kraag of rand'].includes(it.furClass)?it.species:''].join(' ')).includes(word)));
     if(state.sort==='price-up')items.sort((a,b)=>a.priceMinor-b.priceMinor);
@@ -120,7 +120,7 @@
     $('catalog-reset').disabled=!state.query && !state.material && state.sort==='order';
     if(!items.length) {
       var message=state.query || state.material?'Geen stukken gevonden. Pas je zoekopdracht of filters aan.':
-        destination==='Mijn items'?'Er zijn nu geen beschikbare stukken met een hartje.':'Er zijn nu geen stukken beschikbaar.';
+        destination==='Mijn favorieten'?'Er zijn nu geen beschikbare stukken met een hartje.':'Er zijn nu geen stukken beschikbaar.';
       results.innerHTML='<li class="catalog-empty muted">'+message+'</li>';
     } else results.innerHTML=items.map(it=>{
       var key=esc(it.key), selected=!!S.cart[it.key], liked=!!S.liked[it.displayId];
@@ -128,7 +128,7 @@
         '<button type="button" class="face catalog-photo" data-act="list-photo" data-key="'+key+'" aria-label="Bekijk foto’s van '+esc(it.title)+'">'+face(it)+'</button>'+
         '<div class="txt"><button type="button" class="catalog-title" data-act="list-info" data-key="'+key+'" aria-label="Meer over '+esc(it.title)+'">'+esc(it.title)+'</button>'+
         '<div class="catalog-actions"><button type="button" class="chip price catalog-price" data-act="list-cart" data-key="'+key+'" aria-pressed="'+selected+'" aria-label="'+esc(it.price)+', '+esc(it.title)+(selected?', verwijder uit winkelmand':', toevoegen aan winkelmand')+'">'+esc(it.price)+bagIcon(selected)+'</button>'+
-        '<button type="button" class="ic" data-act="list-like" data-key="'+key+'" aria-pressed="'+liked+'" aria-label="'+(liked?'Verwijder uit Mijn items: ':'Bewaar in Mijn items: ')+esc(it.title)+'">'+heartIcon(liked)+'</button></div></div></li>';
+        '<button type="button" class="ic" data-act="list-like" data-key="'+key+'" aria-pressed="'+liked+'" aria-label="'+(liked?'Verwijder uit Mijn favorieten: ':'Bewaar in Mijn favorieten: ')+esc(it.title)+'">'+heartIcon(liked)+'</button></div></div></li>';
     }).join('');
     results.scrollTop=scroll;state.scroll=results.scrollTop;
     if(focused) {
@@ -148,7 +148,7 @@
     }
     var state=lists[destination], materials=Array.from(new Set(ITEMS.map(it=>it.material).concat(state.material).filter(v=>typeof v==='string' && v.trim()))).sort((a,b)=>a.localeCompare(b,'nl-NL'));
     $('cart').innerHTML=header+
-      (destination==='Mijn items'?'<p class="catalog-note muted">Je hartjes worden alleen in deze browser bewaard.</p>':'')+
+      (destination==='Mijn favorieten'?'<p class="catalog-note muted">Je hartjes worden alleen in deze browser bewaard.</p>':'')+
       '<div class="catalog-tools"><div class="catalog-search"><input id="catalog-search" data-field="query" type="search" autocomplete="off" aria-label="Zoek in '+destination+'" placeholder="Zoek een stuk" value="'+esc(state.query)+'">'+
       '<button id="catalog-reset" type="button" class="ic" data-act="list-reset" aria-label="Wis zoekopdracht, filters en sortering">'+CLOSE+'</button></div>'+
       '<div class="catalog-filters"><select data-field="material" aria-label="Materiaal"><option value="">Elk materiaal</option>'+

@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — onderrij zonder lege vakjes, meer foto op lage schermen
+- Na vergelijking met het artifact door Martijn: de onderrij van de cloudwinkel toont alleen stukken die bestaan (geen lege vakjes; bij één stuk alleen het menu). Op schermen lager dan 760 px gaat de bovenmarge van de ontwerpschets naar de foto; op 844 px blijft het scherm gelijk aan optie B.
+- Gecontroleerd met de bestaande en uitgebreide browsertests (nagebootste diensten). De foto blijft op een laag scherm minder hoog dan in het artifact, omdat alles op één scherm past; niet getest op een echte telefoon.
+
 ### 10 november 2026 — review van PR #19 verwerkt
 - Gepubliceerde ID's staan los van fotobeschikbaarheid: de lokale mand overleeft tijdelijke foto-uitval, maar verwijdert verkochte/teruggetrokken stukken. Het SVG-vinkje wordt bij een lege weergave verborgen; de vorige-stukknop wijst niet naar het huidige stuk.
 - Met Martijns akkoord verdwijnt alleen in de app het presentatiekader. Mobiel tot 480 px schermvullend, daarboven 390 px gecentreerd; binnenindeling en onderrij gebruiken dezelfde referentieregels bij de werkelijke breedte. Status alleen bij laden of een probleem, zonder verschuiving.

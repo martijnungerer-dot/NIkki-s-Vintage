@@ -15,6 +15,13 @@ body { padding: 0; gap: 0; min-height: 100svh; }
 @media (max-width: 480px) {
   .ph { width: 100%; height: 100svh; }
 }
+/* Short screens (a phone with browser bars): the 40px top margin of the design mock-up
+   goes to the photo instead. At 844px height the screen stays identical to option B. */
+@media (max-height: 760px) {
+  .ph { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(12px + var(--safe-bottom)); }
+  .info { top: calc(72px + var(--safe-top)); }
+  .cart { padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(12px + var(--safe-bottom)); }
+}
 .info { top: calc(92px + var(--safe-top)); left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right)); }
 .menu { right: calc(16px + var(--safe-right)); }
 .cart { padding: calc(40px + var(--safe-top)) calc(20px + var(--safe-right)) calc(24px + var(--safe-bottom)) calc(20px + var(--safe-left)); }

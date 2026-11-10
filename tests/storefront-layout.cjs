@@ -73,6 +73,11 @@ async function layout(frame,width) {
    if([390,320].includes(width)) {
     await ref.screenshot({path:path.join(output,'reference-'+width+'.png'),fullPage:true});
     await ref.locator('#ph').screenshot({path:path.join(output,'reference-phone-'+width+'.png')});
+    // Reference basket with three sample pieces, for the side-by-side comparison of the Winkelmand.
+    const refCart=await context.newPage();await refCart.goto('https://app.test/reference');
+    for(let i=0;i<3;i++){await refCart.locator('#price').click();await refCart.locator('#nexts .th').first().click();}
+    await refCart.locator('.shop').click();await refCart.locator('[data-act=cart-open]').click();
+    await refCart.screenshot({path:path.join(output,'reference-cart-'+width+'.png'),fullPage:true});await refCart.close();
    }
    const page=await context.newPage();await page.goto('https://app.test',{waitUntil:'commit'});
    await page.waitForFunction(()=>document.getElementById('shop')?.contentWindow.NikkiStore);
@@ -154,10 +159,7 @@ async function layout(frame,width) {
    await again.locator('#prev-th').click();assert.equal(await again.locator('#title').textContent(),names[0]);
    await again.locator('#photo').hover();await page.mouse.wheel(0,80);await again.locator('#title').filter({hasText:names[1]}).waitFor();
    await require('./storefront-collections.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
-   await again.locator('.shop').click();await again.getByRole('menuitem',{name:'Winkelmand',exact:true}).click();
-   assert.equal(await again.locator('#cart .line, #cart .checkout').count(),0,'cart remains a placeholder, without checkout');
-   assert.equal(await again.locator('#cart p').innerText(),'Proefboetiek · bekijken en uitproberen, nog niet afrekenen.');
-   await again.locator('#cart [data-act=close]').click();
+   await require('./storefront-cart.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
    async function refresh(fails=false) {
     await page.evaluate(()=>window.NikkiApp.openAccount());
     await page.locator('#status').evaluate(el=>{el.textContent='';});
@@ -226,6 +228,6 @@ async function layout(frame,width) {
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
+  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket and basket overview, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

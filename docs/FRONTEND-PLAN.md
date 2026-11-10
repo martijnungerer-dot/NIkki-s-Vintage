@@ -1,0 +1,56 @@
+# Frontendplan: losse onderdelen en wie wat doet
+
+Vastgelegd op 10 november 2026. Uitgangspunt is de goedgekeurde cloudwinkel op `main` (`app/`, ontwerpbron `concept/ontdekken-optie-b.html`). De open punten komen uit [FUNCTIONALITEIT.md](FUNCTIONALITEIT.md). Dit plan begon in een Codex-sessie die halverwege stopte; Claude Code heeft het afgemaakt. Merge en release blijven bij Martijn.
+
+## Waarom losse bestanden
+
+Tot nu toe stond de hele winkel in één bestand, `app/store-extension.js`. Twee agents konden daardoor niet tegelijk aan verschillende onderdelen werken zonder elkaars regels te raken. Daarom is er een kleine aansluiting:
+
+| Bestand | Inhoud | Wie mag het wijzigen |
+|---|---|---|
+| `app/store-extension.js` | Kern: hoofdwinkel, Collectie, Mijn items, catalogus (`NikkiStore`) en onderaan het contract `window.NikkiShop` | Alleen in een eigen kleine PR, als het contract moet veranderen. Meld dat in de PR. |
+| `app/store-screens/*.js` | Eén onderdeel per bestand. De build voegt ze in alfabetische volgorde achter de kern toe, in hetzelfde script. | De eigenaar van dat onderdeel (tabel hieronder). |
+| `app/store-layout.css` | Gedeelde stijl, met per onderdeel een eigen blok met kopregel | Alleen het eigen blok. |
+| `tests/storefront-<onderdeel>.cjs` | Browsertest per onderdeel, aangeroepen vanuit `tests/storefront-layout.cjs` | De eigenaar van dat onderdeel. |
+
+### Contract `window.NikkiShop`
+
+- `registerScreen(naam, {render(api), action(act, knop, api)})`: een venster uit het Shop-menu. `render` geeft de inhoud onder de gedeelde kopregel terug; `action` krijgt de `data-act`-klikken in dat venster.
+- `onCatalog(fn)`: wordt na elke catalogusvernieuwing aangeroepen (eerste keer laden en verversen).
+- `api`: `items()`, `current()`, `cartKeys()`, `toggleCart(key, waarde)`, `isLiked(item)`, `show(key)`, `refresh()`, `status(tekst, toestand)`, plus de bestaande helpers `esc`, `face`, `CLOSE`, `bagIcon`, `heartIcon`.
+- Alleen publieke catalogusvelden zijn bereikbaar (dezelfde projectie als in `NikkiStore.replace`). Geen privévelden, tokens of schrijfacties naar Supabase.
+
+## Onderdelen
+
+| | Onderdeel | Bestand | Status en eigenaar |
+|---|---|---|---|
+| A | **Winkelmand-overzicht**: regels uit optie B met foto, naam, prijs en verwijderen, plus het totaal. In plaats van de knop Afrekenen staat de bestaande proefmelding, want er is nog geen checkout. Een stuk waarvan de foto tijdelijk niet laadt, blijft in de mand en wordt als "tijdelijk niet te zien" gemeld. | `app/store-screens/cart.js`, `tests/storefront-cart.cjs` | **Klaar in deze PR** (Claude Code, deze sessie, overgenomen van Codex). [Beelden](screenshots/winkelmand/README.md) |
+| B | **Delen en stuklinks**: het deelicoon in de foto deelt een link naar het huidige stuk; wie de link opent, komt op dat stuk uit. | `app/store-screens/share.js` (startbestand met regels staat klaar, doet nog niets) | **Volgende Claude Code-sessie.** Opdracht hieronder. |
+| C | **Paneelmarges op lage schermen**: in `app/store-layout.css` winnen de algemene `.info`/`.cart`-regels van de regels voor schermen lager dan 760 px. | `app/store-layout.css` | **Wacht op Martijn**: het verandert het beeld van goedgekeurde vensters. Pas na akkoord, met beelden voor/na. |
+| D | Klantaccount voor bezoekers | — | Wacht op productbesluit. Niet bouwen. |
+| E | Hartjes op meerdere apparaten of tabbladen | — | Wacht op besluit (alleen tabbladen, of account met opslag en rechten). |
+| F | Checkout en reservering | — | Wacht op keuze winkelplatform (P4 in [PLAN.md](PLAN.md)). De mand reserveert niets. |
+| G | Persoonlijke pasvorm en meldingen | — | Wacht op productkeuze en datacontract. Niets afleiden uit hartjes of foto's. |
+
+Alleen A en B passen binnen de huidige bevoegdheden: lokaal in de browser, zonder nieuwe opslag, rechten of backend. C tot en met G vragen eerst een besluit van Martijn.
+
+## Opdracht voor de volgende Claude Code-sessie (onderdeel B)
+
+Kopieer dit als startbericht:
+
+> Lees AGENTS.md, docs/FRONTEND-PLAN.md en `app/store-screens/share.js`. Begin op de nieuwste `main` met een eigen branch. Bouw onderdeel B, Delen en stuklinks, alleen in `app/store-screens/share.js` en een eigen test `tests/storefront-share.cjs` (aanroepen vanuit `tests/storefront-layout.cjs`). Wijzig `app/store-extension.js` niet; als het contract echt tekortschiet, stop dan en beschrijf wat nodig is. Lever een kleine PR met beelden op 390 en 320 px naast optie B, en vermeld wat niet getest is.
+
+Regels voor B, ook te lezen in het startbestand:
+
+- De link bevat alleen de permanente stuk-ID, nooit een getekende fotolink of token.
+- Een onbekend, verkocht of ongeldig stuk in de link toont gewoon de winkel. Geen foutscherm en geen voorbeeldstuk.
+- De winkel draait in een iframe (`app/main.js`). De link hoort bij de buitenpagina; test dat expliciet.
+- Het deelicoon blijft op dezelfde plek, minstens 44 px, zonder tekst over de foto.
+- **Open vraag voor Martijn, in de PR stellen:** hoe laat je zien dat de link gekopieerd is? `api.status` toont volgens afspraak alleen laden en fouten. Voorstel: kort een vinkje in hetzelfde icoon, zonder tekst.
+
+## Werkafspraken
+
+- Eén agent per onderdeel en per checkout. Werk niet tegelijk in hetzelfde bestand.
+- Elk onderdeel komt in een eigen kleine PR met beelden op 390 en 320 px naast optie B, en tests voor publiek/privé, unieke voorraad (de mand reserveert niets) en foutafhandeling.
+- Na een merge van een ander onderdeel: haal `main` op en test je eigen onderdeel opnieuw.
+- Werk na afronding de tabel hierboven bij, en zet een regel in [STATUS.md](STATUS.md).

@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — frontendplan in losse onderdelen, winkelmand gebouwd
+- Codex was hiermee begonnen maar stopte op zijn limiet. Er stond niets van gepusht; het laatste Codex-werk (PR #23) was al gemerged. Claude Code heeft de taak overgenomen vanaf main 5bc7199.
+- [FRONTEND-PLAN.md](FRONTEND-PLAN.md): de open punten als losse onderdelen met eigenaar. De kern `app/store-extension.js` heeft onderaan een klein contract `window.NikkiShop`. Elk onderdeel staat in een eigen bestand in `app/store-screens/`, dat de build achter de kern toevoegt.
+- Onderdeel A, Winkelmand-overzicht, gebouwd in `app/store-screens/cart.js`, volgens de mand uit optie B. Afrekenen is vervangen door de proefmelding. Onderdeel B, Delen en stuklinks, staat klaar als startbestand voor de volgende Claude Code-sessie. C tot en met G wachten op Martijn.
+- Build, 23 unit-/databasetests, cloudbrowserworkflow, storefronttests met de nieuwe mandtest en de zelfstandige optie-B-test geslaagd. [Beelden voor/na naast optie B](screenshots/winkelmand/README.md). Hoofdwinkel ongewijzigd (de geometriecontrole blijft groen). Geen schema-, rechten-, voorraad- of backend-schrijfacties. Live Supabase/Gemini en fysieke iOS/Safari niet getest; merge blijft bij Martijn.
+
 ### 10 november 2026 — Collectie en Mijn items ingevuld
 - Begonnen op de nieuwste goedgekeurde main d730413, inclusief PR #20–22; nieuwe branch voor deze aanvulling. Hoofdwinkel, onderrij en bestaande opslagarchitectuur behouden.
 - Collectie toont de publieke catalogus met zoeken, materiaalfilter en sortering; Mijn items toont lokale hartjes. Foto opent de bestaande winkel, naam opent details en keert terug naar dezelfde lijst; prijs en hartje gebruiken bestaande lokale opslag.

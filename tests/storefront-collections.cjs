@@ -97,7 +97,7 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
  c.status='sold';await refresh();assert.equal(await rows().count(),0,'sold item disappears from an already open result list');
  c.status='published';await refresh();assert.equal(await rows().count(),1);
  await reset();await close();
- await open('Mijn items');assert.deepEqual(await rows().evaluateAll(els=>els.map(el=>el.dataset.itemKey)),[a.id,b.id]);
+ await open('Mijn favorieten');assert.deepEqual(await rows().evaluateAll(els=>els.map(el=>el.dataset.itemKey)),[a.id,b.id]);
  assert.ok((await shop.locator('.catalog-note').innerText()).includes('alleen in deze browser'));
  await checkControls();
  if([390,320].includes(width))await page.screenshot({path:path.join(output,'saved-'+width+'.png'),fullPage:true});
@@ -109,9 +109,9 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
  // A second page in the same browser reads the existing gsf-liked values; no account is required.
  const second=await page.context().newPage();await second.goto('https://app.test');
  await second.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');
- const secondShop=second.frames().find(f=>f.name()==='shop');await open('Mijn items',secondShop);
+ const secondShop=second.frames().find(f=>f.name()==='shop');await open('Mijn favorieten',secondShop);
  assert.equal(await secondShop.locator('.catalog-item').count(),2);await second.close();
- await open('Mijn items');
+ await open('Mijn favorieten');
  unavailable.add('0');await refresh();assert.equal(await rows().count(),1);
  assert.equal(await shop.evaluate(id=>JSON.parse(localStorage.getItem('gsf-liked'))[id],a.display_id),true,'photo failure never deletes a favourite');
  unavailable.clear();await refresh();assert.equal(await rows().count(),2);

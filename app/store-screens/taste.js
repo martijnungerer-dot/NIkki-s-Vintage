@@ -1,7 +1,14 @@
 (function () {
   // Mijn smaak — BLAUWDRUK, NOG NIET GEBOUWD. Eigenaar: volgende Claude Code-sessie
   // (docs/SMAAKPROFIEL.md, onderdeel 4). Dit bestand wordt al meegebouwd maar registreert niets,
-  // zodat de winkel ongewijzigd blijft tot Martijn de plek in het menu heeft goedgekeurd.
+  // zodat de winkel ongewijzigd blijft tot dit onderdeel af is.
+  //
+  // Besluiten van Martijn (10 november 2026), zie docs/SMAAKPROFIEL.md "Besluiten":
+  //   - "Mijn smaak" is een vierde regel in het Shop-menu (na Winkelmand of na Mijn favorieten).
+  //   - Alles in het venster vult zich door de keuzes van de bezoeker; niets voorgevuld.
+  //   - De bezoeker kan alles wissen, of één kenmerk tegelijk.
+  //   - Knoppen meer/minder zoals dit staan in de foto, aan de andere kant dan het hartje.
+  //   - Zoekfilters in Collectie tellen niet als voorkeur.
   //
   // Waarom geen React/Vue: de winkel is gewone JavaScript zonder build (AGENTS.md: geen tweede
   // systeem). Het venster gebruikt dezelfde aansluiting als Winkelmand: NikkiShop.registerScreen.
@@ -12,31 +19,40 @@
   //   A.applySignal(p, signal, now)   -> nieuw profiel (zie app/taste/types.d.ts voor Signal)
   //   A.summarize(p, now)             -> wat de bezoeker als "actief" ziet; null als het uit staat
   //   NikkiShop.onSignal(fn)          -> like/unlike/cart/uncart (+ publieke kopie), browse-filter
+  //   NikkiShop.api.current()         -> het stuk in beeld; api.publicCopy(it) voor een signaal
   //
-  // 1. Leren (zelfde PR als het venster, want transparantie hoort erbij)
-  //   NikkiShop.onSignal((signal) => { if (signal.type === 'browse-filter') return; // zoekfilter ≠ voorkeur
+  // 1. Leren
+  //   NikkiShop.onSignal((signal) => { if (signal.type === 'browse-filter') return;
   //     const now = Date.now(); P.save(localStorage, A.applySignal(P.load(localStorage, now), signal, now)); });
   //
-  // 2. Venster (registerScreen('Mijn smaak', { render, action })), van boven naar beneden:
-  //   [kop: terug-icoon · "Mijn smaak" · leeg vak]            (gedeelde kop, zoals Collectie)
-  //   [schakelaar] Persoonlijke volgorde  aan/uit             data-act="taste-enable"
-  //   Uitleg, 16 px, één zin: "Je voorkeuren blijven in deze browser. Er wordt niets over jou opgeslagen."
-  //   Sectie "Dit zoek je"   — expliciete keuzes als chips met ×  data-act="taste-filter" (include, on:false)
-  //   Sectie "Dit vermijd je" — idem voor exclude
-  //   Sectie "Geleerd"        — top 12 uit summarize().prefer en .avoid, label uit p.features[key].label,
-  //                             met ×-knop: data-act="taste-forget" data-key="<FeatureKey>"
-  //   Toevoegen: per dimensie een <select> met waarden uit api.items() (zoals het materiaalfilter),
-  //              twee knoppen met icoon (plus / min, zonder woorden): include of exclude
-  //   Budget: <select> met de prijsklassen uit A.PRICE_BANDS of "Geen grens"  -> {type:'budget'}
-  //   Onderaan: knop met prullenbak-icoon "Wis mijn smaak"   data-act="taste-clear" (bevestigen met confirm)
-  //   Leeg profiel: "Nog geen voorkeuren. Hartjes en je winkelmand helpen de boetiek je smaak te leren."
+  // 2. Meer / minder zoals dit (in de foto)
+  //   - Twee knoppen .on-photo in een eigen groep links in de foto, gespiegeld aan .photo-acts
+  //     (delen + hartje) rechts. Iconen zonder tekst: duim omhoog / duim omlaag, of plus / min.
+  //     aria-label "Meer zoals dit" / "Minder zoals dit", aria-pressed na tikken tot een ander stuk.
+  //   - Tik: A.applySignal(p, {type:'more'|'less', item: api.publicCopy(api.current())}, now).
+  //   - Voeg ze toe vanuit dit bestand (DOM na laden), zodat de kern ongewijzigd blijft. Let op de
+  //     bestaande veeg- en dubbeltikbediening: knoppen in de foto worden al genegeerd door de gebaren.
+  //   - Verberg ze zoals de andere fotoknoppen bij een lege catalogus ([data-catalog-empty]).
   //
-  // 3. Regels
+  // 3. Venster (registerScreen('Mijn smaak', { render, action })), van boven naar beneden:
+  //   [kop: terug-icoon · "Mijn smaak" · leeg vak]            (gedeelde kop, zoals Collectie)
+  //   [schakelaar] Persoonlijke volgorde aan/uit              data-act="taste-enable"
+  //   Uitleg, 16 px, één zin: "Je voorkeuren blijven in deze browser."
+  //   Sectie "Meer van"      — summarize().prefer, label uit p.features[key].label of de expliciete waarde
+  //   Sectie "Minder van"    — summarize().avoid
+  //   Elke regel: label + ×-knop  data-act="taste-forget" data-key="<FeatureKey>" (expliciet: filter on:false)
+  //   Budget, alleen als de bezoeker het koos: regel met ×  -> {type:'budget', maxPriceMinor:null}
+  //   Onderaan: "Wis alles" (prullenbak-icoon)  data-act="taste-clear", met confirm
+  //   Leeg profiel: "Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf."
+  //   Geen keuzelijsten om zelf kenmerken toe te voegen: alles komt uit wat de bezoeker doet.
+  //
+  // 4. Regels
   //   - Stijl van optie B en Collectie: .head, .line, .chip, .ic, var(--chip) enz.; tekst ≥ 16 px,
-  //     knoppen ≥ 44 px, iconen zonder woorden, alles via esc() (labels komen uit opslag = onbetrouwbaar).
-  //   - Nog géén herordening van de winkel en géén AI-aanroep; dat is onderdeel 5 en wacht op Martijn.
-  //   - Menuplek: optie B heeft drie menuregels. Een vierde regel "Mijn smaak" (of een icoon in Mijn items)
-  //     is een ontwerpwijziging: vraag het in de PR, met beelden op 390/320 px naast optie B.
-  //   - Tests in tests/storefront-taste.cjs: leren via hartje/mand, terugdraaien, uit = niets leren,
-  //     wissen houdt de uit-stand, vergeten van één kenmerk, veilige tekst, 44 px, geen netwerk-schrijfacties.
+  //     knoppen ≥ 44 px, alles via esc() (labels komen uit opslag en zijn dus onbetrouwbaar).
+  //   - Menuregel toevoegen via een anker in scripts/build-cloud.mjs (zoals "Mijn favorieten").
+  //   - Geen herordening en geen AI-aanroep: dat zijn onderdelen 5 en 6 (andere sessie,
+  //     bestand app/store-screens/personalise.js). Raak dat bestand niet aan.
+  //   - Tests in tests/storefront-taste.cjs: leren via hartje/mand/meer/minder, terugdraaien,
+  //     uit = niets leren, wissen houdt de uit-stand, één kenmerk vergeten, zoekfilter leert niets,
+  //     veilige tekst, 44 px, geen netwerkverkeer behalve de bestaande catalogus.
 })();

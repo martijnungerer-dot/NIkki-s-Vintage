@@ -14,8 +14,8 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
  for(const key of await keys())await shop.locator('#cart [data-act=cart-remove][data-key="'+key+'"]').click();
  assert.deepEqual(await stored(),{});
  assert.ok((await shop.locator('#cart').innerText()).includes('Je winkelmand is leeg.'));
- assert.equal(await shop.locator('#cart .checkout').count(),0,'no checkout button while there is no checkout');
- assert.ok((await shop.locator('#cart').innerText()).includes('nog niet afrekenen'));
+ assert.equal(await shop.locator('#cart .checkout').count(),0,'no pay button for an empty basket');
+ assert.ok((await shop.locator('#cart').innerText()).includes('betalen is een voorbeeld'));
  await close();
  // Add three pieces through the collection list, which uses the same local basket.
  await shop.locator('.shop').click();await shop.getByRole('menuitem',{name:'Collectie',exact:true}).click();
@@ -40,6 +40,18 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
   assert.ok(text.x>=photo.x+photo.width,'text stays beside the photograph');
  }
  if([390,320].includes(width))await page.screenshot({path:path.join(output,'cart-'+width+'.png'),fullPage:true});
+ // Sample payment: two steps, nothing paid, reserved or removed; the network guard in the caller checks for writes.
+ const before=await stored();
+ await shop.getByRole('button',{name:'Betalen',exact:true}).click();
+ assert.ok((await shop.locator('#cart').innerText()).includes('Voorbeeldbetaling'));
+ assert.equal(await shop.evaluate(()=>document.activeElement.dataset.act),'cart-pay-confirm');
+ for(const button of await shop.locator('#cart button:visible').all()){const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44);}
+ if([390,320].includes(width))await page.screenshot({path:path.join(output,'pay-'+width+'.png'),fullPage:true});
+ await shop.getByRole('button',{name:'Betalen',exact:true}).click();
+ assert.ok((await shop.locator('#cart').innerText()).includes('Er is niets betaald of gereserveerd.'));
+ assert.deepEqual(await stored(),before,'the sample payment leaves the basket untouched');
+ await shop.locator('#cart [data-act=close]').click();await openCart();
+ assert.equal(await lines().count(),3,'reopening starts at the basket again');
  // Removing by keyboard keeps focus in the list and updates storage and total.
  await shop.locator('#cart [data-act=cart-remove][data-key="'+picked[1].id+'"]').focus();await page.keyboard.press('Enter');
  assert.equal(await lines().count(),2);

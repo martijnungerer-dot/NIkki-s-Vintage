@@ -68,3 +68,7 @@ button:disabled { cursor: default; }
 .cart-foot { margin-top: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 14px; }
 .cart-note { margin: 16px 0 0; text-align: center; font-size: 16px; line-height: 1.4; }
 .cart-foot .cart-note { margin: 0; }
+.cart-step { padding-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+.cart-step-title { margin: 0; font-size: 22px; }
+.cart-step-text { margin: 0; font-size: 17px; line-height: 1.55; }
+.cart-secondary { background: transparent; }

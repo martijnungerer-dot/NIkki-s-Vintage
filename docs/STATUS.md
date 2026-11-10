@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — besluiten Martijn verwerkt, Mijn favorieten en Betalen
+- Twaalf besluiten van Martijn vastgelegd in [SMAAKPROFIEL.md](SMAAKPROFIEL.md). De belangrijkste: AI rangschikt, de winkel herordent en kiest de hoofdfoto per bezoeker, "Mijn smaak" komt in het Shop-menu, meer/minder zoals dit staat in de foto, en zo dicht mogelijk bij optie B blijven.
+- "Mijn items" heet nu "Mijn favorieten". In de winkelmand staat weer een knop, nu "Betalen". Die doorloopt een voorbeeldbetaling in twee stappen; er wordt niets betaald of gereserveerd, en de browsertest controleert dat er geen schrijfacties zijn. [Beelden](screenshots/winkelmand/README.md).
+- Verdeling: de volgende Claude Code-sessie bouwt "Mijn smaak" en meer/minder zoals dit. Deze sessie bouwt daarna de server-proxy en het herordenen met de AI-volgorde en de hoofdfoto per bezoeker.
+
 ### 10 november 2026 — smaakprofiel: datamodel, signaalverwerking, prompt en controle
 - Martijns opdracht voor een smaakprofiel ontbrak in de eerste versie van deze taak. Nu uitgewerkt in [SMAAKPROFIEL.md](SMAAKPROFIEL.md), gebaseerd op de door Nikki ingevulde publieke kenmerken (materiaal, model, kleur, lengte, pasvorm, periode, bijzonderheden, bont, prijsklasse). Niets wordt uit foto's afgeleid.
 - Klaar: `app/taste/` (TypeScript-contract, opslag met verval, signaalverwerking, lokale rangschikking, stabiele sessievolgorde) en `supabase/functions/personalise/prompt.mjs` (payload, systeemprompt, controle van het AI-antwoord). De kern geeft nu de extra publieke velden door en zendt signalen uit via `NikkiShop.onSignal`. De winkel gedraagt zich nog hetzelfde en slaat nog geen profiel op.

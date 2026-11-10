@@ -229,7 +229,7 @@ async function layout(frame,width) {
    assert.equal(await again.locator('#nexts .th').count(),3,'empty catalogue keeps its empty slots');assert.ok(await again.locator('#prev-th').isVisible());
    assert.ok(await again.locator('#bag-full').isHidden(),'withdrawn last garment clears SVG checkmark');
    assert.deepEqual(await again.evaluate(()=>JSON.parse(localStorage.getItem('nikki-cart'))),{},'unavailable garments leave the local basket');
-   for(const name of ['Collectie','Mijn items']) {
+   for(const name of ['Collectie','Mijn favorieten']) {
     await again.locator('.shop').click();await again.getByRole('menuitem',{name,exact:true}).click();
     assert.equal(await again.locator('.catalog-item').count(),0,'empty catalog never creates sample items');
     assert.ok(await again.locator('.catalog-empty').isVisible());

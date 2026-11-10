@@ -34,7 +34,9 @@ if(scripts?.length!==1)throw Error('[build] concept/ontdekken-optie-b.html: expe
 // Each storefront piece lives in its own file in app/store-screens/ (see docs/FRONTEND-PLAN.md).
 const screenFiles=(await readdir(new URL('app/store-screens/',root))).filter(f=>f.endsWith('.js')).sort();
 const screens=await Promise.all(screenFiles.map(f=>read('app/store-screens/'+f)));
-shop=patchShop(shop,scripts[0],'<script>\n'+[await read('app/store-extension.js'),...screens].join('\n')+'\n</script>');
+// Taste profile modules (docs/SMAAKPROFIEL.md) come first; they only define window.NikkiTaste.
+const taste=await Promise.all(['profile','aggregate','ranking'].map(f=>read('app/taste/'+f+'.js')));
+shop=patchShop(shop,scripts[0],'<script>\n'+[...taste,await read('app/store-extension.js'),...screens].join('\n')+'\n</script>');
 shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>Nikki’s Boetiek</title>');
 shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');

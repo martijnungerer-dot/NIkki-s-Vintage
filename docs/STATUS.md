@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — smaakprofiel: datamodel, signaalverwerking, prompt en controle
+- Martijns opdracht voor een smaakprofiel ontbrak in de eerste versie van deze taak. Nu uitgewerkt in [SMAAKPROFIEL.md](SMAAKPROFIEL.md), gebaseerd op de door Nikki ingevulde publieke kenmerken (materiaal, model, kleur, lengte, pasvorm, periode, bijzonderheden, bont, prijsklasse). Niets wordt uit foto's afgeleid.
+- Klaar: `app/taste/` (TypeScript-contract, opslag met verval, signaalverwerking, lokale rangschikking, stabiele sessievolgorde) en `supabase/functions/personalise/prompt.mjs` (payload, systeemprompt, controle van het AI-antwoord). De kern geeft nu de extra publieke velden door en zendt signalen uit via `NikkiShop.onSignal`. De winkel gedraagt zich nog hetzelfde en slaat nog geen profiel op.
+- Volgende Claude Code-sessie: venster "Mijn smaak" (blauwdruk in `app/store-screens/taste.js`). Herordenen, server-proxy en A/B-test wachten op Martijn; zes vragen staan in het plan.
+- 37 unit-/databasetests (14 nieuw), browsertests met controle van de signalen, projectcheck en TypeScript-controle geslaagd. Geen handler, migratie, uitrol of live Gemini-test.
+
 ### 10 november 2026 — frontendplan in losse onderdelen, winkelmand gebouwd
 - Codex was hiermee begonnen maar stopte op zijn limiet. Er stond niets van gepusht; het laatste Codex-werk (PR #23) was al gemerged. Claude Code heeft de taak overgenomen vanaf main 5bc7199.
 - [FRONTEND-PLAN.md](FRONTEND-PLAN.md): de open punten als losse onderdelen met eigenaar. De kern `app/store-extension.js` heeft onderaan een klein contract `window.NikkiShop`. Elk onderdeel staat in een eigen bestand in `app/store-screens/`, dat de build achter de kern toevoegt.

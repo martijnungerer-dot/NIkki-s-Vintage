@@ -216,13 +216,13 @@
     var a = b.getAttribute('data-act');
     if (a === 'prev-photo') goPhoto(-1, true);
     else if (a === 'next-photo') goPhoto(1, true);
-    else if (a === 'like') { S.liked[ITEMS[S.item].displayId] = !S.liked[ITEMS[S.item].displayId]; save('gsf-liked',S.liked); render(false); }
+    else if (a === 'like') { var it=ITEMS[S.item]; S.liked[it.displayId] = !S.liked[it.displayId]; save('gsf-liked',S.liked); render(false); emit(S.liked[it.displayId]?'like':'unlike',it); }
     else if (a === 'info' || a === 'menu') open(a);
     else if (a === 'destination') { destination=b.dataset.screen; open('cart'); }
     else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
     else if (a === 'list-like' || a === 'list-cart') {
       var item=ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;
-      if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);}
+      if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);emit(S.liked[item.displayId]?'like':'unlike',item);}
       else toggleCart(item.key);
       render(false);renderResults();
     }
@@ -243,6 +243,7 @@
   ph.addEventListener('change',function(e){
     var field=e.target.dataset.field;if(field!=='material' && field!=='sort')return;
     lists[destination][field]=e.target.value;renderResults(true);
+    if(field==='material' && e.target.value)emitSignal({type:'browse-filter',dimension:'material',value:e.target.value});
   });
   ph.addEventListener('keydown', function (e) {
     if(e.key==='Escape' && S.open)closeAll();
@@ -300,6 +301,8 @@
       ITEMS=records.filter(r=>r.images?.length).map(r=>({
         key:r.key, displayId:r.displayId, title:r.title, description:r.description, priceMinor:r.priceMinor,
         material:r.material, species:r.species, furClass:r.furClass,
+        // Public, human-checked characteristics for the taste profile (docs/SMAAKPROFIEL.md).
+        model:r.model, colour:r.colour, length:r.length, fit:r.fit, era:r.era, details:Array.isArray(r.details)?r.details.slice(0,30):[],
         price:new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:r.priceMinor%100?2:0}).format(r.priceMinor/100),
         measurements:r.measurements, images:r.images.map(i=>({src:i.src,path:i.path,role:i.role,main:i.main}))
       }));
@@ -334,11 +337,19 @@
   };
   // Screens in app/store-screens/ plug in here, so each piece can be built in its own file.
   // Contract and ownership: docs/FRONTEND-PLAN.md. Only public catalog fields are exposed.
-  var SCREENS={}, catalogListeners=[];
-  function toggleCart(key, value=!S.cart[key]) { if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false); }
+  var SCREENS={}, catalogListeners=[], signalListeners=[];
+  function toggleCart(key, value=!S.cart[key]) {
+    var was=!!S.cart[key]; if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false);
+    var it=ITEMS.find(x=>x.key===key); if(it && was!==!!value)emit(value?'cart':'uncart',it);
+  }
+  // Signals for the taste profile: only a copy of public fields, never photos or links.
+  function publicCopy(it) { return {key:it.key,priceMinor:it.priceMinor,material:it.material,model:it.model,colour:it.colour,length:it.length,fit:it.fit,era:it.era,details:it.details.slice(),furClass:it.furClass}; }
+  function emitSignal(signal) { signalListeners.forEach(fn=>{try{fn(signal,api);}catch(e){}}); }
+  function emit(type,it) { emitSignal({type,item:publicCopy(it)}); }
   var api={
     esc, face, CLOSE, bagIcon, heartIcon,
     items:()=>ITEMS.slice(),
+    publicCopy,
     current:()=>ITEMS[S.item] || null,
     cartKeys:()=>Object.keys(S.cart),
     toggleCart,
@@ -352,6 +363,9 @@
     registerScreen(name, screen) { SCREENS[name]=screen; },
     // Called with api after every catalog replacement (initial load and refresh).
     onCatalog(fn) { catalogListeners.push(fn); },
+    // Called on like/unlike/cart/uncart (with a public copy of the piece) and browse-filter.
+    // A listener error never breaks the shop. Wiring to the taste profile: docs/SMAAKPROFIEL.md.
+    onSignal(fn) { signalListeners.push(fn); },
     api
   };
   // Do not clear the saved local basket until the catalog has actually loaded.

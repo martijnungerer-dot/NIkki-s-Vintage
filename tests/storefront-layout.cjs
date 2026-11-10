@@ -10,7 +10,7 @@ const output=path.resolve(process.env.NIKKI_SCREENSHOTS || path.join(root,'work/
 const names=['Bruine vintage jas','Gevlekte jas met sjaalkraag','Korte zwarte jas','Korte jas met reverskraag','Lange jas met capuchon'];
 const colours=['#8A5A3C','#B9A58E','#3B3431','#C9B8A6','#A08672'];
 const drawing=(colour)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420"><rect width="300" height="420" fill="#E9E1D6"/><path d="M120 70 L150 95 L180 70 L222 92 L240 220 L222 228 L214 150 L210 390 L90 390 L86 150 L78 228 L60 220 L78 92 Z" fill="'+colour+'"/><path d="M120 70 L150 140 L180 70" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="3"/><path d="M150 140 L150 390" stroke="rgba(0,0,0,0.18)" stroke-width="2"/></svg>';
-function catalog() {return names.map((title,i)=>({id:'00000000-0000-4000-8000-'+String(i+1).padStart(12,'0'),display_id:i+1,version:1,status:'published',data:{title,description:'Nikki’s eigen verkooptekst. <img src=x onerror=alert(1)>',priceMinor:15000+i*1000,material:['Leer <img src=x onerror=alert(1)>','Wol','Leer','','Suède'][i],species:i===3?null:'Vos <b>testwaarde</b>',furClass:['Ja','Nee','Alleen kraag of rand','Ja',''][i],measurements:[55.5,null,null,100],images:Array.from({length:i===0?3:2},(_,j)=>({path:i+'-'+j+'.jpg',role:['Voorkant','Achterkant','Detail'][j],main:j===(i===1?1:0)}))}}));}
+function catalog() {return names.map((title,i)=>({id:'00000000-0000-4000-8000-'+String(i+1).padStart(12,'0'),display_id:i+1,version:1,status:'published',data:{title,description:'Nikki’s eigen verkooptekst. <img src=x onerror=alert(1)>',priceMinor:15000+i*1000,material:['Leer <img src=x onerror=alert(1)>','Wol','Leer','','Suède'][i],species:i===3?null:'Vos <b>testwaarde</b>',furClass:['Ja','Nee','Alleen kraag of rand','Ja',''][i],model:'Sjaalkraag',colour:'Zwart',length:'Knielang',fit:'',era:'',details:['Bontkraag'],measurements:[55.5,null,null,100],images:Array.from({length:i===0?3:2},(_,j)=>({path:i+'-'+j+'.jpg',role:['Voorkant','Achterkant','Detail'][j],main:j===(i===1?1:0)}))}}));}
 async function geometry(frame) {return frame.evaluate(()=>{
  const origin=document.getElementById('ph').getBoundingClientRect(), names=['.ph','.top','.brand','#photo','#row','.chip.title','.chip.price','#band','#prev-th','#nexts','.shop'];
  return Object.fromEntries(names.map(s=>{const el=document.querySelector(s),r=el.getBoundingClientRect(),c=getComputedStyle(el);return [s,{x:r.x-origin.x,y:r.y-origin.y,w:r.width,h:r.height,bg:c.backgroundColor,color:c.color,font:c.fontFamily,size:c.fontSize,radius:c.borderRadius,padding:c.padding,gap:c.gap}];}));
@@ -160,6 +160,16 @@ async function layout(frame,width) {
    await again.locator('#photo').hover();await page.mouse.wheel(0,80);await again.locator('#title').filter({hasText:names[1]}).waitFor();
    await require('./storefront-collections.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
    await require('./storefront-cart.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
+   // Taste profile hooks (docs/SMAAKPROFIEL.md): signals carry public fields only; nothing is learned or stored yet.
+   await again.evaluate(()=>{window.seenSignals=[];window.NikkiShop.onSignal(s=>window.seenSignals.push(s));window.NikkiShop.onSignal(()=>{throw Error('listener');});});
+   await again.locator('#like').click();await again.locator('#like').click();await again.locator('#price').click();await again.locator('#price').click();
+   const signals=await again.evaluate(()=>window.seenSignals);
+   assert.deepEqual(signals.slice(0,2).map(s=>s.type),['like','unlike'],'a failing listener never blocks the shop');
+   assert.deepEqual(signals.slice(2).map(s=>s.type).sort(),['cart','uncart']);
+   assert.deepEqual(Object.keys(signals[0].item).sort(),['colour','details','era','fit','furClass','key','length','material','model','priceMinor']);
+   assert.ok(!JSON.stringify(signals).includes('token'),'no photo links in signals');
+   assert.equal(await again.evaluate(()=>typeof window.NikkiTaste.aggregate.applySignal),'function');
+   assert.equal(await again.evaluate(()=>localStorage.getItem('nikki-taste')),null,'no taste profile is stored before the transparency panel exists');
    async function refresh(fails=false) {
     await page.evaluate(()=>window.NikkiApp.openAccount());
     await page.locator('#status').evaluate(el=>{el.textContent='';});

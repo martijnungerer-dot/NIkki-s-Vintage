@@ -22,7 +22,8 @@ Tot nu toe stond de hele winkel in één bestand, `app/store-extension.js`. Twee
 
 - `registerScreen(naam, {render(api), action(act, knop, api)})`: een venster uit het Shop-menu. `render` geeft de inhoud onder de gedeelde kopregel terug; `action` krijgt de `data-act`-klikken in dat venster.
 - `onCatalog(fn)`: wordt na elke catalogusvernieuwing aangeroepen (eerste keer laden en verversen).
-- `onSignal(fn)`: wordt aangeroepen bij hartje, hartje weg, in mand, uit mand (met een kopie van alleen de publieke velden) en bij een materiaalfilter in Collectie (`browse-filter`). Een fout in een luisteraar breekt de winkel niet.
+- `onSignal(fn)`: wordt aangeroepen bij hartje, hartje weg, in mand en uit mand, met een kopie van alleen de publieke velden. Zoekfilters zenden niets (geen smaak). Een fout in een luisteraar breekt de winkel niet.
+- `api.personalise({order, lead, fromStart})`: persoonlijke volgorde en hoofdfoto per stuk; het stuk in beeld blijft staan (zie [SMAAKPROFIEL.md](SMAAKPROFIEL.md)).
 - `api`: `items()`, `publicCopy(item)`, `current()`, `cartKeys()`, `toggleCart(key, waarde)`, `isLiked(item)`, `show(key)`, `refresh()`, `status(tekst, toestand)`, plus de bestaande helpers `esc`, `face`, `CLOSE`, `bagIcon`, `heartIcon`.
 - Alleen publieke catalogusvelden zijn bereikbaar (dezelfde projectie als in `NikkiStore.replace`). Geen privévelden, tokens of schrijfacties naar Supabase.
 

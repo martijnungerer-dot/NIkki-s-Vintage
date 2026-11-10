@@ -46,7 +46,7 @@ async function layout(frame,width) {
  try {
   for(const width of [390,320,280,283,284,331,332,480,481,1024]) {
    const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
-   const errors=[], writes=[],unavailable=new Set();let records=catalog(),signs=0,failCatalog=false,releaseCatalog;
+   const errors=[], writes=[],unavailable=new Set(),personalise={calls:[],reply:{source:'fallback',ranking:[]},fail:false};let records=catalog(),signs=0,failCatalog=false,releaseCatalog;
    const catalogReady=new Promise(resolve=>{releaseCatalog=resolve;});
    context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
    await context.route('**/*',async route=>{
@@ -67,6 +67,10 @@ async function layout(frame,width) {
     }
     if(u.pathname==='/storage/v1/object/sign/garment-photos') {signs++;return json(req.postDataJSON().paths.filter(p=>!unavailable.has(p.split('-')[0])).map(p=>({path:p,signedURL:'/object/sign/garment-photos/'+p+'?token='+signs})));}
     if(u.pathname.startsWith('/storage/v1/object/sign/garment-photos/'))return route.fulfill({headers,contentType:'image/svg+xml',body:drawing(colours[Number(u.pathname.split('/').at(-1).split('-')[0])])});
+    if(u.pathname==='/functions/v1/personalise') {
+     personalise.calls.push(req.postDataJSON());if(personalise.hold)await personalise.hold;
+     return personalise.fail?route.fulfill({status:503,headers,contentType:'application/json',body:'{"error":"UNAVAILABLE"}'}):json(personalise.reply);
+    }
     writes.push(req.method()+' '+u.pathname);return route.fulfill({status:500,headers});
    });
    const ref=await context.newPage();await ref.goto('https://app.test/reference');
@@ -235,9 +239,10 @@ async function layout(frame,width) {
     assert.ok(await again.locator('.catalog-empty').isVisible());
     await again.locator('#cart [data-act=close]').click();
    }
+   if(width===390){records=catalog();await require('./storefront-personalise.cjs')({context,records:()=>records,names,personalise});}
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket and basket overview, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
+  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket and basket overview, personal order and lead photo, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

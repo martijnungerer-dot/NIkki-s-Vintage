@@ -91,6 +91,18 @@ De server accepteert maximaal vier verkleinde foto's per analyse, maximaal 30 aa
 
 Bij een storing kun je altijd **Liever zelf invullen** gebruiken. De AI vult materiaal, bontsoort en periode bewust niet in. Foto's alleen bewijzen deze kenmerken niet. Alle voorstellen blijven onder menselijke controle; de server publiceert nooit op basis van een AI-resultaat alleen.
 
+
+### Persoonlijke volgorde (smaakprofiel)
+
+De tweede serverfunctie, [supabase/functions/personalise](../supabase/functions/personalise/handler.mjs), rangschikt de collectie per bezoeker (zie [SMAAKPROFIEL.md](SMAAKPROFIEL.md)). Ze gebruikt dezelfde secrets als hierboven. Nodig: de migratie `20261110210000_personalise_usage.sql` en de uitrol:
+
+```sh
+npx supabase db push
+npx supabase functions deploy personalise
+```
+
+De functie is openbaar (bezoekers loggen niet in), daarom staat de platform-JWT-controle uit in `supabase/config.toml`. Ze controleert zelf de herkomst (`ALLOWED_ORIGINS`), een body van hoogstens 8 kB, en een daglimiet: 20 aanvragen per bezoeker per UTC-dag en 2000 voor het hele project. Een aanvraag zonder voorkeuren telt niet mee. Een bezoeker wordt alleen herkend aan een dagelijks wisselende, versleutelde afgeleide van het IP-adres (bij IPv6 per /64-blok); het IP-adres zelf wordt niet bewaard. De browser stuurt alleen de compacte smaaksamenvatting; de server leest zelf de gepubliceerde stukken. Zonder Gemini-sleutel of bij een storing geeft de functie de lokale volgorde terug, zodat de winkel blijft werken.
+
 ## 7. Online proefomgeving
 
 De huidige proefomgeving gebruikt Cloudflare Workers Static Assets: [Nikki's boetiek](https://nikki-s-vintage.martijnungerer.workers.dev). De GitHub-koppeling bouwt `main` met `npm run build` en publiceert `dist/cloud`. Production workers.dev is ingeschakeld; een eigen domein is niet nodig. Cloudflare Pages blijft een alternatief voor een nieuwe omgeving. De latere Gemini Edge Function draait bij Supabase.

@@ -10,6 +10,15 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — Gemini-review verwerkt
+- Martijn liet Gemini de code van PR #24–26 reviewen. Alle bevindingen gecontroleerd: drie hoog (terugbladeren bevroor de volgorde, te weinig uitvoertokens, sessiecache verviel na een hartje), vier middel en twee laag. Ze zijn verwerkt, met één afwijking van het voorstel: geen `thinkingBudget: 0`, omdat niet elk model dat accepteert. Details en drie open beslispunten in [REVIEW-SMAAKPROFIEL.md](REVIEW-SMAAKPROFIEL.md).
+- 46 unit-/databasetests en browsertests geslaagd, met nieuwe tests voor elke herstelde bevinding. Niet live getest.
+
+### 10 november 2026 — persoonlijke volgorde met AI (onderdelen 5 en 6)
+- Serverfunctie `personalise`: openbaar zonder login, met controle op herkomst, een body van hoogstens 8 kB, een daglimiet per anonieme bezoeker (20) en in totaal (2000, nieuwe migratie), en terugval op de lokale volgorde bij een storing of zonder Gemini-sleutel. Er worden geen IP-adressen bewaard.
+- Winkel: `app/store-screens/personalise.js` opent op het best passende stuk, past het AI-antwoord toe op alles na het stuk in beeld, toont per stuk de gekozen foto, en houdt de volgorde vast tijdens de sessie. De kern kreeg `api.personalise`. Zonder profiel blijft alles zoals het was; een profiel ontstaat pas met onderdeel 4.
+- 42 unit-/databasetests (5 server- en 1 databaseblok nieuw) en browsertests met nagebootste serverfunctie geslaagd. Niet live getest: uitrol, migratie en Gemini wachten op Martijn ([SUPABASE-START.md](SUPABASE-START.md), stap 6).
+
 ### 10 november 2026 — besluiten Martijn verwerkt, Mijn favorieten en Betalen
 - Twaalf besluiten van Martijn vastgelegd in [SMAAKPROFIEL.md](SMAAKPROFIEL.md). De belangrijkste: AI rangschikt, de winkel herordent en kiest de hoofdfoto per bezoeker, "Mijn smaak" komt in het Shop-menu, meer/minder zoals dit staat in de foto, en zo dicht mogelijk bij optie B blijven.
 - "Mijn items" heet nu "Mijn favorieten". In de winkelmand staat weer een knop, nu "Betalen". Die doorloopt een voorbeeldbetaling in twee stappen; er wordt niets betaald of gereserveerd, en de browsertest controleert dat er geen schrijfacties zijn. [Beelden](screenshots/winkelmand/README.md).

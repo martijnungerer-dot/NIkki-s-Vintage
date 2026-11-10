@@ -69,7 +69,9 @@ export function buildRequest({summary,rows,wantRationale=false}){
 /** Body voor Gemini generateContent. Model en instructies kiest de server, nooit de browser. */
 export function geminiBody(payload){
   return {systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},contents:[{role:'user',parts:[{text:JSON.stringify(payload)}]}],
-    generationConfig:{responseMimeType:'application/json',maxOutputTokens:payload.want_rationale?2048:768,temperature:0}};
+    // Ruim plafond: 40 kandidaten kosten al ~1000 uitvoertokens, en denkstappen tellen mee binnen dit plafond.
+    // Alleen gebruikte tokens worden gerekend. thinkingBudget:0 wordt niet door elk model geaccepteerd.
+    generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192,temperature:0}};
 }
 
 function cleanWhy(v){

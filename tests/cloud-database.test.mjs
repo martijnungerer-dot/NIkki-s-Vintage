@@ -58,5 +58,18 @@ test('actual PostgreSQL migration: RLS, photos, conflicts, sold preservation, al
       await assert.rejects(()=>db.query('select public.consume_analysis($1)',[outsider]),/RATE_LIMIT/);
     });
     assert.equal((await db.query("select calls from public.analysis_usage where scope='global'")).rows[0].calls,100);
+    // Taste ranking: visitors cannot call the limiter or read its table; the server can, within limits.
+    const client='a'.repeat(32);
+    for(const role of ['anon','authenticated'])await as(role,role==='anon'?null:staff,async()=>{
+      await assert.rejects(()=>db.query('select public.consume_personalise($1)',[client]),/permission denied/);
+      await assert.rejects(()=>db.query('select * from public.personalise_usage'),/permission denied/);
+    });
+    await as('service_role',null,async()=>{
+      await assert.rejects(()=>db.query('select public.consume_personalise($1)',['203.0.113.9']),/BAD_CLIENT/,'raw IP addresses are refused');
+      for(let i=0;i<20;i++)await db.query('select public.consume_personalise($1)',[client]);
+      await assert.rejects(()=>db.query('select public.consume_personalise($1)',[client]),/RATE_LIMIT/);
+    });
+    await db.exec("update public.personalise_usage set calls=2000 where scope='global'");
+    await as('service_role',null,async()=>{await assert.rejects(()=>db.query('select public.consume_personalise($1)',['b'.repeat(32)]),/RATE_LIMIT/,'global daily ceiling');});
   }finally{await db.close();}
 });

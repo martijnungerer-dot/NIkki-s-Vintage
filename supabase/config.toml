@@ -4,3 +4,8 @@ project_id = "nikki-boetiek"
 # JWT is verified against Supabase Auth inside handler before any paid call.
 # Allows current publishable keys as well as legacy anon keys.
 verify_jwt = false
+
+[functions.personalise]
+# Public taste ranking without login (docs/SMAAKPROFIEL.md). The handler checks origin, body size
+# and a daily limit per anonymous client before any paid call; visitors only have a publishable key.
+verify_jwt = false

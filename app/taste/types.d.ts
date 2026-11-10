@@ -60,7 +60,7 @@ export type Signal =
   | { type: 'dwell'; item: TasteItem; ms: number }  // impliciet; weegt voorlopig 0
   | { type: 'filter'; mode: 'include' | 'exclude'; dimension: Dimension; value: string; on: boolean }
   | { type: 'budget'; maxPriceMinor: number | null }
-  | { type: 'forget'; key: string }                 // één geleerd kenmerk wissen
+  | { type: 'forget'; key: string }                 // één kenmerk wissen, geleerd en expliciet
   | { type: 'enable'; on: boolean };
 
 /** Compacte samenvatting die naar de server gaat. Scores -1 … 1, max 12 per lijst. */

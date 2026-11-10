@@ -204,10 +204,18 @@ async function layout(frame,width) {
    assert.notEqual(await again.locator('#title').textContent(),current,'missing previous garment falls back to a different garment');
    const remaining=records.find(r=>r.data.title===names[4]);records=[remaining];await refresh();
    assert.ok(await again.locator('#prev-th').isDisabled(),'one remaining garment disables previous');
+   assert.ok(await again.locator('#prev-th').isHidden(),'one remaining garment shows no previous thumbnail');
+   assert.equal(await again.locator('#nexts .th').count(),0,'no empty next slots');
+   assert.ok(await again.locator('.shop').isVisible(),'menu stays available with one garment');
+   records=catalog().slice(0,2);await refresh();
+   assert.equal(await again.locator('#nexts .th').count(),1,'only existing next garments are shown');
+   assert.ok(await again.locator('#prev-th').isVisible());
+   records=[remaining];await refresh();
    await again.locator('#price').click();assert.ok(await again.locator('#bag-full').isVisible());
    records=[];await refresh();
    assert.equal(await again.locator('#ph').getAttribute('data-catalog-empty'),'true');
    assert.equal(await again.locator('#track img').count(),0,'no fake inventory when empty');
+   assert.equal(await again.locator('#band .th:visible').count(),0,'empty catalogue shows no placeholder thumbnails');
    assert.ok(await again.locator('#bag-full').isHidden(),'withdrawn last garment clears SVG checkmark');
    assert.deepEqual(await again.evaluate(()=>JSON.parse(localStorage.getItem('nikki-cart'))),{},'unavailable garments leave the local basket');
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);

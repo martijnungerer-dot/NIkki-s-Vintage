@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 10 november 2026 — lege vakjes in de onderrij terug
+- Op verzoek van Martijn blijven de vier vakjes in de onderrij altijd staan, ook leeg. Bij één stuk is het vakje "vorige" leeg in plaats van een herhaling van het huidige stuk. De extra fotoruimte op lage schermen blijft.
+
 ### 10 november 2026 — onderrij zonder lege vakjes, meer foto op lage schermen
 - Na vergelijking met het artifact door Martijn: de onderrij van de cloudwinkel toont alleen stukken die bestaan (geen lege vakjes; bij één stuk alleen het menu). Op schermen lager dan 760 px gaat de bovenmarge van de ontwerpschets naar de foto; op 844 px blijft het scherm gelijk aan optie B.
 - Gecontroleerd met de bestaande en uitgebreide browsertests (nagebootste diensten). De foto blijft op een laag scherm minder hoog dan in het artifact, omdat alles op één scherm past; niet getest op een echte telefoon.

@@ -34,8 +34,8 @@
       $('price').setAttribute('aria-pressed','false'); $('price').setAttribute('aria-label','Geen stuk beschikbaar');
       $('bag-empty').toggleAttribute('hidden',false); $('bag-full').toggleAttribute('hidden',true);
       $('prev-th').querySelector('.face').replaceChildren(); $('prev-th').setAttribute('aria-label','Vorig stuk');
-      // No pieces: no empty placeholders, only the menu remains.
-      $('prev-th').hidden=true; $('nexts').replaceChildren();
+      // The row keeps its four slots, empty when there is nothing to show.
+      $('nexts').innerHTML=Array.from({length:3},()=>'<button type="button" class="th" disabled aria-label="Geen volgend stuk"><span class="face"></span></button>').join('');
       return;
     }
     var inCart=!!S.cart[it.key], liked=!!S.liked[it.displayId];
@@ -47,16 +47,16 @@
     $('like').setAttribute('aria-pressed', String(liked));
     $('like').querySelector('svg').setAttribute('fill', liked ? '#FFFFFF' : 'none');
     var p = ITEMS[S.prev] || it;
-    // With a single piece there is nothing to go back or forward to.
-    $('prev-th').disabled=N<2; $('prev-th').hidden=N<2;
+    // With a single piece the slot stays, empty and disabled.
+    $('prev-th').disabled=N<2;
     ph.querySelectorAll('[data-act="prev-photo"], [data-act="next-photo"]').forEach(b=>{b.disabled=it.images.length<2;});
-    $('prev-th').querySelector('.face').innerHTML = face(p);
-    $('prev-th').setAttribute('aria-label', 'Terug naar ' + p.title);
+    $('prev-th').querySelector('.face').innerHTML = N<2 ? '' : face(p);
+    $('prev-th').setAttribute('aria-label', N<2 ? 'Geen vorig stuk' : 'Terug naar ' + p.title);
     var h = '';
-    // Show only pieces that exist; never an empty slot.
-    for (var k=1; k<=3 && k<N; k++) {
-      var i=(S.item+k)%N;
-      h+='<button type="button" class="th" data-act="go" data-idx="'+i+'" aria-label="Bekijk '+esc(ITEMS[i].title)+'"><span class="face">'+face(ITEMS[i])+'</span></button>';
+    // Always three slots; a slot without a garment stays empty and disabled.
+    for (var k=1; k<=3; k++) {
+      var i=(S.item+k)%N, available=k<N;
+      h+='<button type="button" class="th" data-act="go" data-idx="'+i+'"'+(available?'':' disabled')+' aria-label="'+(available?'Bekijk '+esc(ITEMS[i].title):'Geen volgend stuk')+'"><span class="face">'+(available?face(ITEMS[i]):'')+'</span></button>';
     }
     $('nexts').innerHTML = h;
     renderTrack();

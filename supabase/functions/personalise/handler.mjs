@@ -16,7 +16,13 @@ async function readBody(req){
 
 /** Dagelijks wisselende, niet terug te rekenen sleutel per bezoeker. Het IP-adres wordt niet bewaard. */
 export async function clientId(req,secret,day){
-  const ip=(req.headers.get('cf-connecting-ip')||req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown').trim().slice(0,64);
+  let ip=(req.headers.get('cf-connecting-ip')||req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown').trim().slice(0,64).toLowerCase();
+  // IPv6: één aansluiting heeft meestal een heel /64-blok; tel dat als één bezoeker (review MED-2).
+  if(ip.includes(':')&&!ip.includes('.')){
+    const [head,tail='']=ip.split('::');const left=head?head.split(':'):[],right=tail?tail.split(':'):[];
+    const full=ip.includes('::')?[...left,...Array(Math.max(0,8-left.length-right.length)).fill('0'),...right]:left;
+    ip=full.slice(0,4).map(h=>h.replace(/^0+(?=.)/,'')||'0').join(':')+'::/64';
+  }
   const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
   const mac=new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(day+'|'+ip)));
   return [...mac.slice(0,16)].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -37,7 +43,10 @@ export function createHandler({env,fetcher,now=()=>new Date()}){return async req
   if(!url||!key)return reply(503,{error:'NOT_CONFIGURED'});
   let body,summary;
   try{body=await readBody(req);summary=sanitizeSummary(body?.profile);}catch{return reply(400,{error:'BAD_INPUT'});}
-  const wantRationale=body.want_rationale===true;
+  // Geen uitleg zolang de winkel die niet toont (review MED-2): de client kan het tokenverbruik niet opdrijven.
+  const wantRationale=false;
+  // Zonder voorkeuren of budget valt er niets te rangschikken: geen quotum, catalogus of AI (review MED-2).
+  if(!Object.keys(summary.prefer).length&&!Object.keys(summary.avoid).length&&!summary.budget_max_minor)return reply(200,{source:'none',ranking:[]});
   const call=(u,opts={})=>fetcher(u,{...opts,signal:AbortSignal.timeout(20000)});
   const serverHeaders={apikey:key,...(key.startsWith('eyJ')?{Authorization:'Bearer '+key}:{}),'Content-Type':'application/json'};
   try{

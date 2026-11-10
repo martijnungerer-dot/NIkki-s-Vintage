@@ -35,7 +35,7 @@
     var d = ''; for (var k = 0; k < (ITEMS[S.item]?.images.length || 0); k++) d += '<i' + (k === S.photo ? ' class="on"' : '') + '></i>';
     $('dots').innerHTML = d; $('dots').setAttribute('aria-label', ITEMS.length ? 'Foto ' + (S.photo + 1) + ' van ' + ITEMS[S.item].images.length : 'Geen foto’s');
   }
-  function render(fade) {
+  function render(fade, keepTrack) {
     var it = ITEMS[S.item];
     ph.dataset.catalogEmpty=String(!it);
     ph.querySelectorAll('#row button, #photo button, #prev-th').forEach(b=>{b.disabled=!it;});
@@ -70,7 +70,8 @@
       h+='<button type="button" class="th" data-act="go" data-idx="'+i+'"'+(available?'':' disabled')+' aria-label="'+(available?'Bekijk '+esc(ITEMS[i].title):'Geen volgend stuk')+'"><span class="face">'+(available?face(ITEMS[i]):'')+'</span></button>';
     }
     $('nexts').innerHTML = h;
-    renderTrack();
+    // keepTrack: same piece in view, so a zoom or swipe in progress is not interrupted (review MED-4).
+    if (!keepTrack) renderTrack();
     if (fade) { var el = $('photo'); el.classList.remove('wissel'); void el.offsetWidth; el.classList.add('wissel'); }
   }
   function goItem(i) { if (!ITEMS[i] || i === S.item) return; S.prev = S.item; S.item = i; S.photo = primary(ITEMS[i]); S.zoom = false; closeAll(); render(true); }
@@ -173,7 +174,7 @@
     if(S.open==='cart' && SCREENS[destination]) {
       var act=document.activeElement.dataset.act, key=document.activeElement.dataset.key;
       renderCart();
-      var same=Array.from($('cart').querySelectorAll('button')).find(b=>b.dataset.act===act && b.dataset.key===key);
+      var same=act && Array.from($('cart').querySelectorAll('button')).find(b=>b.dataset.act===act && b.dataset.key===key);
       (same || $('cart').querySelector('button')).focus({preventScroll:true});
       return;
     }
@@ -254,7 +255,6 @@
   ph.addEventListener('change',function(e){
     var field=e.target.dataset.field;if(field!=='material' && field!=='sort')return;
     lists[destination][field]=e.target.value;renderResults(true);
-    if(field==='material' && e.target.value)emitSignal({type:'browse-filter',dimension:'material',value:e.target.value});
   });
   ph.addEventListener('keydown', function (e) {
     if(e.key==='Escape' && S.open)closeAll();
@@ -339,7 +339,8 @@
       catalogListeners.forEach(fn=>fn(api));
     },
     put(record,reveal=true) {
-      this.replace([...ITEMS.filter(it=>it.key!==record.key),record]);
+      // Rebuild in Nikki's order, not the personal one, so that her order survives (review MED-4).
+      this.replace([...ITEMS.slice().sort((a,b)=>a.boutique-b.boutique).filter(it=>it.key!==record.key),record]);
       if(reveal)goItem(ITEMS.findIndex(it=>it.key===record.key));
     },
     status(message, state='success') {
@@ -379,13 +380,14 @@
       // Rebuild from Nikki's order so that switching personalisation off restores it exactly.
       ITEMS=ordered(ITEMS.slice().sort((a,b)=>a.boutique-b.boutique));N=ITEMS.length;
       if(!N)return;
-      if(choice.fromStart) { // only before anything is painted: start at the best match
+      if(choice?.fromStart) { // only before anything is painted: start at the best match
         S.item=0;S.prev=N-1===0?0:N-1;S.photo=primary(ITEMS[0]);S.zoom=false;
       } else {
         S.item=Math.max(0,ITEMS.findIndex(it=>it.key===current));
         S.prev=ITEMS.findIndex(it=>it.key===previous);if(S.prev<0 || S.prev===S.item)S.prev=N-1===S.item?0:N-1;
       }
-      render(false); // without fromStart, S.photo is untouched: the photo in view stays
+      // Without fromStart the piece in view, its photo and any zoom or swipe stay as they are.
+      render(false, !choice?.fromStart && ITEMS[S.item]?.key===current);
       if(S.open==='cart')refreshList();
     },
     status:(message,state)=>window.NikkiStore.status(message,state)
@@ -395,7 +397,7 @@
     registerScreen(name, screen) { SCREENS[name]=screen; },
     // Called with api after every catalog replacement (initial load and refresh).
     onCatalog(fn) { catalogListeners.push(fn); },
-    // Called on like/unlike/cart/uncart (with a public copy of the piece) and browse-filter.
+    // Called on like/unlike/cart/uncart with a public copy of the piece. Search filters are not taste.
     // A listener error never breaks the shop. Wiring to the taste profile: docs/SMAAKPROFIEL.md.
     onSignal(fn) { signalListeners.push(fn); },
     api

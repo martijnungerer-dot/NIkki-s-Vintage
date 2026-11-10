@@ -71,4 +71,9 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
  await shop.locator('#cart [data-act=cart-remove][data-key="'+picked[2].id+'"]').click();
  assert.deepEqual(await stored(),{[picked[0].id]:true});
  await close();
+ // Review LOW-1: a basket whose only piece is temporarily invisible is not called empty.
+ unavailable.add('0');await refresh();await openCart();
+ const text=await shop.locator('#cart').innerText();
+ assert.ok(!text.includes('Je winkelmand is leeg.'));assert.ok(text.includes('1 stuk in je winkelmand is tijdelijk niet te zien.'));
+ await close();unavailable.clear();await refresh();
 };

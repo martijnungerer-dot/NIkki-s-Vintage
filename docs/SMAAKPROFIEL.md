@@ -53,11 +53,11 @@ Getest in `tests/taste.test.mjs` (14 tests, onderdeel van `npm test`). De browse
 
 1. Bij het openen van de boetiek, alleen als de bezoeker een smaakprofiel heeft: meteen de lokale rangschikking. De winkel opent dus op het best passende stuk, zonder wachten en zonder verspringen.
 2. Eén aanroep naar de serverfunctie met alleen de compacte samenvatting. Die leest zelf de gepubliceerde stukken, filtert op budget en vraagt Gemini om een volgorde en een fotorol per stuk.
-3. Het antwoord geldt voor alles **na** het stuk in beeld. Wat de bezoeker al zag, blijft staan. Per stuk wordt de gekozen foto als eerste getoond, als dat stuk zo'n foto heeft.
-4. Tijdens de sessie blijft die volgorde staan, ook na herladen, zonder nieuwe aanroep. Een nieuwe volgorde komt bij een nieuwe sessie, of als "Mijn smaak" `NikkiPersonalise.refresh()` aanroept na een expliciete keuze.
+3. Het stuk in beeld blijft op zijn plek; alle andere stukken volgen het antwoord. Per stuk wordt de gekozen foto als eerste getoond, als dat stuk zo'n foto heeft.
+4. Tijdens de sessie blijft die volgorde staan, ook na herladen (dan opent de winkel op de eerste AI-keuze) en ook als hartjes of de mand het profiel intussen veranderen. Er volgt geen nieuwe aanroep. Een nieuwe volgorde komt bij een nieuwe sessie, of als "Mijn smaak" `NikkiPersonalise.refresh()` aanroept na een expliciete keuze.
 5. Zonder profiel of met personalisatie uit: Nikki's volgorde. Bij een storing blijft de lokale volgorde staan.
 
-Collectie gebruikt dezelfde persoonlijke volgorde (sortering "Boetiek"). Stukken die de server weglaat, zoals stukken boven het budget, komen achteraan in Nikki's volgorde. De korte uitleg "waarom past dit bij jou" zit al in de server (`want_rationale`), maar wordt nog nergens getoond. Waar die komt, is een ontwerpvraag.
+Collectie gebruikt dezelfde persoonlijke volgorde (sortering "Boetiek"). Stukken die de server weglaat, zoals stukken boven het budget, komen achteraan in Nikki's volgorde. De korte uitleg "waarom past dit bij jou" zit in `prompt.mjs`, maar de server vraagt hem voorlopig niet op (kosten). Aanzetten kan zodra er een plek in het ontwerp is. Een profiel zonder voorkeuren kost geen aanroep. Review en verwerking: [REVIEW-SMAAKPROFIEL.md](REVIEW-SMAAKPROFIEL.md).
 
 ## Opdracht voor de volgende Claude Code-sessie (onderdeel 4)
 

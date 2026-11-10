@@ -59,6 +59,27 @@ test('undoing a heart or basket removes the boost but never creates aversion',()
   assert.equal(Object.keys(p.features).length,0);assert.equal(p.counts.cart,0);
 });
 
+test('review MED-3: undoing a heart never deepens an existing dislike',()=>{
+  let p=A.applySignal(P.empty(NOW),{type:'like',item:coat},NOW);
+  p=A.applySignal(p,{type:'less',item:coat},NOW);
+  p=A.applySignal(p,{type:'less',item:coat},NOW);
+  assert.equal(p.features['material:wol'].w,-1.5);
+  p=A.applySignal(p,{type:'unlike',item:coat},NOW);
+  assert.equal(p.features['material:wol'].w,-1.5,'unlike leaves a dislike as it is');
+});
+
+test('review MED-1: forgetting a feature removes it from learned and explicit preferences',()=>{
+  let p=A.applySignal(P.empty(NOW),{type:'more',item:coat},NOW);
+  p=A.applySignal(p,{type:'filter',mode:'include',dimension:'colour',value:'Zwart',on:true},NOW);
+  p=A.applySignal(p,{type:'filter',mode:'exclude',dimension:'material',value:'Leer',on:true},NOW);
+  p=A.applySignal(p,{type:'forget',key:'colour:zwart'},NOW);
+  p=A.applySignal(p,{type:'forget',key:'material:leer'},NOW);
+  const s=A.summarize(p,NOW);
+  assert.equal(s.prefer['colour:zwart'],undefined);assert.equal(s.avoid['material:leer'],undefined);
+  assert.equal(s.prefer['model:sjaalkraag'],0.33,'other features stay');
+  assert.equal(JSON.stringify(A.applySignal(p,{type:'forget',key:42},NOW).features),JSON.stringify(p.features));
+});
+
 test('learned weights decay with a 30-day half-life; explicit choices do not',()=>{
   let p=A.applySignal(P.empty(NOW),{type:'more',item:coat},NOW);
   p=A.applySignal(p,{type:'filter',mode:'include',dimension:'model',value:'Cape',on:true},NOW);
@@ -127,6 +148,7 @@ test('payload: only published pieces within budget, no prices, UUIDs or private 
   assert.ok(text.length<2000);
   const body=geminiBody(req.payload);
   assert.equal(body.systemInstruction.parts[0].text,SYSTEM_PROMPT);assert.equal(body.generationConfig.temperature,0);
+  assert.ok(body.generationConfig.maxOutputTokens>=4096,'review HIGH-2: room for 40 candidates plus thinking');
 });
 
 test('payload caps candidates by local score to bound token cost',()=>{

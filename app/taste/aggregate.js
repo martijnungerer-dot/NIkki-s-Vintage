@@ -47,8 +47,8 @@
     var features = Object.assign({}, profile.features);
     featuresOf(item).forEach(function (pair) {
       var old = features[pair[0]], before = old ? P.decayed(old, now) : 0, w = before + weight;
-      // Een hartje of mand terugdraaien maakt een kenmerk niet negatief: dat is geen afkeer.
-      if (floorAtZero && before >= 0) w = Math.max(0, w);
+      // Een hartje of mand terugdraaien haalt alleen een bonus weg: nooit (meer) afkeer (review MED-3).
+      if (floorAtZero) w = before > 0 ? Math.max(0, w) : before;
       features[pair[0]] = { w: Math.max(-P.MAX_WEIGHT, Math.min(P.MAX_WEIGHT, w)), t: now, label: pair[1] };
     });
     return Object.assign({}, profile, { features: features });
@@ -81,7 +81,18 @@
       if (s.on) explicit[other][s.dimension] = (explicit[other][s.dimension] || []).filter(function (v) { return fold(v) !== fold(value); });
       p.explicit = P.sanitize({ version: 1, explicit: explicit }, now).explicit;
     }
-    else if (s.type === 'forget') { var f = Object.assign({}, p.features); delete f[s.key]; p = Object.assign({}, p, { features: f }); }
+    else if (s.type === 'forget') {
+      // Wist een kenmerk overal: geleerd én expliciet, zodat het echt uit "Mijn smaak" verdwijnt (review MED-1).
+      if (typeof s.key !== 'string') return p;
+      var f = Object.assign({}, p.features); delete f[s.key];
+      var dim = s.key.slice(0, s.key.indexOf(':')), value = s.key.slice(s.key.indexOf(':') + 1), cleared = { version: 1, explicit: { include: {}, exclude: {}, maxPriceMinor: p.explicit.maxPriceMinor } };
+      ['include', 'exclude'].forEach(function (mode) {
+        Object.keys(p.explicit[mode]).forEach(function (d) {
+          cleared.explicit[mode][d] = d === dim ? p.explicit[mode][d].filter(function (v) { return fold(v) !== value; }) : p.explicit[mode][d];
+        });
+      });
+      p = Object.assign({}, p, { features: f, explicit: P.sanitize(cleared, now).explicit });
+    }
     else if (!s.item || typeof s.item !== 'object') return p;
     else if (!p.enabled) return p;
     else if (s.type === 'dwell') { if (!WEIGHTS.dwell) return p; p = learn(p, s.item, WEIGHTS.dwell, now, false); }

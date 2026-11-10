@@ -30,16 +30,37 @@ module.exports=async function({context,records,names,personalise}) {
  await shop.locator('.shop').click();await shop.getByRole('menuitem',{name:'Collectie',exact:true}).click();
  assert.deepEqual((await shop.locator('#catalog-results .catalog-item').evaluateAll(els=>els.map(el=>el.dataset.itemKey))).slice(0,3),[rec[1].id,rec[2].id,rec[0].id]);
  await shop.locator('#cart [data-act=close]').click();
- // 3. Same session: reload keeps the order and makes no new AI call.
+ // 3. Same session: reload opens on the AI's first choice and makes no new AI call, even after the
+ //    profile changed meanwhile through a heart or the basket (review HIGH-3).
+ await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('nikki-taste'));p.features['colour:zwart']={w:1,t:Date.now(),label:'Zwart'};localStorage.setItem('nikki-taste',JSON.stringify(p));});
  shop=await open();
  assert.equal(personalise.calls.length,1,'one AI call per session');
- assert.equal(await shop.locator('#title').textContent(),names[1]);
+ assert.equal(await shop.locator('#title').textContent(),names[2],'reload starts at the AI order');
+ // 3b. refresh() (after an explicit change in "Mijn smaak") asks again; the piece in view stays.
+ await shop.locator('#nexts .th').first().click();const viewing=await shop.locator('#title').textContent();
+ await shop.evaluate(()=>window.NikkiPersonalise.refresh());
+ for(let i=0;i<50&&personalise.calls.length<2;i++)await page.waitForTimeout(20);
+ await shop.waitForFunction(()=>sessionStorage.getItem('nikki-taste-order'));
+ assert.equal(personalise.calls.length,2);assert.equal(await shop.locator('#title').textContent(),viewing);
+ // 3c. Browsing backwards to the last piece before the answer arrives no longer freezes the list (review HIGH-1).
+ let release;personalise.hold=new Promise(r=>{release=r;});
+ await page.evaluate(()=>sessionStorage.clear());shop=await open();
+ await shop.locator('#prev-th').click();const last=await shop.locator('#title').textContent();
+ release();personalise.hold=null;
+ await shop.waitForFunction(()=>sessionStorage.getItem('nikki-taste-order'));
+ assert.equal(await shop.locator('#title').textContent(),last,'the piece in view stays');
+ await shop.locator('.shop').click();await shop.getByRole('menuitem',{name:'Collectie',exact:true}).click();
+ const order=await shop.locator('#catalog-results .catalog-item').evaluateAll(els=>els.map(el=>el.dataset.itemKey));
+ assert.deepEqual(order.filter(k=>k===rec[2].id||k===rec[0].id),[rec[2].id,rec[0].id],'the AI order still applies');
+ assert.equal(order[0],rec[2].id,'pieces before the one in view are reordered too');
+ await shop.locator('#cart [data-act=close]').click();
+ personalise.calls=[];
  // 4. A failing server keeps the local order and the shop working.
  await page.evaluate(()=>sessionStorage.clear());personalise.fail=true;
  shop=await open();
  assert.equal(await shop.locator('#title').textContent(),names[1]);
- for(let i=0;i<50&&personalise.calls.length<2;i++)await page.waitForTimeout(20);
- assert.equal(personalise.calls.length,2);assert.equal(await shop.locator('#title').textContent(),names[1],'local order stays after a server error');
+ for(let i=0;i<50&&personalise.calls.length<1;i++)await page.waitForTimeout(20);
+ assert.equal(personalise.calls.length,1);assert.equal(await shop.locator('#title').textContent(),names[1],'local order stays after a server error');
  personalise.fail=false;
  // 5. Personalisation off: Nikki's order, no call.
  await page.evaluate(p=>{localStorage.setItem('nikki-taste',p);sessionStorage.clear();},profile(false));

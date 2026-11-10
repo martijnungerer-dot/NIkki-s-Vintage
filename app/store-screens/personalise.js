@@ -2,7 +2,7 @@
   // Persoonlijke volgorde en hoofdfoto (docs/SMAAKPROFIEL.md, onderdeel 6). Eigenaar: Claude Code.
   // Bij sessiestart, alleen als de bezoeker een smaakprofiel heeft:
   //   1. meteen de lokale rangschikking (geen wachten, geen verspringen bij het eerste beeld);
-  //   2. één AI-aanroep via de server; het antwoord wordt toegepast op alles ná het stuk in beeld.
+  //   2. één AI-aanroep via de server; het stuk in beeld blijft op zijn plek, de rest volgt de AI.
   // Tijdens de sessie blijft de volgorde staan (sessionStorage), ook na herladen. Een nieuwe volgorde
   // komt pas bij een nieuwe sessie of via NikkiPersonalise.refresh() na een expliciete keuze in
   // "Mijn smaak" (onderdeel 4). Zonder profiel of met personalisatie uit: Nikki's volgorde.
@@ -26,29 +26,34 @@
     return order.length ? { order: order, lead: lead } : null;
   }
 
-  // The piece in view and everything before it stay put; the rest follows the new order.
-  function keepSeen(next) {
-    var now = shop.items().map(function (it) { return it.key; }), current = shop.current();
-    var head = current ? now.slice(0, now.indexOf(current.key) + 1) : [];
-    return head.concat(next.filter(function (k) { return head.indexOf(k) < 0; }));
+  // Only the piece in view keeps its place; everything else follows the new order. Keeping "all
+  // pieces up to the current one" froze the whole list after browsing backwards (review HIGH-1).
+  // The core keeps the previous-piece slot by key, so nothing visible jumps except the next thumbnails.
+  function keepCurrent(next) {
+    var current = shop.current(); if (!current) return next.slice();
+    var at = shop.items().map(function (it) { return it.key; }).indexOf(current.key);
+    var rest = next.filter(function (k) { return k !== current.key; });
+    rest.splice(Math.max(0, Math.min(at, rest.length)), 0, current.key);
+    return rest;
   }
 
   // first: called while the catalog is first drawn (same task, nothing painted yet), so even the
-  // first piece may change. Later calls keep what the visitor has already seen.
+  // first piece may change. Later calls keep the piece in view.
   function start(first) {
-    var s = summary(), id = ++request, place = first ? function (o) { return o; } : keepSeen;
+    var s = summary(), id = ++request, place = first ? function (o) { return o.slice(); } : keepCurrent;
     if (!hasTaste(s)) { writeSession(null); if (!first) shop.personalise({ order: null, lead: {} }); return; }
-    var profile = JSON.stringify(s), cached = readSession();
-    if (cached && cached.profile === profile && Array.isArray(cached.order)) { shop.personalise({ order: place(cached.order), lead: cached.lead || {}, fromStart: !!first }); return; }
+    // Within a session the order stays, even if hearts or the basket changed the profile meanwhile
+    // (review HIGH-3). An explicit change goes through refresh(), which clears this cache first.
+    var cached = readSession();
+    if (cached && Array.isArray(cached.order)) { shop.personalise({ order: place(cached.order), lead: cached.lead || {}, fromStart: !!first }); return; }
     shop.personalise({ order: place(T.ranking.rank(shop.items(), s).order), lead: {}, fromStart: !!first });
     var ask = window.parent.NikkiApp && window.parent.NikkiApp.personalise;
     if (typeof ask !== 'function') return;
     Promise.resolve().then(function () { return ask(s); }).then(function (res) {
       var choice = parse(res);
       if (!choice || id !== request) return; // a newer request or no usable answer
-      var order = keepSeen(choice.order);
-      writeSession({ profile: profile, order: order, lead: choice.lead });
-      shop.personalise({ order: order, lead: choice.lead });
+      writeSession({ order: choice.order, lead: choice.lead }); // the pure AI order, for a reload
+      shop.personalise({ order: keepCurrent(choice.order), lead: choice.lead });
     }).catch(function () { /* local order stays; the shop keeps working */ });
   }
 

@@ -52,12 +52,25 @@ test('AI ranking: server budget filter, no prices or IDs sent, answer normalised
   assert.equal(r.status,200);const out=await r.json();
   assert.equal(out.source,'ai');
   assert.deepEqual(out.ranking.map(x=>x.id),[uuid(3),uuid(1)],'over-budget piece is never offered');
-  assert.equal(out.ranking[0].photoRole,'Detail');assert.equal(out.ranking[0].why,'Wol, zoals je graag ziet.');
+  assert.equal(out.ranking[0].photoRole,'Detail');
+  assert.equal(out.ranking[0].why,null,'review MED-2: no rationale while the shop does not show it, whatever the client asks');
   const sent=ai(s.calls)[0];
   assert.ok(sent.url.includes('gemini-test:generateContent'));assert.ok(!sent.url.includes('secret-gemini'));
   for(const leak of [uuid(1),'15000','45000','priceMinor'])assert.ok(!sent.opts.body.includes(leak),leak);
   const garments=s.calls.find(c=>c.url.includes('/rest/v1/garments'));
   assert.ok(garments.url.includes('status=eq.published'),'server reads only published pieces');
+});
+
+test('review MED-2: an empty profile costs no quota, catalog read or model call',async()=>{
+  const s=setup();const r=await s.request({profile:{v:1,budget_max_minor:null,prefer:{},avoid:{}}});
+  assert.equal(r.status,200);assert.deepEqual(await r.json(),{source:'none',ranking:[]});assert.equal(s.calls.length,0);
+});
+
+test('review MED-2: one IPv6 /64 counts as one visitor',async()=>{
+  const id=ip=>clientId(new Request('https://x',{headers:{'cf-connecting-ip':ip}}),'server-only','2026-11-10');
+  assert.equal(await id('2001:db8:aa:1::1'),await id('2001:0db8:00aa:0001:ffff:1:2:3'));
+  assert.notEqual(await id('2001:db8:aa:1::1'),await id('2001:db8:aa:2::1'));
+  assert.notEqual(await id('203.0.113.9'),await id('203.0.113.10'),'IPv4 stays per address');
 });
 
 test('model failure, bad JSON or missing Gemini settings fall back to the local order',async()=>{

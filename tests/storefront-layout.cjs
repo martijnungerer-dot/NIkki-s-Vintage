@@ -68,7 +68,7 @@ async function layout(frame,width) {
     if(u.pathname==='/storage/v1/object/sign/garment-photos') {signs++;return json(req.postDataJSON().paths.filter(p=>!unavailable.has(p.split('-')[0])).map(p=>({path:p,signedURL:'/object/sign/garment-photos/'+p+'?token='+signs})));}
     if(u.pathname.startsWith('/storage/v1/object/sign/garment-photos/'))return route.fulfill({headers,contentType:'image/svg+xml',body:drawing(colours[Number(u.pathname.split('/').at(-1).split('-')[0])])});
     if(u.pathname==='/functions/v1/personalise') {
-     personalise.calls.push(req.postDataJSON());
+     personalise.calls.push(req.postDataJSON());if(personalise.hold)await personalise.hold;
      return personalise.fail?route.fulfill({status:503,headers,contentType:'application/json',body:'{"error":"UNAVAILABLE"}'}):json(personalise.reply);
     }
     writes.push(req.method()+' '+u.pathname);return route.fulfill({status:500,headers});

@@ -43,6 +43,9 @@ module.exports = async function ({context, width, output, personalise}) {
  await more.click(); assert.equal(await weight(feature), 0, 'opposite signal cancels less');
  assert.equal(await more.getAttribute('aria-pressed'), 'false', 'cancelling less does not mark more as pressed');
  assert.equal(await less.getAttribute('aria-pressed'), 'false');
+ await more.click(); await more.click(); assert.equal(await weight(feature), 1, 'tapping a pressed button stores no second signal');
+ await less.click(); assert.equal(await weight(feature), 0, 'one opposite tap cancels a repeated tap');
+ assert.equal(await more.getAttribute('aria-pressed'), 'false');
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');
  assert.equal(await shop.locator('#title').textContent(), title);

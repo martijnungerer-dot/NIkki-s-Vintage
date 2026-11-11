@@ -46,6 +46,8 @@
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
     var type = button.dataset.taste;
+    // Each visible state change stores at most one signal: a repeated tap on a pressed button is ignored.
+    if (type === pressed) return;
     // A failed or ignored save leaves the stored signal, and therefore the pressed state, unchanged.
     if (apply({ type: type, item: api.publicCopy(item) })) pressed = pressed !== (type === 'more' ? 'less' : 'more') ? type : null;
     syncPhoto();

@@ -2,7 +2,7 @@
   // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
   var shop = window.NikkiShop, api = shop.api;
   var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
-  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false;
+  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false, applied = {};
   // Resolve localStorage inside the profile module's try/catch, including a blocked getter.
   // After a failed read the cached copy is for display only: every write follows a read, and
   // a write after a failed read is refused so stale or empty data cannot overwrite newer preferences.
@@ -45,14 +45,36 @@
   group.addEventListener('click', function (event) {
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
-    var type = button.dataset.taste, opposite = type === 'more' ? 'less' : 'more';
-    // Each visible state change stores exactly one signal. A second tap releases the pressed button
-    // by storing the opposite signal, the same way the other button cancels it.
-    // A failed or ignored save leaves the stored signal, and therefore the pressed state, unchanged.
-    if (type === pressed) { if (apply({ type: opposite, item: api.publicCopy(item) })) pressed = null; }
-    else if (apply({ type: type, item: api.publicCopy(item) })) pressed = pressed !== opposite ? type : null;
+    var type = button.dataset.taste, copy = api.publicCopy(item);
+    // Each visible state change stores exactly one change. While a button is pressed, a tap on either
+    // button releases it by undoing exactly what the press stored. A failed or ignored save leaves
+    // the stored profile, and therefore the pressed state, unchanged.
+    if (pressed) { if (undo(applied)) pressed = null; }
+    else {
+      var before = load().features;
+      if (apply({ type: type, item: copy })) {
+        var after = load().features;
+        applied = {};
+        A.featuresOf(copy).forEach(function (pair) {
+          applied[pair[0]] = { delta: (after[pair[0]] ? after[pair[0]].w : 0) - (before[pair[0]] ? before[pair[0]].w : 0), label: pair[1] };
+        });
+        pressed = type;
+      }
+    }
     syncPhoto();
   });
+  // At the ±3 limit a press can change a weight by less than 1, so release reverts the real change.
+  function undo(changes) {
+    var now = Date.now(), profile = P.load(storage, now);
+    if (!profile.enabled) return false;
+    var features = Object.assign({}, profile.features);
+    Object.keys(changes).forEach(function (key) {
+      var old = features[key], w = (old ? old.w : 0) - changes[key].delta;
+      features[key] = { w: Math.max(-P.MAX_WEIGHT, Math.min(P.MAX_WEIGHT, w)), t: now, label: old ? old.label : changes[key].label };
+    });
+    storageFailed = !P.save(storage, P.prune(Object.assign({}, profile, { features: features, updatedAt: now }), now));
+    return !storageFailed;
+  }
   // The core replaces the photo track when the visitor changes piece. Observe only that track,
   // so our own button attributes cannot trigger an observer loop. Photo changes keep the feedback.
   new MutationObserver(syncPhoto).observe(document.getElementById('track'), { childList: true });

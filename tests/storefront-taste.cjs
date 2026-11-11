@@ -52,6 +52,16 @@ module.exports = async function ({context, width, output, personalise}) {
  assert.equal(await more.getAttribute('aria-pressed'), 'true');
  await less.click(); assert.equal(await weight(feature), 0, 'one opposite tap still cancels');
  assert.equal(await more.getAttribute('aria-pressed'), 'false');
+ // Releasing or cancelling undoes only the change the first tap really made, also at the ±3 limit.
+ const setWeight = w => shop.evaluate(([key,w]) => {const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());if(w===null)delete p.features[key];else p.features[key]={w,t:Date.now(),label:'Grens'};P.save(localStorage,p);}, [feature,w]);
+ for (const [start, first, second] of [[3,more,more],[-3,less,less],[3,more,less],[-3,less,more],[2.5,more,more]]) {
+  await setWeight(start);
+  await first.click(); await second.click();
+  assert.equal(await weight(feature), start, 'undo restores '+start+' exactly');
+  assert.equal(await more.getAttribute('aria-pressed'), 'false');
+  assert.equal(await less.getAttribute('aria-pressed'), 'false');
+ }
+ await setWeight(null);
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');
  assert.equal(await shop.locator('#title').textContent(), title);

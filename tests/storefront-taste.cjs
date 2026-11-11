@@ -48,6 +48,13 @@ module.exports = async function ({context, width, output, personalise}) {
  assert.equal(await shop.locator('#title').textContent(), title);
  assert.deepEqual(await shop.evaluate(() => window.NikkiShop.api.items().map(it=>it.key)), order);
  await more.click();
+ // A failed save must not make a cancelling tap look successful.
+ await shop.evaluate(()=>{window.nativeTasteSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='nikki-taste')throw new DOMException('Test quota','QuotaExceededError');return window.nativeTasteSet.call(this,k,v);};});
+ await less.click();
+ await shop.evaluate(()=>{Storage.prototype.setItem=window.nativeTasteSet;delete window.nativeTasteSet;});
+ assert.equal(await weight(feature), 1, 'failed save keeps the stored signal');
+ assert.equal(await more.getAttribute('aria-pressed'), 'true', 'failed save keeps the earlier pressed state');
+ assert.equal(await less.getAttribute('aria-pressed'), 'false');
  await shop.locator('[data-act=next-photo]').click();
  assert.equal(await more.getAttribute('aria-pressed'), 'true', 'photo change keeps feedback');
  await shop.locator('#nexts .th').first().click();
@@ -175,8 +182,23 @@ async function reviewCases() {
   check(document.querySelector('.taste-window [role=status]'),'a blocked getter is handled without breaking the panel');
   check(button('taste-enable').getAttribute('aria-checked')==='false' && document.querySelectorAll('[data-act=taste-forget]').length===58,'blocked getter keeps last loaded view intact');
   Object.defineProperty(window,'localStorage',descriptor);
+  // Another tab saved a newer profile; a read that fails must never be followed by a write.
+  fail=false;
+  const newer=JSON.parse(saved);newer.features['colour:rood']={w:1,t:Date.now(),label:'Rood'};
+  nativeSet.call(storage,'nikki-taste',JSON.stringify(newer));
+  const nativeGet=Storage.prototype.getItem;
+  Storage.prototype.getItem=function(key){if(key==='nikki-taste')throw new DOMException('Test read','SecurityError');return nativeGet.call(this,key);};
+  try {
+   for(const act of ['taste-enable','taste-forget','taste-clear']) {
+    button(act).click();await tick();
+    check(nativeGet.call(storage,'nikki-taste')===JSON.stringify(newer),'a failed read must not let '+act+' overwrite newer preferences');
+    check(document.querySelector('.taste-window [role=status]'),'a failed read before '+act+' is reported');
+   }
+  } finally {Storage.prototype.getItem=nativeGet;}
+  check(refreshes===0,'a failed read must not refresh');
+  nativeSet.call(storage,'nikki-taste',saved);
   api.refresh();await tick();
-  fail=false;writes=0;
+  writes=0;
   button('taste-clear').click();await tick();
   check(writes===1,'clear writes exactly once');
   check(refreshes===1,'successful clear refreshes exactly once');

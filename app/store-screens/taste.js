@@ -2,14 +2,19 @@
   // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
   var shop = window.NikkiShop, api = shop.api;
   var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
-  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null;
+  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false;
   // Resolve localStorage inside the profile module's try/catch, including a blocked getter.
+  // After a failed read the cached copy is for display only: every write follows a read, and
+  // a write after a failed read is refused so stale or empty data cannot overwrite newer preferences.
   var storage = {
     getItem: function (key) {
-      try { return (rawCache = window.localStorage.getItem(key)); }
-      catch (e) { if (rawCache !== null) return rawCache; throw e; }
+      try { rawCache = window.localStorage.getItem(key); readFailed = false; return rawCache; }
+      catch (e) { readFailed = true; if (rawCache !== null) return rawCache; throw e; }
     },
-    setItem: function (key, value) { window.localStorage.setItem(key, value); rawCache = value; }
+    setItem: function (key, value) {
+      if (readFailed) throw new Error('Profile read failed; not saving.');
+      window.localStorage.setItem(key, value); rawCache = value;
+    }
   };
 
   function load() { return P.load(storage, Date.now()); }
@@ -41,7 +46,8 @@
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
     var type = button.dataset.taste;
-    pressed = apply({ type: type, item: api.publicCopy(item) }) && pressed !== (type === 'more' ? 'less' : 'more') ? type : null;
+    // A failed or ignored save leaves the stored signal, and therefore the pressed state, unchanged.
+    if (apply({ type: type, item: api.publicCopy(item) })) pressed = pressed !== (type === 'more' ? 'less' : 'more') ? type : null;
     syncPhoto();
   });
   // The core replaces the photo track when the visitor changes piece. Observe only that track,

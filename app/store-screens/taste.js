@@ -1,61 +1,154 @@
 (function () {
-  // Mijn smaak — BLAUWDRUK, NOG NIET GEBOUWD. Eigenaar: volgende Claude Code-sessie
-  // (docs/SMAAKPROFIEL.md, onderdeel 4). Dit bestand wordt al meegebouwd maar registreert niets,
-  // zodat de winkel ongewijzigd blijft tot dit onderdeel af is.
-  //
-  // Besluiten van Martijn (10 november 2026), zie docs/SMAAKPROFIEL.md "Besluiten":
-  //   - "Mijn smaak" is een vierde regel in het Shop-menu (na Winkelmand of na Mijn favorieten).
-  //   - Alles in het venster vult zich door de keuzes van de bezoeker; niets voorgevuld.
-  //   - De bezoeker kan alles wissen, of één kenmerk tegelijk.
-  //   - Knoppen meer/minder zoals dit staan in de foto, aan de andere kant dan het hartje.
-  //   - Zoekfilters in Collectie tellen niet als voorkeur.
-  //
-  // Waarom geen React/Vue: de winkel is gewone JavaScript zonder build (AGENTS.md: geen tweede
-  // systeem). Het venster gebruikt dezelfde aansluiting als Winkelmand: NikkiShop.registerScreen.
-  //
-  // Beschikbaar
-  //   const P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
-  //   P.load(localStorage, Date.now()) / P.save(localStorage, p) / P.clear(localStorage, now, p.enabled)
-  //   A.applySignal(p, signal, now)   -> nieuw profiel (zie app/taste/types.d.ts voor Signal)
-  //   A.summarize(p, now)             -> wat de bezoeker als "actief" ziet; null als het uit staat
-  //   NikkiShop.onSignal(fn)          -> like/unlike/cart/uncart (+ publieke kopie); zoekfilters zenden niets
-  //   NikkiShop.api.current()         -> het stuk in beeld; api.publicCopy(it) voor een signaal
-  //
-  // 1. Leren
-  //   NikkiShop.onSignal((signal) => {
-  //     const now = Date.now(); P.save(localStorage, A.applySignal(P.load(localStorage, now), signal, now)); });
-  //
-  // 2. Meer / minder zoals dit (in de foto)
-  //   - Twee knoppen .on-photo in een eigen groep links in de foto, gespiegeld aan .photo-acts
-  //     (delen + hartje) rechts. Iconen zonder tekst: duim omhoog / duim omlaag, of plus / min.
-  //     aria-label "Meer zoals dit" / "Minder zoals dit", aria-pressed na tikken tot een ander stuk.
-  //   - Tik: A.applySignal(p, {type:'more'|'less', item: api.publicCopy(api.current())}, now).
-  //   - Voeg ze toe vanuit dit bestand (DOM na laden), zodat de kern ongewijzigd blijft. Let op de
-  //     bestaande veeg- en dubbeltikbediening: knoppen in de foto worden al genegeerd door de gebaren.
-  //   - Verberg ze zoals de andere fotoknoppen bij een lege catalogus ([data-catalog-empty]).
-  //
-  // 3. Venster (registerScreen('Mijn smaak', { render, action })), van boven naar beneden:
-  //   [kop: terug-icoon · "Mijn smaak" · leeg vak]            (gedeelde kop, zoals Collectie)
-  //   [schakelaar] Persoonlijke volgorde aan/uit              data-act="taste-enable"
-  //   Uitleg, 16 px, één zin: "Je voorkeuren blijven in deze browser."
-  //   Sectie "Meer van"      — summarize().prefer, label uit p.features[key].label of de expliciete waarde
-  //   Sectie "Minder van"    — summarize().avoid
-  //   Elke regel: label + ×-knop  data-act="taste-forget" data-key="<FeatureKey>"
-  //   ({type:'forget'} wist het kenmerk overal, geleerd én expliciet). Geen budget- of keuzevelden
-  //   (besluit 2): explicit en budget blijven leeg zolang Martijn daar niet anders over beslist.
-  //   Onderaan: "Wis alles" (prullenbak-icoon)  data-act="taste-clear", met confirm
-  //   Leeg profiel: "Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf."
-  //   Geen keuzelijsten om zelf kenmerken toe te voegen: alles komt uit wat de bezoeker doet.
-  //
-  // 4. Regels
-  //   - Stijl van optie B en Collectie: .head, .line, .chip, .ic, var(--chip) enz.; tekst ≥ 16 px,
-  //     knoppen ≥ 44 px, alles via esc() (labels komen uit opslag en zijn dus onbetrouwbaar).
-  //   - Menuregel toevoegen via een anker in scripts/build-cloud.mjs (zoals "Mijn favorieten").
-  //   - Herordenen en de AI-aanroep bestaan al (onderdelen 5 en 6, app/store-screens/personalise.js).
-  //     Roep na wissen (alles of één kenmerk) of aan/uit window.NikkiPersonalise.refresh() aan;
-  //     na een hartje, mand of meer/minder niet (de volgorde blijft staan tijdens de sessie).
-  //     Raak dat bestand niet aan.
-  //   - Tests in tests/storefront-taste.cjs: leren via hartje/mand/meer/minder, terugdraaien,
-  //     uit = niets leren, wissen houdt de uit-stand, één kenmerk vergeten, zoekfilter leert niets,
-  //     veilige tekst, 44 px, geen netwerkverkeer behalve de bestaande catalogus.
+  // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
+  var shop = window.NikkiShop, api = shop.api;
+  var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
+  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false;
+  // Release state for the pressed more/less button (memory only, per piece; see undo()).
+  var base = null, log = [], ownRaw = null, external = false;
+  // Resolve localStorage inside the profile module's try/catch, including a blocked getter.
+  // After a failed read the cached copy is for display only: every write follows a read, and
+  // a write after a failed read is refused so stale or empty data cannot overwrite newer preferences.
+  var storage = {
+    getItem: function (key) {
+      try { rawCache = window.localStorage.getItem(key); readFailed = false; return rawCache; }
+      catch (e) { readFailed = true; if (rawCache !== null) return rawCache; throw e; }
+    },
+    setItem: function (key, value) {
+      if (readFailed) throw new Error('Profile read failed; not saving.');
+      window.localStorage.setItem(key, value); rawCache = value;
+    }
+  };
+
+  function load() { return P.load(storage, Date.now()); }
+  function apply(signal) {
+    var now = Date.now(), profile = P.load(storage, now);
+    if (!profile.enabled && ['like', 'unlike', 'cart', 'uncart', 'more', 'less'].includes(signal.type)) return false;
+    storageFailed = !P.save(storage, A.applySignal(profile, signal, now));
+    return !storageFailed;
+  }
+  shop.onSignal(function (signal) {
+    if (!['like', 'unlike', 'cart', 'uncart'].includes(signal.type)) return;
+    if (pressed) { load(); if (rawCache !== ownRaw) external = true; }
+    if (apply(signal) && pressed) { log.push({ signal: signal, at: Date.now() }); ownRaw = rawCache; }
+  });
+
+  var group = document.createElement('div');
+  group.className = 'taste-photo-acts';
+  group.innerHTML = ['more', 'less'].map(function (type) {
+    var label = type === 'more' ? 'Meer zoals dit' : 'Minder zoals dit';
+    return '<button type="button" class="on-photo" data-taste="' + type + '" aria-label="' + api.esc(label) + '" aria-pressed="false">' +
+      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 12h10' + (type === 'more' ? 'M12 7v10' : '') + '"/></svg></button>';
+  }).join('');
+  document.getElementById('photo').appendChild(group);
+  function syncPhoto() {
+    var item = api.current(), key = item ? item.key : null;
+    if (key !== currentKey) { currentKey = key; pressed = null; base = null; log = []; }
+    group.hidden = !item;
+    Array.from(group.children).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.taste === pressed)); });
+  }
+  group.addEventListener('click', function (event) {
+    var button = event.target.closest('button'), item = api.current();
+    if (!button || !item) return;
+    var type = button.dataset.taste, copy = api.publicCopy(item);
+    // While a button is pressed, a tap on either button releases it. A failed or ignored save
+    // leaves the stored profile, and therefore the pressed state, unchanged.
+    if (pressed) { if (undo()) { pressed = null; base = null; log = []; } }
+    else {
+      var snapshot = load();
+      if (apply({ type: type, item: copy })) { base = snapshot; log = []; ownRaw = rawCache; external = false; pressed = type; }
+    }
+    syncPhoto();
+  });
+  // Learning is lossy (±3 limit, decay, MAX_FEATURES, the unlike/uncart floor), so a press cannot be
+  // inverted. Release restores the profile from before the press and replays the hearts and basket
+  // signals given while pressed, with the same pure functions: exact by construction.
+  // If another tab saved meanwhile, its preferences are never overwritten: only the button is released.
+  function undo() {
+    var now = Date.now(), current = P.load(storage, now);
+    if (!current.enabled) return false;
+    if (external || rawCache !== ownRaw) return true;
+    var restored = log.reduce(function (p, entry) { return A.applySignal(p, entry.signal, entry.at); }, base);
+    storageFailed = !P.save(storage, P.prune(Object.assign({}, restored, { updatedAt: now }), now));
+    return !storageFailed;
+  }
+  // The core replaces the photo track when the visitor changes piece. Observe only that track,
+  // so our own button attributes cannot trigger an observer loop. Photo changes keep the feedback.
+  new MutationObserver(syncPhoto).observe(document.getElementById('track'), { childList: true });
+  shop.onCatalog(syncPhoto);
+  syncPhoto();
+
+  function preferences(profile) {
+    // summarize() caps the AI payload at 12 per list. The editor must expose every saved
+    // feature so each one can be forgotten, including while personalisation is off.
+    var entries = {};
+    Object.keys(profile.features).forEach(function (key) {
+      var feature = profile.features[key];
+      entries[key] = { key: key, label: feature.label, weight: feature.w };
+    });
+    ['include', 'exclude'].forEach(function (mode) {
+      Object.keys(profile.explicit[mode]).forEach(function (dimension) {
+        profile.explicit[mode][dimension].forEach(function (label) {
+          var key = A.key(dimension, label);
+          if (key) entries[key] = { key: key, label: label, weight: mode === 'include' ? P.MAX_WEIGHT : -P.MAX_WEIGHT };
+        });
+      });
+    });
+    return Object.values(entries).sort(function (a, b) {
+      return Math.abs(b.weight) - Math.abs(a.weight) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+    });
+  }
+  shop.registerScreen('Mijn smaak', {
+    render: function (api) {
+      var profile = load(), esc = api.esc;
+      // Both the immediate and the asynchronous personalisation answer can redraw this panel.
+      // Keep one scroll position across synchronous redraws until the new DOM is installed.
+      var previous = document.querySelector('.taste-window');
+      if (scrollToRestore === null) scrollToRestore = previous && !document.getElementById('cart').hidden ? previous.scrollTop : 0;
+      queueMicrotask(function () {
+        if (scrollToRestore === null) return;
+        var panel = document.querySelector('.taste-window');
+        if (panel) panel.scrollTop = scrollToRestore;
+        scrollToRestore = null;
+      });
+      var entries = preferences(profile);
+      function section(title, sign) {
+        var list = entries.filter(function (entry) { return entry.weight * sign > 0; });
+        return list.length ? '<section class="taste-section"><h2>' + esc(title) + '</h2><ul>' + list.map(function (entry) {
+          return '<li class="line"><span class="taste-label">' + esc(entry.label) + '</span><button type="button" class="ic" data-act="taste-forget" data-key="' + esc(entry.key) + '" aria-label="' + esc('Vergeet ' + entry.label) + '">' + api.CLOSE + '</button></li>';
+        }).join('') + '</ul></section>' : '';
+      }
+      return '<div class="taste-window"><button type="button" class="taste-toggle line" role="switch" aria-checked="' + profile.enabled + '" data-act="taste-enable"><span>Persoonlijke volgorde</span><span class="taste-switch" aria-hidden="true"></span></button>' +
+        '<p class="taste-note muted">Je voorkeuren blijven in deze browser.</p>' +
+        (storageFailed ? '<p class="taste-note" role="status">Opslaan lukt niet. Controleer of browseropslag beschikbaar is.</p>' : '') +
+        (entries.length ? section('Meer van', 1) + section('Minder van', -1) : '<p class="taste-empty muted">Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf.</p>') +
+        '<button type="button" class="checkout taste-clear" data-act="taste-clear">Wis alles</button></div>';
+    },
+    action: function (act, button, api) {
+      if (!['taste-clear', 'taste-forget', 'taste-enable'].includes(act)) return;
+      var panel = document.querySelector('.taste-window'), scroll = panel.scrollTop;
+      var buttons = Array.from(panel.querySelectorAll('[data-act="taste-forget"]')), index = buttons.indexOf(button);
+      var neighbour = buttons[index + 1] || buttons[index - 1];
+      if (act === 'taste-clear') {
+        if (!window.confirm('Alle smaakvoorkeuren wissen? Je hartjes en winkelmand blijven bewaard.')) return;
+        // clear() owns the one write; its return value does not report storage failure.
+        var written = false;
+        P.clear({ setItem: function (key, value) { storage.setItem(key, value); written = true; } }, Date.now(), load().enabled);
+        storageFailed = !written;
+      } else if (act === 'taste-forget') apply({ type: 'forget', key: button.dataset.key });
+      else if (act === 'taste-enable') apply({ type: 'enable', on: !load().enabled });
+      if (!storageFailed) {
+        pressed = null; base = null; log = [];
+        syncPhoto();
+        if (act === 'taste-clear') scrollToRestore = 0;
+        window.NikkiPersonalise.refresh();
+      }
+      api.refresh();
+      panel = document.querySelector('.taste-window');
+      if (!storageFailed && act === 'taste-forget') {
+        var next = neighbour && Array.from(panel.querySelectorAll('[data-act="taste-forget"]')).find(function (b) { return b.dataset.key === neighbour.dataset.key; });
+        (next || panel.querySelector('[data-act="taste-enable"]')).focus({ preventScroll: true });
+      }
+      panel.scrollTop = act === 'taste-clear' && !storageFailed ? 0 : scroll;
+    }
+  });
 })();

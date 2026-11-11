@@ -84,6 +84,28 @@ module.exports = async function ({context, width, output, personalise}) {
  assert.deepEqual(Object.keys(restored).sort(), full, 'release restores evicted entries');
  assert.ok(Object.values(restored).every(f => Math.abs(f.w - .5) < .001));
  await shop.evaluate(() => {const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());p.features={};P.save(localStorage,p);});
+ // Release restores the pre-press profile and replays hearts/basket signals made while pressed.
+ const shape = p => ({w:Object.fromEntries(Object.entries(p.features).map(([k,f])=>[k,f.w])),counts:p.counts});
+ await setWeight(.5);
+ const beforePress = shape(await read());
+ await more.click(); assert.equal((await read()).counts.more, beforePress.counts.more + 1);
+ await more.click(); assert.deepEqual(shape(await read()), beforePress, 'release restores weights and counts exactly');
+ await setWeight(2.5);
+ await more.click(); await shop.locator('#like').click(); await more.click();
+ assert.equal(await weight(feature), 3, 'a heart given at the limit while pressed survives release');
+ await shop.locator('#like').click();
+ await shop.locator('#like').click(); await setWeight(-.6);
+ await more.click(); assert.equal(await weight(feature), .4);
+ await shop.locator('#like').click(); await more.click();
+ assert.equal(await weight(feature), -.6, 'an unlike while pressed is replayed with its floor at zero');
+ // Another tab saved meanwhile: release never overwrites that tab's preferences.
+ await setWeight(null);
+ await more.click();
+ const otherTab = await shop.evaluate(() => {const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());p.features['colour:blauw']={w:2,t:Date.now(),label:'Blauw'};P.save(localStorage,p);return localStorage.getItem('nikki-taste');});
+ await more.click();
+ assert.equal(await shop.evaluate(() => localStorage.getItem('nikki-taste')), otherTab, 'release keeps changes from another tab');
+ assert.equal(await more.getAttribute('aria-pressed'), 'false');
+ await shop.evaluate(() => {const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());p.features={};P.save(localStorage,p);});
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');
  assert.equal(await shop.locator('#title').textContent(), title);

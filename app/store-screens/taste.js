@@ -2,7 +2,9 @@
   // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
   var shop = window.NikkiShop, api = shop.api;
   var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
-  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false, applied = {};
+  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false;
+  // Release state for the pressed more/less button (memory only, per piece; see undo()).
+  var base = null, log = [], ownRaw = null, external = false;
   // Resolve localStorage inside the profile module's try/catch, including a blocked getter.
   // After a failed read the cached copy is for display only: every write follows a read, and
   // a write after a failed read is refused so stale or empty data cannot overwrite newer preferences.
@@ -25,7 +27,9 @@
     return !storageFailed;
   }
   shop.onSignal(function (signal) {
-    if (['like', 'unlike', 'cart', 'uncart'].includes(signal.type)) apply(signal);
+    if (!['like', 'unlike', 'cart', 'uncart'].includes(signal.type)) return;
+    if (pressed) { load(); if (rawCache !== ownRaw) external = true; }
+    if (apply(signal) && pressed) { log.push({ signal: signal, at: Date.now() }); ownRaw = rawCache; }
   });
 
   var group = document.createElement('div');
@@ -38,7 +42,7 @@
   document.getElementById('photo').appendChild(group);
   function syncPhoto() {
     var item = api.current(), key = item ? item.key : null;
-    if (key !== currentKey) { currentKey = key; pressed = null; }
+    if (key !== currentKey) { currentKey = key; pressed = null; base = null; log = []; }
     group.hidden = !item;
     Array.from(group.children).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.taste === pressed)); });
   }
@@ -46,36 +50,25 @@
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
     var type = button.dataset.taste, copy = api.publicCopy(item);
-    // Each visible state change stores exactly one change. While a button is pressed, a tap on either
-    // button releases it by undoing exactly what the press stored. A failed or ignored save leaves
-    // the stored profile, and therefore the pressed state, unchanged.
-    if (pressed) { if (undo(applied)) pressed = null; }
+    // While a button is pressed, a tap on either button releases it. A failed or ignored save
+    // leaves the stored profile, and therefore the pressed state, unchanged.
+    if (pressed) { if (undo()) { pressed = null; base = null; log = []; } }
     else {
-      var before = load().features;
-      if (apply({ type: type, item: copy })) {
-        // Record every weight the press changed, including weaker entries it evicted at MAX_FEATURES.
-        var after = load().features, t = Date.now();
-        applied = {};
-        Object.keys(Object.assign({}, before, after)).forEach(function (key) {
-          var delta = (after[key] ? after[key].w : 0) - (before[key] ? before[key].w : 0);
-          if (delta) applied[key] = { delta: delta, t: t, label: (after[key] || before[key]).label };
-        });
-        pressed = type;
-      }
+      var snapshot = load();
+      if (apply({ type: type, item: copy })) { base = snapshot; log = []; ownRaw = rawCache; external = false; pressed = type; }
     }
     syncPhoto();
   });
-  // Release reverts the real change: smaller at the ±3 limit, decayed like the weights since the
-  // press, and evicted entries come back (with their decay) because their delta is recorded too.
-  function undo(changes) {
-    var now = Date.now(), profile = P.load(storage, now);
-    if (!profile.enabled) return false;
-    var features = Object.assign({}, profile.features);
-    Object.keys(changes).forEach(function (key) {
-      var old = features[key], w = (old ? old.w : 0) - P.decayed({ w: changes[key].delta, t: changes[key].t }, now);
-      features[key] = { w: Math.max(-P.MAX_WEIGHT, Math.min(P.MAX_WEIGHT, w)), t: now, label: old ? old.label : changes[key].label };
-    });
-    storageFailed = !P.save(storage, P.prune(Object.assign({}, profile, { features: features, updatedAt: now }), now));
+  // Learning is lossy (±3 limit, decay, MAX_FEATURES, the unlike/uncart floor), so a press cannot be
+  // inverted. Release restores the profile from before the press and replays the hearts and basket
+  // signals given while pressed, with the same pure functions: exact by construction.
+  // If another tab saved meanwhile, its preferences are never overwritten: only the button is released.
+  function undo() {
+    var now = Date.now(), current = P.load(storage, now);
+    if (!current.enabled) return false;
+    if (external || rawCache !== ownRaw) return true;
+    var restored = log.reduce(function (p, entry) { return A.applySignal(p, entry.signal, entry.at); }, base);
+    storageFailed = !P.save(storage, P.prune(Object.assign({}, restored, { updatedAt: now }), now));
     return !storageFailed;
   }
   // The core replaces the photo track when the visitor changes piece. Observe only that track,
@@ -144,7 +137,7 @@
       } else if (act === 'taste-forget') apply({ type: 'forget', key: button.dataset.key });
       else if (act === 'taste-enable') apply({ type: 'enable', on: !load().enabled });
       if (!storageFailed) {
-        pressed = null;
+        pressed = null; base = null; log = [];
         syncPhoto();
         if (act === 'taste-clear') scrollToRestore = 0;
         window.NikkiPersonalise.refresh();

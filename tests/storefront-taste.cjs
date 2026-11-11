@@ -36,8 +36,13 @@ module.exports = async function ({context, width, output, personalise}) {
  await more.click(); assert.equal(await weight(feature), 1);
  assert.equal(await more.getAttribute('aria-pressed'), 'true');
  await less.click(); assert.equal(await weight(feature), 0, 'opposite signal cancels more');
+ assert.equal(await more.getAttribute('aria-pressed'), 'false');
+ assert.equal(await less.getAttribute('aria-pressed'), 'false', 'cancelling more does not mark less as pressed');
  await less.click(); assert.equal(await weight(feature), -1);
+ assert.equal(await less.getAttribute('aria-pressed'), 'true');
  await more.click(); assert.equal(await weight(feature), 0, 'opposite signal cancels less');
+ assert.equal(await more.getAttribute('aria-pressed'), 'false', 'cancelling less does not mark more as pressed');
+ assert.equal(await less.getAttribute('aria-pressed'), 'false');
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');
  assert.equal(await shop.locator('#title').textContent(), title);
@@ -104,6 +109,7 @@ module.exports = async function ({context, width, output, personalise}) {
  await open();
  assert.equal(await shop.locator('.taste-label').textContent(),attack);
  assert.equal(await shop.locator('.taste-window img, .taste-window script').count(),0);
+ assert.equal(await shop.getByRole('heading',{name:'Minder van',exact:true}).count(),0,'empty opposite section is omitted');
  assert.equal(await shop.locator('[data-act=taste-forget]').getAttribute('aria-label'),'Vergeet '+attack);
  await shop.locator('[data-act=taste-forget]').click();assert.deepEqual((await read()).features,{});assert.equal((await read()).enabled,false);
  await close();
@@ -167,6 +173,7 @@ async function reviewCases() {
   button('taste-enable').click();await tick();
   check(refreshes===0,'a blocked storage getter must not refresh');
   check(document.querySelector('.taste-window [role=status]'),'a blocked getter is handled without breaking the panel');
+  check(button('taste-enable').getAttribute('aria-checked')==='false' && document.querySelectorAll('[data-act=taste-forget]').length===58,'blocked getter keeps last loaded view intact');
   Object.defineProperty(window,'localStorage',descriptor);
   api.refresh();await tick();
   fail=false;writes=0;

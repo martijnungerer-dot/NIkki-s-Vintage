@@ -62,6 +62,28 @@ module.exports = async function ({context, width, output, personalise}) {
   assert.equal(await less.getAttribute('aria-pressed'), 'false');
  }
  await setWeight(null);
+ // A press left on for 30 days: release removes only the decayed press, never creating the opposite.
+ await more.click();
+ await shop.evaluate(() => {window.realNow=Date.now;const later=window.realNow()+30*864e5;Date.now=()=>later;});
+ await more.click();
+ const decayedRelease = await weight(feature);
+ await shop.evaluate(() => {Date.now=window.realNow;delete window.realNow;});
+ assert.ok(Math.abs(decayedRelease) < .05, 'release after decay restores neutral, not '+decayedRelease);
+ assert.equal(await more.getAttribute('aria-pressed'), 'false');
+ await setWeight(null);
+ // A full profile: entries the press evicts come back on release.
+ const full = await shop.evaluate(() => {
+  const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());p.features={};
+  for(let i=0;i<P.MAX_FEATURES;i++)p.features['detail:vulling'+String(i).padStart(2,'0')]={w:.5,t:Date.now(),label:'Vulling '+i};
+  P.save(localStorage,p);return Object.keys(p.features).sort();
+ });
+ await more.click();
+ assert.notDeepEqual(Object.keys((await read()).features).sort(), full, 'the press evicts weaker entries');
+ await more.click();
+ const restored = (await read()).features;
+ assert.deepEqual(Object.keys(restored).sort(), full, 'release restores evicted entries');
+ assert.ok(Object.values(restored).every(f => Math.abs(f.w - .5) < .001));
+ await shop.evaluate(() => {const P=window.NikkiTaste.profile,p=P.load(localStorage,Date.now());p.features={};P.save(localStorage,p);});
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');
  assert.equal(await shop.locator('#title').textContent(), title);

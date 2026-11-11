@@ -53,23 +53,26 @@
     else {
       var before = load().features;
       if (apply({ type: type, item: copy })) {
-        var after = load().features;
+        // Record every weight the press changed, including weaker entries it evicted at MAX_FEATURES.
+        var after = load().features, t = Date.now();
         applied = {};
-        A.featuresOf(copy).forEach(function (pair) {
-          applied[pair[0]] = { delta: (after[pair[0]] ? after[pair[0]].w : 0) - (before[pair[0]] ? before[pair[0]].w : 0), label: pair[1] };
+        Object.keys(Object.assign({}, before, after)).forEach(function (key) {
+          var delta = (after[key] ? after[key].w : 0) - (before[key] ? before[key].w : 0);
+          if (delta) applied[key] = { delta: delta, t: t, label: (after[key] || before[key]).label };
         });
         pressed = type;
       }
     }
     syncPhoto();
   });
-  // At the ±3 limit a press can change a weight by less than 1, so release reverts the real change.
+  // Release reverts the real change: smaller at the ±3 limit, decayed like the weights since the
+  // press, and evicted entries come back (with their decay) because their delta is recorded too.
   function undo(changes) {
     var now = Date.now(), profile = P.load(storage, now);
     if (!profile.enabled) return false;
     var features = Object.assign({}, profile.features);
     Object.keys(changes).forEach(function (key) {
-      var old = features[key], w = (old ? old.w : 0) - changes[key].delta;
+      var old = features[key], w = (old ? old.w : 0) - P.decayed({ w: changes[key].delta, t: changes[key].t }, now);
       features[key] = { w: Math.max(-P.MAX_WEIGHT, Math.min(P.MAX_WEIGHT, w)), t: now, label: old ? old.label : changes[key].label };
     });
     storageFailed = !P.save(storage, P.prune(Object.assign({}, profile, { features: features, updatedAt: now }), now));

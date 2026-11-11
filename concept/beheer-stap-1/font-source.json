@@ -1,0 +1,13 @@
+{
+  "family": "Newsreader",
+  "source": "https://github.com/google/fonts/tree/main/ofl/newsreader",
+  "downloaded": "2026-11-11",
+  "license": "SIL Open Font License 1.1 (OFL.txt)",
+  "files": {
+    "Newsreader.ttf": "8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1",
+    "OFL.txt": "afdae9053282ba66bbacbc4cb20ad20b12ef46379ac587fd464fe3ff8ce1cd4a"
+  },
+  "adaptations": [
+    "Eén eindspatie in OFL.txt verwijderd voor git diff --check; licentietekst ongewijzigd."
+  ]
+}

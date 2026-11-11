@@ -2,13 +2,19 @@
   // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
   var shop = window.NikkiShop, api = shop.api;
   var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
-  var currentKey = null, pressed = null, storageFailed = false;
+  var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null;
+  // Resolve localStorage inside the profile module's try/catch, including a blocked getter.
+  var storage = {
+    getItem: function (key) { return window.localStorage.getItem(key); },
+    setItem: function (key, value) { window.localStorage.setItem(key, value); }
+  };
 
-  function load() { return P.load(localStorage, Date.now()); }
+  function load() { return P.load(storage, Date.now()); }
   function apply(signal) {
-    var now = Date.now(), profile = P.load(localStorage, now);
-    if (!profile.enabled && ['like', 'unlike', 'cart', 'uncart', 'more', 'less'].includes(signal.type)) return;
-    storageFailed = !P.save(localStorage, A.applySignal(profile, signal, now));
+    var now = Date.now(), profile = P.load(storage, now);
+    if (!profile.enabled && ['like', 'unlike', 'cart', 'uncart', 'more', 'less'].includes(signal.type)) return false;
+    storageFailed = !P.save(storage, A.applySignal(profile, signal, now));
+    return !storageFailed;
   }
   shop.onSignal(function (signal) {
     if (['like', 'unlike', 'cart', 'uncart'].includes(signal.type)) apply(signal);
@@ -31,8 +37,7 @@
   group.addEventListener('click', function (event) {
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
-    apply({ type: button.dataset.taste, item: api.publicCopy(item) });
-    pressed = load().enabled && !storageFailed ? button.dataset.taste : null;
+    pressed = apply({ type: button.dataset.taste, item: api.publicCopy(item) }) ? button.dataset.taste : null;
     syncPhoto();
   });
   // The core replaces the photo track when the visitor changes piece. Observe only that track,
@@ -41,43 +46,77 @@
   shop.onCatalog(syncPhoto);
   syncPhoto();
 
-  function labelFor(profile, key) {
-    if (profile.features[key]) return profile.features[key].label;
-    var dim = key.slice(0, key.indexOf(':')), values = [];
-    ['include', 'exclude'].forEach(function (mode) { values = values.concat(profile.explicit[mode][dim] || []); });
-    return values.find(function (value) { return A.key(dim, value) === key; }) || key.slice(key.indexOf(':') + 1);
+  function preferences(profile) {
+    // summarize() caps the AI payload at 12 per list. The editor must expose every saved
+    // feature so each one can be forgotten, including while personalisation is off.
+    var entries = {};
+    Object.keys(profile.features).forEach(function (key) {
+      var feature = profile.features[key];
+      entries[key] = { key: key, label: feature.label, weight: feature.w };
+    });
+    ['include', 'exclude'].forEach(function (mode) {
+      Object.keys(profile.explicit[mode]).forEach(function (dimension) {
+        profile.explicit[mode][dimension].forEach(function (label) {
+          var key = A.key(dimension, label);
+          if (key) entries[key] = { key: key, label: label, weight: mode === 'include' ? P.MAX_WEIGHT : -P.MAX_WEIGHT };
+        });
+      });
+    });
+    return Object.values(entries).sort(function (a, b) {
+      return Math.abs(b.weight) - Math.abs(a.weight) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+    });
   }
   shop.registerScreen('Mijn smaak', {
     render: function (api) {
       var profile = load(), esc = api.esc;
-      // Switching off pauses learning and ranking, but leaves the saved preferences visible/removable.
-      var summary = A.summarize(Object.assign({}, profile, { enabled: true }), Date.now());
-      function section(title, scores) {
-        return '<section class="taste-section"><h2>' + esc(title) + '</h2><ul>' + Object.keys(scores).map(function (key) {
-          var label = labelFor(profile, key);
-          return '<li class="line"><span class="taste-label">' + esc(label) + '</span><button type="button" class="ic" data-act="taste-forget" data-key="' + esc(key) + '" aria-label="' + esc('Vergeet ' + label) + '">' + api.CLOSE + '</button></li>';
+      // Both the immediate and the asynchronous personalisation answer can redraw this panel.
+      // Keep one scroll position across synchronous redraws until the new DOM is installed.
+      var previous = document.querySelector('.taste-window');
+      if (scrollToRestore === null) scrollToRestore = previous && !document.getElementById('cart').hidden ? previous.scrollTop : 0;
+      queueMicrotask(function () {
+        if (scrollToRestore === null) return;
+        var panel = document.querySelector('.taste-window');
+        if (panel) panel.scrollTop = scrollToRestore;
+        scrollToRestore = null;
+      });
+      var entries = preferences(profile);
+      function section(title, sign) {
+        return '<section class="taste-section"><h2>' + esc(title) + '</h2><ul>' + entries.filter(function (entry) { return entry.weight * sign > 0; }).map(function (entry) {
+          return '<li class="line"><span class="taste-label">' + esc(entry.label) + '</span><button type="button" class="ic" data-act="taste-forget" data-key="' + esc(entry.key) + '" aria-label="' + esc('Vergeet ' + entry.label) + '">' + api.CLOSE + '</button></li>';
         }).join('') + '</ul></section>';
       }
-      var hasTaste = Object.keys(summary.prefer).length + Object.keys(summary.avoid).length > 0;
       return '<div class="taste-window"><button type="button" class="taste-toggle line" role="switch" aria-checked="' + profile.enabled + '" data-act="taste-enable"><span>Persoonlijke volgorde</span><span class="taste-switch" aria-hidden="true"></span></button>' +
         '<p class="taste-note muted">Je voorkeuren blijven in deze browser.</p>' +
         (storageFailed ? '<p class="taste-note" role="status">Opslaan lukt niet. Controleer of browseropslag beschikbaar is.</p>' : '') +
-        (hasTaste ? section('Meer van', summary.prefer) + section('Minder van', summary.avoid) : '<p class="taste-empty muted">Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf.</p>') +
+        (entries.length ? section('Meer van', 1) + section('Minder van', -1) : '<p class="taste-empty muted">Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf.</p>') +
         '<button type="button" class="checkout taste-clear" data-act="taste-clear">Wis alles</button></div>';
     },
     action: function (act, button, api) {
+      if (!['taste-clear', 'taste-forget', 'taste-enable'].includes(act)) return;
+      var panel = document.querySelector('.taste-window'), scroll = panel.scrollTop;
+      var buttons = Array.from(panel.querySelectorAll('[data-act="taste-forget"]')), index = buttons.indexOf(button);
+      var neighbour = buttons[index + 1] || buttons[index - 1];
       if (act === 'taste-clear') {
         if (!window.confirm('Alle smaakvoorkeuren wissen? Je hartjes en winkelmand blijven bewaard.')) return;
-        var profile = load();
-        var cleared = P.clear(localStorage, Date.now(), profile.enabled);
-        storageFailed = !P.save(localStorage, cleared);
+        // clear() owns the one write; its return value does not report storage failure.
+        var written = false;
+        P.clear({ setItem: function (key, value) { storage.setItem(key, value); written = true; } }, Date.now(), load().enabled);
+        storageFailed = !written;
       } else if (act === 'taste-forget') apply({ type: 'forget', key: button.dataset.key });
       else if (act === 'taste-enable') apply({ type: 'enable', on: !load().enabled });
-      else return;
-      pressed = null;
-      syncPhoto();
-      window.NikkiPersonalise.refresh();
+      if (!storageFailed) {
+        pressed = null;
+        syncPhoto();
+        if (act === 'taste-clear') scrollToRestore = 0;
+        window.NikkiPersonalise.refresh();
+      }
       api.refresh();
+      panel = document.querySelector('.taste-window');
+      if (!storageFailed && act === 'taste-forget') {
+        var next = neighbour && Array.from(panel.querySelectorAll('[data-act="taste-forget"]')).find(function (b) { return b.dataset.key === neighbour.dataset.key; });
+        (next || panel.querySelector('[data-act="taste-enable"]')).focus({ preventScroll: true });
+      }
+      panel.scrollTop = act === 'taste-clear' && !storageFailed ? 0 : scroll;
     }
   });
 })();

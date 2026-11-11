@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 // Runs inside the existing routed storefront fixture: no live services or mutations.
-module.exports = async function ({context, width, output, records, personalise}) {
+module.exports = async function ({context, width, output, personalise}) {
  const page = await context.newPage();
  await page.goto('https://app.test', {waitUntil:'commit'});
  await page.waitForFunction(() => document.getElementById('status').textContent === 'Collectie geladen.');
@@ -107,9 +107,79 @@ module.exports = async function ({context, width, output, records, personalise})
  assert.equal(await shop.locator('[data-act=taste-forget]').getAttribute('aria-label'),'Vergeet '+attack);
  await shop.locator('[data-act=taste-forget]').click();assert.deepEqual((await read()).features,{});assert.equal((await read()).enabled,false);
  await close();
+ await shop.evaluate(reviewCases);
  await shop.evaluate(()=>window.NikkiStore.replace([],[]));
  assert.ok(await more.isHidden());assert.ok(await less.isHidden());
  // Restore shared fixture state for the remainder of the existing suite.
  await page.evaluate(()=>{localStorage.removeItem('nikki-taste');sessionStorage.clear();});
  await page.close();
 };
+
+// DOM behaviour checks shared with a lightweight local review runner. These use the actual
+// built shop, profile modules and UI handlers; layout/touch targets still require Playwright.
+async function reviewCases() {
+ const check=(condition,message)=>{if(!condition)throw Error(message);};
+ const tick=()=>new Promise(resolve=>queueMicrotask(resolve));
+ const storage=window.localStorage, P=window.NikkiTaste.profile, api=window.NikkiShop.api;
+ const read=()=>JSON.parse(storage.getItem('nikki-taste'));
+ const button=act=>document.querySelector('[data-act="'+act+'"]');
+ const profile=P.empty(Date.now());profile.enabled=false;
+ for(let i=0;i<59;i++)profile.features['detail:kenmerk'+String(i).padStart(2,'0')]={w:i<30?1:-1,t:Date.now(),label:'Kenmerk '+i};
+ profile.features['material:wol']={w:1,t:Date.now(),label:'Wol'};
+ profile.explicit.include.material=['Wol'];
+ P.save(storage,profile);
+ document.querySelector('.shop').click();
+ Array.from(document.querySelectorAll('#menu button')).find(b=>b.textContent==='Mijn smaak').click();
+ await tick();
+ check(document.querySelectorAll('[data-act=taste-forget]').length===60,'all 60 saved features must be editable, beyond the AI summary limit');
+ check(document.querySelectorAll('[data-key="material:wol"]').length===1,'learned and explicit copies share one row');
+ let panel=document.querySelector('.taste-window');panel.scrollTop=300;
+ const scroll=panel.scrollTop, forgotten=document.querySelector('[data-key="detail:kenmerk10"]');
+ forgotten.focus({preventScroll:true});forgotten.click();await tick();
+ check(!read().features['detail:kenmerk10'] && Object.keys(read().features).length===59,'forget exactly one feature');
+ check(document.activeElement.dataset.key==='detail:kenmerk11','focus moves to the next remaining feature');
+ check(document.querySelector('.taste-window').scrollTop===scroll,'forget preserves scroll');
+ api.refresh();await tick();
+ check(document.querySelector('.taste-window').scrollTop===scroll,'a later redraw also preserves scroll');
+ document.querySelector('[data-key="material:wol"]').click();await tick();
+ check(!read().features['material:wol'] && !read().explicit.include.material?.length,'forget removes learned and explicit copies');
+ check(read().enabled===false,'forget keeps the off setting');
+
+ const saved=storage.getItem('nikki-taste'), nativeSet=Storage.prototype.setItem;
+ const nativeRefresh=window.NikkiPersonalise.refresh, nativeConfirm=window.confirm;
+ const descriptor=Object.getOwnPropertyDescriptor(window,'localStorage');
+ let writes=0,refreshes=0,fail=true;
+ Storage.prototype.setItem=function(key,value){
+  if(key==='nikki-taste'){writes++;if(fail)throw new DOMException('Test quota','QuotaExceededError');}
+  return nativeSet.call(this,key,value);
+ };
+ window.NikkiPersonalise.refresh=function(){refreshes++;return nativeRefresh();};
+ window.confirm=()=>true;
+ try {
+  for(const act of ['taste-enable','taste-forget','taste-clear']) {
+   button(act).click();await tick();
+   check(storage.getItem('nikki-taste')===saved,'failed '+act+' must leave the profile intact');
+   check(refreshes===0,'failed '+act+' must not request a new personal order');
+   check(document.querySelector('.taste-window [role=status]')?.textContent.includes('Opslaan lukt niet'),'storage failure must be visible');
+  }
+  check(writes===3,'each failed action tries exactly one write');
+  Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new DOMException('Test blocked storage','SecurityError');}});
+  button('taste-enable').click();await tick();
+  check(refreshes===0,'a blocked storage getter must not refresh');
+  check(document.querySelector('.taste-window [role=status]'),'a blocked getter is handled without breaking the panel');
+  Object.defineProperty(window,'localStorage',descriptor);
+  api.refresh();await tick();
+  fail=false;writes=0;
+  button('taste-clear').click();await tick();
+  check(writes===1,'clear writes exactly once');
+  check(refreshes===1,'successful clear refreshes exactly once');
+  check(read().enabled===false && Object.keys(read().features).length===0,'clear retains off and removes the profile');
+  check(!document.querySelector('.taste-window [role=status]'),'successful retry clears the error');
+ } finally {
+  Object.defineProperty(window,'localStorage',descriptor);
+  Storage.prototype.setItem=nativeSet;window.NikkiPersonalise.refresh=nativeRefresh;window.confirm=nativeConfirm;
+ }
+ button('close').click();
+ return 'PASS: 60 editable features, explicit forget, focus/scroll, quota failure, blocked storage and single-write clear';
+}
+module.exports.reviewCases=reviewCases;

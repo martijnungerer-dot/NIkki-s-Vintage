@@ -72,8 +72,21 @@ Lever per onderdeel eerst schermafbeeldingen of een mock op 390 en 320 px en des
   Behoud ze, of pas test en code bewust samen aan, met dezelfde dekking. Voeg tests toe voor 16 px, 44 px, toetsenbordfocus en de lege staat.
 - **Controles per PR:** `npm run build`, `npm test`, `npm run test:browser`, `npm run check` en `git diff --check`. Lever schermafbeeldingen voor en na op 390 en 320 px.
 
-## Open vragen voor Martijn
+## Besluiten van Martijn (11 november 2026)
 
-- Raster of lijst voor "Jouw collectie"?
-- Moet de bovenbalk volledig naar iconen, of blijven "Boetiek" en "Beheer" als woorden staan, omdat dat geen universele iconen zijn?
-- Moet het invoerscherm in dezelfde reeks mee, of eerst alleen bovenbalk, inloggen en collectie?
+Deze besluiten gaan vóór de voorgestelde richting hierboven:
+
+1. **"Jouw collectie" wordt een raster** van mooie, aanraakbare tegels. Elke tegel toont de hoofdfoto van het stuk, met titel, prijs en status naast of onder de foto, niet eroverheen.
+   - **Bovenaan staat een knop met een +.** Daar begint het toevoegen van een nieuw stuk.
+   - **De + opent meteen de camera.** Op een telefoon kan dat met een bestandsveld met `accept="image/*"` en `capture="environment"`; de gemaakte foto komt direct in de fotostap van het invoerscherm. Waar geen camera is (desktop), opent dezelfde knop de bestandskeuze. Foto's uit de galerij kiezen moet in het invoerscherm mogelijk blijven.
+   - Bewerken en Markeer verkocht blijven bereikbaar vanuit een tegel, met de bestaande bevestigingen.
+2. **De bovenbalk gebruikt iconen, als dat elegant kan.** Maak ze in dezelfde lijnstijl en grootte als de iconen van de boetiek, met `aria-label`. Is een icoon niet ondubbelzinnig, kies dan een rustige oplossing (bijvoorbeeld een korte tooltip of een menu) in plaats van een rij tekstknoppen, en leg die keuze voor in de PR.
+3. **Het invoerscherm gaat mee** in dezelfde reeks: zelfde tokens, letters, knoppen en iconen, grote fototegels met een duidelijke hoofdfoto, een stappenindicator en één primaire knop. De inhoud en de controles blijven gelijk: Gemini-voorstellen, de verplichte controle, de bevestiging bij opslaan, en EXIF verwijderen en verkleinen.
+
+**Volgorde van de PR's voor Codex:**
+- stap 0: de skills;
+- daarna bovenbalk met inloggen;
+- daarna het collectieraster met de +/camera-knop;
+- daarna het invoerscherm.
+
+Lever per stap eerst een mock op 390 en 320 px en desktop, naast de huidige versie, en bouw pas na akkoord.

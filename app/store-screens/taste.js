@@ -45,11 +45,12 @@
   group.addEventListener('click', function (event) {
     var button = event.target.closest('button'), item = api.current();
     if (!button || !item) return;
-    var type = button.dataset.taste;
-    // Each visible state change stores at most one signal: a repeated tap on a pressed button is ignored.
-    if (type === pressed) return;
+    var type = button.dataset.taste, opposite = type === 'more' ? 'less' : 'more';
+    // Each visible state change stores exactly one signal. A second tap releases the pressed button
+    // by storing the opposite signal, the same way the other button cancels it.
     // A failed or ignored save leaves the stored signal, and therefore the pressed state, unchanged.
-    if (apply({ type: type, item: api.publicCopy(item) })) pressed = pressed !== (type === 'more' ? 'less' : 'more') ? type : null;
+    if (type === pressed) { if (apply({ type: opposite, item: api.publicCopy(item) })) pressed = null; }
+    else if (apply({ type: type, item: api.publicCopy(item) })) pressed = pressed !== opposite ? type : null;
     syncPhoto();
   });
   // The core replaces the photo track when the visitor changes piece. Observe only that track,

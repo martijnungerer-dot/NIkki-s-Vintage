@@ -43,8 +43,14 @@ module.exports = async function ({context, width, output, personalise}) {
  await more.click(); assert.equal(await weight(feature), 0, 'opposite signal cancels less');
  assert.equal(await more.getAttribute('aria-pressed'), 'false', 'cancelling less does not mark more as pressed');
  assert.equal(await less.getAttribute('aria-pressed'), 'false');
- await more.click(); await more.click(); assert.equal(await weight(feature), 1, 'tapping a pressed button stores no second signal');
- await less.click(); assert.equal(await weight(feature), 0, 'one opposite tap cancels a repeated tap');
+ await more.click(); await more.click(); assert.equal(await weight(feature), 0, 'a second tap releases more and undoes its signal');
+ assert.equal(await more.getAttribute('aria-pressed'), 'false');
+ assert.equal(await less.getAttribute('aria-pressed'), 'false', 'releasing more does not mark less as pressed');
+ await less.click(); await less.click(); assert.equal(await weight(feature), 0, 'a second tap releases less and undoes its signal');
+ assert.equal(await less.getAttribute('aria-pressed'), 'false');
+ await more.click(); await more.click(); await more.click(); assert.equal(await weight(feature), 1, 'a third tap presses again');
+ assert.equal(await more.getAttribute('aria-pressed'), 'true');
+ await less.click(); assert.equal(await weight(feature), 0, 'one opposite tap still cancels');
  assert.equal(await more.getAttribute('aria-pressed'), 'false');
  assert.equal(await refreshes(), 0, 'learning does not refresh the personal order');
  assert.equal(personalise.calls.length, calls, 'learning makes no network call');

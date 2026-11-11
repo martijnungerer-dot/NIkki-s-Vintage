@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 11 november 2026 — delen en stuklinks (onderdeel B)
+- Begonnen op main 5d5e74e (PR #26 gemerged). Codex bouwt tegelijk "Mijn smaak" (onderdeel 4); dit werk raakt andere bestanden.
+- Het deelicoon werkt nu. Op een telefoon opent één tik het deelmenu met titel en link, anders wordt de link gekopieerd en staat er twee seconden een vinkje in hetzelfde icoon. De link bevat alleen de stuk-ID (`#stuk=<id>`), nooit een fotolink of token. Wie hem opent, komt op dat stuk uit. Een onbekend, ongeldig of verkocht stuk toont gewoon de winkel, en het `#stuk`-deel verdwijnt na gebruik uit de adresbalk.
+- Losse browsertest `tests/storefront-share.cjs` (deelmenu, kopiëren, vinkje, 44 px, links, verkocht, geen schrijfacties) geslaagd op 390 en 320 px, net als de bestaande tests. [Beelden](screenshots/delen/README.md). Niet getest op een echte telefoon.
+
 ### 10 november 2026 — Gemini-review verwerkt
 - Martijn liet Gemini de code van PR #24–26 reviewen. Alle bevindingen gecontroleerd: drie hoog (terugbladeren bevroor de volgorde, te weinig uitvoertokens, sessiecache verviel na een hartje), vier middel en twee laag. Ze zijn verwerkt, met één afwijking van het voorstel: geen `thinkingBudget: 0`, omdat niet elk model dat accepteert. Details en drie open beslispunten in [REVIEW-SMAAKPROFIEL.md](REVIEW-SMAAKPROFIEL.md).
 - 46 unit-/databasetests en browsertests geslaagd, met nieuwe tests voor elke herstelde bevinding. Niet live getest.

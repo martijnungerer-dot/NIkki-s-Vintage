@@ -14,7 +14,7 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 | `store-extension.js` | Optie B bedienen met de publieke NikkiStore-catalogus; onderaan het contract `window.NikkiShop` voor losse onderdelen |
 | `taste/*.js` | Smaakprofiel: datamodel (`types.d.ts`), opslag/verval, signaalverwerking en lokale rangschikking als pure functies (`window.NikkiTaste`). Zie [smaakprofiel](../docs/SMAAKPROFIEL.md). |
 | `../supabase/functions/personalise/` | Smaakprofiel serverkant: openbare functie met daglimiet, payload, systeemprompt en controle van het AI-antwoord, terugval bij storing. |
-| `store-screens/*.js` | Eén winkelonderdeel per bestand (nu: `cart.js` Winkelmand, `personalise.js` persoonlijke volgorde en hoofdfoto; startbestanden `taste.js` Mijn smaak en `share.js` Delen). Zie [frontendplan](../docs/FRONTEND-PLAN.md). |
+| `store-screens/*.js` | Eén winkelonderdeel per bestand (nu: `cart.js` Winkelmand, `personalise.js` persoonlijke volgorde en hoofdfoto; `share.js` delen en stuklinks; startbestand `taste.js` Mijn smaak). Zie [frontendplan](../docs/FRONTEND-PLAN.md). |
 | `store-layout.css` | Presentatiekader weglaten, veilige randen, vaste statusplek en lange verkooptekst |
 | `config.js` | Alleen publieke Supabase-projectgegevens |
 | `../supabase/migrations/` | Datacontract, gecontroleerde mutaties, daglimieten en expliciete toegangsrechten |

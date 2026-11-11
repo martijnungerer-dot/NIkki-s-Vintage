@@ -74,10 +74,18 @@ Lever per onderdeel eerst schermafbeeldingen of een mock op 390 en 320 px en des
 
 ## Besluiten van Martijn (11 november 2026)
 
+**Vastgesteld ontwerp voor "Jouw collectie":** het scherm "Jouw collectie" in het Claude Design-artefact "Beheerkant Nikki's Boetiek" (https://claude.ai/artifact/QJQ9iW4aZkmPKtiqW7nmE6), zoals goedgekeurd door Martijn op 11 november 2026. Het artefact is privé; Martijn deelt het of levert schermafbeeldingen aan. Hoofdpunten:
+
+- een raster van twee kolommen, met als eerste vakje de +-kaart;
+- per stuk een fototegel met daaronder titel, prijs en een statuslabel, plus de iconen potlood (bewerken) en label (markeer verkocht), elk 44 px;
+- filterknoppen Alle, Beschikbaar en Verkocht;
+- een bovenbalk met de merknaam in Newsreader en drie lijniconen: een kledinghanger (naar de boetiek), vernieuwen en account.
+
+
 Deze besluiten gaan vóór de voorgestelde richting hierboven:
 
 1. **"Jouw collectie" wordt een raster** van mooie, aanraakbare tegels. Elke tegel toont de hoofdfoto van het stuk, met titel, prijs en status naast of onder de foto, niet eroverheen.
-   - **Bovenaan staat een knop met een +.** Daar begint het toevoegen van een nieuw stuk.
+   - **Het eerste vakje linksboven in het raster is een +-kaart.** Die heeft dezelfde opbouw als een stuk: een tegel in fotoformaat in de zachte zandkleur `#F3ECE3`, met een lichte ronde +, en daaronder "Nieuw stuk" en in de zachte kleur "Foto maken". Daar begint het toevoegen van een nieuw stuk. (Bijgesteld op 11 november 2026; dit vervangt de eerdere knop rechtsboven.)
    - **De + opent meteen de camera.** Op een telefoon kan dat met een bestandsveld met `accept="image/*"` en `capture="environment"`; de gemaakte foto komt direct in de fotostap van het invoerscherm. Waar geen camera is (desktop), opent dezelfde knop de bestandskeuze. Foto's uit de galerij kiezen moet in het invoerscherm mogelijk blijven.
    - Bewerken en Markeer verkocht blijven bereikbaar vanuit een tegel, met de bestaande bevestigingen.
 2. **De bovenbalk gebruikt iconen, als dat elegant kan.** Maak ze in dezelfde lijnstijl en grootte als de iconen van de boetiek, met `aria-label`. Is een icoon niet ondubbelzinnig, kies dan een rustige oplossing (bijvoorbeeld een korte tooltip of een menu) in plaats van een rij tekstknoppen, en leg die keuze voor in de PR.

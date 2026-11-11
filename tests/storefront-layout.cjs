@@ -164,7 +164,7 @@ async function layout(frame,width) {
    await again.locator('#photo').hover();await page.mouse.wheel(0,80);await again.locator('#title').filter({hasText:names[1]}).waitFor();
    await require('./storefront-collections.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
    await require('./storefront-cart.cjs')({page,shop:again,width,output,records:()=>records,refresh,unavailable});
-   // Taste profile hooks (docs/SMAAKPROFIEL.md): signals carry public fields only; nothing is learned or stored yet.
+   // Taste profile hooks: signals carry public fields only; learning stays local.
    await again.evaluate(()=>{window.seenSignals=[];window.NikkiShop.onSignal(s=>window.seenSignals.push(s));window.NikkiShop.onSignal(()=>{throw Error('listener');});});
    await again.locator('#like').click();await again.locator('#like').click();await again.locator('#price').click();await again.locator('#price').click();
    const signals=await again.evaluate(()=>window.seenSignals);
@@ -173,7 +173,7 @@ async function layout(frame,width) {
    assert.deepEqual(Object.keys(signals[0].item).sort(),['colour','details','era','fit','furClass','key','length','material','model','priceMinor']);
    assert.ok(!JSON.stringify(signals).includes('token'),'no photo links in signals');
    assert.equal(await again.evaluate(()=>typeof window.NikkiTaste.aggregate.applySignal),'function');
-   assert.equal(await again.evaluate(()=>localStorage.getItem('nikki-taste')),null,'no taste profile is stored before the transparency panel exists');
+   assert.ok(await again.evaluate(()=>JSON.parse(localStorage.getItem('nikki-taste'))?.version===1),'signals are learned locally');
    async function refresh(fails=false) {
     await page.evaluate(()=>window.NikkiApp.openAccount());
     await page.locator('#status').evaluate(el=>{el.textContent='';});
@@ -239,6 +239,7 @@ async function layout(frame,width) {
     assert.ok(await again.locator('.catalog-empty').isVisible());
     await again.locator('#cart [data-act=close]').click();
    }
+   if([390,320,280].includes(width)){records=catalog();await require('./storefront-taste.cjs')({context,width,output,records:()=>records,personalise});}
    if(width===390){records=catalog();await require('./storefront-personalise.cjs')({context,records:()=>records,names,personalise});}
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);
    await context.close();

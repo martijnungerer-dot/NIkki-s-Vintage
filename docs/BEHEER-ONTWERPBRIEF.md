@@ -141,3 +141,46 @@ Op 12 november 2026 vastgelegd. Martijn deelt het Claude Design-artefact "Beheer
 
   Productieschrijfacties en het uitrollen van functies gebeuren alleen met akkoord van Martijn.
 - **Gegevens:** geen privévelden, kosten of tokens in de browser. Foto's blijven alleen voor het analyseren en opslaan van het stuk. EXIF verwijderen en verkleinen blijven.
+
+### Meer foto's voor de analyse, waarvan een deel intern (Martijn, 12 november 2026)
+
+- De huidige grens van vier foto's (in `supabase/functions/analyse/handler.mjs` en `app/intake-extension.js`, toegelicht in `docs/SUPABASE-START.md`) was een voorzichtige standaard tegen kosten en misbruik, geen besluit van Martijn.
+- **Gewenst:**
+  - vier foto's van alle kanten voor de carrousel;
+  - een foto van het etiket;
+  - een foto van het maatlabel (als dat er is);
+  - eventueel foto's van het meetlint.
+
+  Alle foto's gaan naar de analyse; alleen de carrouselfoto's verschijnen in de boetiek.
+- **Uitwerking (aparte backend-PR, met akkoord van Martijn):**
+  - een kenmerk per foto, bijvoorbeeld `public: false` of een rol "Etiket" of "Maatlabel", als gedocumenteerde contractwijziging;
+  - een hogere grens per analyse (voorstel: 8), terwijl de daglimieten blijven;
+  - interne foto's worden aan de serverkant nooit aan de publieke catalogus of de getekende links voor bezoekers gegeven. Dat geldt voor de rechten en de fotolinks, niet alleen voor de weergave;
+  - tests voor die scheiding tussen publiek en intern;
+  - de eerste echte analyses meten op kosten.
+- **In het ontwerp:** de fotostap toont twee groepen, "Voor de boetiek" (vier kanten, met hoofdfoto) en "Alleen voor controle" (etiket, maatlabel, meetlint). De fotocoach vraagt om de foto's die nog ontbreken.
+
+### Protocol voor detailfoto's (concept, Martijn, 12 november 2026; Nikki vult aan en keurt goed)
+
+Details zijn belangrijk bij vintage mode. Een detailfoto met een vaste rol krijgt in de analyse extra gewicht.
+
+**Rollen voor detailfoto's** (standaard intern, zie hierboven):
+- Rits (trekker en tanden);
+- Knopen;
+- Kraag en revers;
+- Voering en binnenkant, bij bont en shearling ook de huidkant;
+- Etiket en maatlabel;
+- Naden en stiksels;
+- Zakken, manchetten en zoom;
+- Gebrek (vlek, kale plek, scheur).
+
+**Extra gewicht, concreet:**
+- In de analyse telt een foto met een detailrol als bewijs voor dat kenmerk. Gemini baseert zijn voorstel voor dat veld op die foto en vermeldt dat, bijvoorbeeld "metalen rits (zie detailfoto)". Het krijgt een hogere zekerheid dan een voorstel van een overzichtsfoto.
+- Bij de controle ziet Nikki per kenmerk welke foto het onderbouwt, en bevestigt het.
+- Bevestigde details kunnen detailkenmerken worden voor het smaakprofiel, bijvoorbeeld "metalen rits" of "sjaalkraag".
+- De fotocoach vraagt per soort stuk om de relevante details, bijvoorbeeld bij een leren jack de rits en de kraag.
+- De zichtbare gebreken komen eerlijk in de beschrijving.
+
+**Grenzen:**
+- Een periode, merk of echtheid alleen na bevestiging door Nikki. Een AI-aanwijzing (zoals "rits lijkt uit de jaren 60") is een hint, geen verkoopclaim.
+- De lijst met rollen en de bijbehorende kenmerken zijn een contractwijziging: documenteren, testen, en akkoord van Martijn.

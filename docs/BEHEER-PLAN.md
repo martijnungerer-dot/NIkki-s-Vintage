@@ -33,6 +33,17 @@ Vastgelegd op 12 november 2026 op verzoek van Martijn. Dit plan zet alle wensen 
 
 Optie (a) maakt de fotocoach, het meten en de detailfoto's veel beter onderhoudbaar.
 
+**Besluit van Martijn (12 november 2026): optie (a), een eigen bron onder `app/intake/`.**
+
+- Codex zet het invoerscherm in fase 3 om naar `app/intake/`, met één bestand per stap.
+- De werking en de controles blijven eerst gelijk. De bestaande browsertests blijven groen, of worden bewust samen met de code aangepast.
+- `concept/intake-prototype.html` en `demo/intake-bridge.js` blijven als historisch concept staan, maar de build gebruikt ze niet meer voor de cloudapp.
+
+**Hetzelfde patroon voor de boetiek (later, alleen met uitdrukkelijk akkoord van Martijn):**
+- De boetiek komt nu ook uit een concept (`concept/ontdekken-optie-b.html`) met tekstpatches. Een eigen bron onder `app/store/` zou de app beter onderhoudbaar maken.
+- Die omzetting mag het ontwerp, de indeling en het gedrag niet veranderen. Bewijs dat met de bestaande layout- en geometrietests en met schermafbeeldingen die identiek zijn, conform "Geldende versie van de winkel" in `AGENTS.md`.
+- Pas na de beheerkant, als aparte PR.
+
 ## Fasen
 
 ### Fase 0: fundament (geen zichtbare verandering)
@@ -109,4 +120,5 @@ Bij elke AI-PR meld je apart dat live Gemini niet getest is zolang een account o
 |---|---|
 | Ontwerp "Jouw collectie" | Vastgesteld (11 november 2026) |
 | Ontwerp inloggen, invoerscherm, fotocoach, meten | Open, in het Claude Design-artefact |
+| Besluit invoerscherm | Eigen bron `app/intake/` (12 november 2026) |
 | Fase 0–5 | Niet begonnen |

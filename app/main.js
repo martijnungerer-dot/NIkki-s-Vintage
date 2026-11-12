@@ -1,3 +1,5 @@
+import {setupHeader} from './admin/header.js';
+import {setupLogin} from './admin/login.js';
 import {config} from './config.js';
 import {Api} from './api.js';
 import {prepareImage} from './images.js';
@@ -18,7 +20,7 @@ function show(screen){
   for(const name of ['shop','intake','manage'])$(name).hidden=name!==screen;
   document.querySelectorAll('button[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
 }
-function controls(){ $('login').hidden=staff;$('new').hidden=!staff;$('logout').hidden=!api.session; }
+function controls(){ $('manage-title').textContent=staff?'Jouw collectie':'Welkom terug'; $('login').hidden=staff;$('new').hidden=!staff;$('logout').hidden=!api.session; }
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
 function withPhotos(row,urls){
   const images=row.data.images.filter(i=>urls.has(i.path)).map(i=>({...i,src:urls.get(i.path)}));
@@ -85,12 +87,11 @@ window.NikkiApp={
     catch{say('Het stuk is opgeslagen. De collectie kon niet worden vernieuwd; probeer Collectie vernieuwen.','error');}
   }
 };
-document.querySelectorAll('button[data-screen]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.screen)));
-$('reload').addEventListener('click',()=>action(async()=>{await refresh();say(loaded('Collectie vernieuwd.'));}));
-$('login').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-  await api.login($('email').value,$('password').value);$('password').value='';staff=true;controls();await refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
-});});
-$('logout').addEventListener('click',()=>action(async()=>{try{await api.logout();}finally{location.reload();}}));
+setupHeader({show,reload:()=>action(async()=>{await refresh();say(loaded('Collectie vernieuwd.'));}),
+  logout:()=>action(async()=>{try{await api.logout();}finally{location.reload();}})});
+setupLogin({login:async(email,password)=>{
+  await api.login(email,password);staff=true;controls();await refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
+}});
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
 // The management shell uses the palette of the chosen storefront.
 const shopRoot=$('shop').contentDocument.documentElement;
@@ -101,7 +102,7 @@ const syncStyle=()=>{
 };
 syncStyle();
 if(!api.configured()){
-  say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.','error');$('login').querySelector('button').disabled=true;$('reload').disabled=true;
+  say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.','error');$('login').querySelector('[type=submit]').disabled=true;$('reload').disabled=true;
 }else await action(async()=>{
   if(api.session){try{await api.request('/rest/v1/rpc/require_staff',{method:'POST',body:{}});staff=true;}catch{api.keep(null);}}
   controls();await refresh();say(loaded('Collectie geladen.'));

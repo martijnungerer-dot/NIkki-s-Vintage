@@ -1,0 +1,51 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const {chromium} = require('playwright');
+const id = '11111111-1111-4111-8111-111111111111';
+const photo = id + '/' + 'a'.repeat(64) + '.jpg';
+const garment = {id, display_id:1, status:'published', version:1, data:{
+  title:'Leren mantel', description:'Een lange mantel met knopen.', priceMinor:12500,
+  material:'Leer', furClass:'Nee', model:'Autojas', colour:'Bruin', length:'Lang',
+  species:null, fit:null, era:null, details:[], measurements:[54,46,62,98],
+  images:[{path:photo,role:'Voorkant',main:true}]
+}};
+async function fixture(width = 390) {
+  const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
+  const context = await browser.newContext({viewport:{width,height:844}});
+  const page = await context.newPage();
+  const state = {rows:[structuredClone(garment)],requests:[],errors:[]};
+  page.on('pageerror', e=>state.errors.push(e.message));
+  page.on('dialog', d=>d.accept());
+  await context.route('**/*', async route=>{
+    const req = route.request(), url = new URL(req.url());
+    if (url.hostname === 'app.test') {
+      if (url.pathname === '/config.js') return route.fulfill({contentType:'text/javascript',body:"export const config={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test-public'}"});
+      const file = url.pathname === '/' ? '/index.html' : url.pathname;
+      try { return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(path.join('dist/cloud',file))}); }
+      catch { return route.fulfill({status:404}); }
+    }
+    if (url.hostname !== 'test.supabase.co') return route.abort();
+    const headers = {'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'};
+    const json = (data,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(data)});
+    if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
+    state.requests.push({path:url.pathname,body:req.postDataJSON()});
+    if(url.pathname==='/auth/v1/token')return json({access_token:'session',refresh_token:'refresh',expires_at:Date.now()/1000+3600});
+    if(url.pathname==='/rest/v1/rpc/require_staff'||url.pathname==='/auth/v1/logout')return json(null);
+    if(url.pathname==='/rest/v1/garments'||url.pathname==='/rest/v1/rpc/public_catalog')return json(state.rows);
+    if(url.pathname==='/storage/v1/object/sign/garment-photos')return json(req.postDataJSON().paths.filter(p=>!p.includes('missing')).map(p=>({path:p,signedURL:'/object/sign/garment-photos/'+p})));
+    if(url.pathname.startsWith('/storage/v1/object/sign/garment-photos/'))return route.fulfill({headers,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500"><rect width="400" height="500" fill="#e8dfd2"/><path d="M155 65 105 100 45 285 90 305 120 220 110 460 290 460 280 220 310 305 355 285 295 100 245 65 220 110 180 110Z" fill="#624739"/><path d="m155 65 45 85 45-85M200 150v310" fill="none" stroke="#392a23" stroke-width="6"/><g fill="#b0977b"><circle cx="215" cy="210" r="5"/><circle cx="215" cy="270" r="5"/><circle cx="215" cy="330" r="5"/></g></svg>'});
+    if(url.pathname==='/functions/v1/personalise')return json({source:'fallback',ranking:[]});
+    return json({error:'fixture route unavailable'},500);
+  });
+  await page.goto('https://app.test');
+  await page.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');
+  await page.evaluate(()=>window.NikkiApp.openAccount());
+  return {browser,page,state,async login(){
+    await page.locator('#email').fill('nikki@example.test');
+    await page.locator('#password').fill('test-password');
+    await page.locator('#login [type=submit], #login button:not([type])').click();
+    await page.waitForFunction(()=>document.getElementById('login').hidden);
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Ingelogd.'));
+  }};
+}
+module.exports={fixture,garment};

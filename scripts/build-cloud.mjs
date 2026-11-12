@@ -1,4 +1,4 @@
-import {readFile,writeFile,mkdir,copyFile,readdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,copyFile,readdir,cp} from 'node:fs/promises';
 import {intake as intakeSource} from './build-connected-demo.mjs';
 import {replaceExactly,replaceRegion,injectAt} from './build-anchors.mjs';
 const root=new URL('../',import.meta.url);
@@ -46,5 +46,6 @@ shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldge
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});
 for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));
+await cp(new URL('app/admin/',root),new URL('dist/cloud/admin/',root),{recursive:true});
 await writeFile(new URL('dist/cloud/views.js',root),'export const shopSource='+JSON.stringify(shop)+';\nexport const intakeSource='+JSON.stringify(intake)+';\n');
 console.log('Built dist/cloud. No credentials or live connections needed.');

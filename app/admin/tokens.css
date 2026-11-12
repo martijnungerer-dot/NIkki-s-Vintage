@@ -1,0 +1,5 @@
+:root {
+  --bg:#FAF6F0; --surface:#F3ECE3; --fg:#2E2420; --muted:#6B5A50; --line:#E3DAD0;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  color-scheme:light;
+}

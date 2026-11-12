@@ -9,7 +9,13 @@
   var T = window.NikkiTaste, SESSION_KEY = 'nikki-taste-order', UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   var shop = null, request = 0;
 
-  function summary() { var now = Date.now(); return T.aggregate.summarize(T.profile.load(localStorage, now), now); }
+  // Privacy settings can make even reading window.localStorage throw. Without a readable profile
+  // there is no taste: the shop keeps Nikki's order instead of failing to load.
+  function summary() {
+    var now = Date.now(), storage;
+    try { storage = window.localStorage; } catch (e) { return null; }
+    return T.aggregate.summarize(T.profile.load(storage, now), now);
+  }
   function hasTaste(s) { return !!s && (Object.keys(s.prefer).length > 0 || Object.keys(s.avoid).length > 0 || !!s.budget_max_minor); }
   function readSession() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } }
   function writeSession(value) { try { if (value) sessionStorage.setItem(SESSION_KEY, JSON.stringify(value)); else sessionStorage.removeItem(SESSION_KEY); } catch (e) {} }

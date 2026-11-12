@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 12 november 2026 — beheer fase 0, stap 2 voorbereid voor review
+- Vanaf main `516df19`, branch `codex/beheer-fase-0-modules`: `app/main.js` opgesplitst in `app/admin/` en optie-B-tokens toegevoegd. Bestaande werking, testselectors en bevestigingen behouden; geen boetiek- of backendwijziging.
+- Build, 51 tests, volledige bestaande browsersuite, projectcheck en diffcheck geslaagd. De baseline had een bestaande timingfout bij de klembordcontrole (`tests/storefront-share.cjs:65`); die is niet gewijzigd of opgelost.
+- Inloggen, collectie en boetiek zijn pixelgelijk voor/na op 390 en 320 px. [Beelden, beperkingen en overdracht](screenshots/beheer-fase-0/README.md). Nog niet gemerged of gepubliceerd; live Supabase/Gemini niet getest.
+
 ### 12 november 2026 — opslag geblokkeerd, plannen voor de beheerkant
 - `app/store-screens/personalise.js` vangt nu een geblokkeerde browseropslag op. Daardoor laadt de collectie, in Nikki's volgorde en zonder AI-aanroep. Daarvoor faalde het laden; dat liet een nieuwe test eerst zien. Alle tests geslaagd.
 - Beheerkant: het ontwerp van "Jouw collectie" is door Martijn vastgesteld in Claude Design. De ontwerpbrief (PR #30, #33 en #34) en het plan in vijf fasen ([BEHEER-PLAN.md](BEHEER-PLAN.md)) staan op main. Er is nog niets van gebouwd.

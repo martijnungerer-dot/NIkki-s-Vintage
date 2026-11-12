@@ -10,6 +10,15 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 12 november 2026 — opslag geblokkeerd, plannen voor de beheerkant
+- `app/store-screens/personalise.js` vangt nu een geblokkeerde browseropslag op. Daardoor laadt de collectie, in Nikki's volgorde en zonder AI-aanroep. Daarvoor faalde het laden; dat liet een nieuwe test eerst zien. Alle tests geslaagd.
+- Beheerkant: het ontwerp van "Jouw collectie" is door Martijn vastgesteld in Claude Design. De ontwerpbrief (PR #30, #33 en #34) en het plan in vijf fasen ([BEHEER-PLAN.md](BEHEER-PLAN.md)) staan op main. Er is nog niets van gebouwd.
+
+### 11 november 2026 — Mijn smaak (onderdeel 4, PR #27)
+- "Mijn smaak" in het Shop-menu: persoonlijke volgorde aan/uit, kenmerken los vergeten, alles wissen, en meer/minder zoals dit in de foto. Leren gebeurt alleen lokaal.
+- Loslaten van meer/minder zet het profiel van vóór de tik terug en past de tussentijdse hartjes en mandacties opnieuw toe. Dat is per constructie exact, na Gemini- en Codex-reviews die elk met een falende test zijn aangetoond.
+- Alle unit- en browsertests geslaagd. Gemerged als `8ca8e4a`. Niet live getest.
+
 ### 11 november 2026 — delen en stuklinks (onderdeel B)
 - Begonnen op main 5d5e74e (PR #26 gemerged). Codex bouwt tegelijk "Mijn smaak" (onderdeel 4); dit werk raakt andere bestanden.
 - Het deelicoon werkt nu. Op een telefoon opent één tik het deelmenu met titel en link, anders wordt de link gekopieerd en staat er twee seconden een vinkje in hetzelfde icoon. De link bevat alleen de stuk-ID (`#stuk=<id>`), nooit een fotolink of token. Wie hem opent, komt op dat stuk uit. Een onbekend, ongeldig of verkocht stuk toont gewoon de winkel, en het `#stuk`-deel verdwijnt na gebruik uit de adresbalk.

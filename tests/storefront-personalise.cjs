@@ -69,4 +69,15 @@ module.exports=async function({context,records,names,personalise}) {
  assert.equal(personalise.calls.length,before);
  await page.evaluate(()=>{localStorage.removeItem('nikki-taste');sessionStorage.clear();});
  await page.close();
+ // 6. Storage blocked in the shop (privacy settings): the catalog still loads in Nikki's order, without errors.
+ const blocked=await context.newPage();
+ await blocked.addInitScript(()=>{if(window.frameElement&&window.frameElement.id==='shop')Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new DOMException('Test blocked storage','SecurityError');}});});
+ const callsBefore=personalise.calls.length;
+ await blocked.goto('https://app.test',{waitUntil:'commit'});
+ await blocked.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');
+ const blockedShop=blocked.frames().find(f=>f.name()==='shop');
+ assert.equal(await blockedShop.evaluate(()=>{try{localStorage;return 'open';}catch(e){return e.name;}}),'SecurityError','storage is really blocked in the shop');
+ assert.equal(await blockedShop.locator('#title').textContent(),names[0],'blocked storage keeps Nikki’s order');
+ assert.equal(personalise.calls.length,callsBefore,'no personalisation call without a readable profile');
+ await blocked.close();
 };

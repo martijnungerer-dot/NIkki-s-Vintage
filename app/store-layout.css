@@ -72,3 +72,22 @@ button:disabled { cursor: default; }
 .cart-step-title { margin: 0; font-size: 22px; }
 .cart-step-text { margin: 0; font-size: 17px; line-height: 1.55; }
 .cart-secondary { background: transparent; }
+
+/* Mijn smaak (app/store-screens/taste.js): option B colours, rows and touch targets. */
+.taste-photo-acts { position: absolute; left: 4px; bottom: 2px; display: flex; color: rgba(255,255,255,.9); }
+.taste-photo-acts .on-photo { position: static; width: 44px; height: 44px; }
+.taste-photo-acts [aria-pressed="true"] { border-radius: 10px; background: rgba(46,36,32,.45); }
+[data-catalog-empty="true"] .taste-photo-acts { visibility: hidden; }
+.taste-window { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-size: 18px; }
+.taste-toggle { width: 100%; min-height: 44px; justify-content: space-between; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; font-size: 18px; }
+.taste-toggle > span:first-child { flex: 1; min-width: 0; }
+.taste-switch { width: 44px; height: 26px; padding: 3px; border: 1px solid var(--chip-line); border-radius: 14px; background: var(--chip); flex: none; }
+.taste-switch::before { content: ''; display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); }
+.taste-toggle[aria-checked="true"] .taste-switch { background: var(--chip-on); }
+.taste-toggle[aria-checked="true"] .taste-switch::before { transform: translateX(18px); background: var(--fg); }
+.taste-note, .taste-empty { font-size: 16px; line-height: 1.5; margin: 16px 0; }
+.taste-section h2 { font-size: 22px; font-weight: 400; margin: 24px 0 0; }
+.taste-section ul { list-style: none; margin: 0; padding: 0; }
+.taste-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.taste-section .ic { min-width: 44px; min-height: 44px; }
+.taste-clear { width: 100%; min-height: 48px; margin-top: 24px; }

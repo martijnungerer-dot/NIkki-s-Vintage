@@ -33,3 +33,9 @@ Lees eerst README.md, docs/ACCESS.md, docs/PLAN.md en relevante onderdelen van d
 
 Controleer vooral dubbelverkoop, herhaald initialiseren van voorraad, lekken van privévelden/secrets, onbetrouwbare materiaalclaims, verborgen veranderingen in meeteenheden en productieacties vanuit previews.
 
+## Ontwerpskills
+
+- Gebruik [Frontend Design](.agents/skills/frontend-design/SKILL.md) voor de visuele richting, [UI UX Pro Max](.agents/skills/ui-ux-pro-max/SKILL.md) als aanvullende mobiele UX-richtlijn en [Web Design Guidelines](.agents/skills/web-design-guidelines/SKILL.md) voor de controle van gebouwde UI. Lees relevante skills bij gebruik; alleen hun naam noemen is geen toepassing.
+- Gebruikerskeuzes en projectafspraken gaan vóór algemene skilladviezen. Een skill autoriseert geen frameworkmigratie, productiewijzigingen of nieuwe functionaliteit. Bestaande gegevens en functies moeten per wijziging expliciet behouden, verplaatst of na akkoord vervangen worden.
+- Zie [skillbeheer](.agents/skills/README.md) voor bronversies, lokale aanpassingen en gebruik. Deze bestanden staan in de repository zodat volgende sessies dezelfde basis hebben.
+

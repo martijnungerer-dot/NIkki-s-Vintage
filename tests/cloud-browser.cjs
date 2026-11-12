@@ -52,6 +52,7 @@ async function context(){
    assert.ok(auth);analyses++;assert.equal(req.postDataJSON().images[0].mimeType,'image/jpeg');
    return json({titel:'AI voorstel',beschrijving:'Controleerbare tekst',kleur:{waarde:'Zwart',zekerheid:'middel',waarom:'Zichtbaar'},fotos:[{nr:1,rol:'Voorkant',bruikbaar:true}]});
   }
+  if(u.pathname==='/functions/v1/personalise')return json({source:'fallback',ranking:[]});
   throw Error('Unexpected route '+u.pathname);
  });return c;
 }

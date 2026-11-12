@@ -40,6 +40,8 @@ shop=patchShop(shop,scripts[0],'<script>\n'+[...taste,await read('app/store-exte
 shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>Nikki’s Boetiek</title>');
 // Martijn, 10 november 2026: "Mijn favorieten" in plaats van "Mijn items".
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn items</button>','<button type="button" role="menuitem" data-act="menu">Mijn favorieten</button>');
+// Fourth Shop destination, using the same checked build anchor as Mijn favorieten.
+shop=patchShop(shop,'<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>','<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>\n    <button type="button" role="menuitem" data-act="menu">Mijn smaak</button>');
 shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});

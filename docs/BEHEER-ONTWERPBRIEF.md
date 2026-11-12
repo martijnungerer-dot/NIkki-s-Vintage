@@ -98,3 +98,46 @@ Deze besluiten gaan vóór de voorgestelde richting hierboven:
 - daarna het invoerscherm.
 
 Lever per stap eerst een mock op 390 en 320 px en desktop, naast de huidige versie, en bouw pas na akkoord.
+
+## Vervolg: inloggen, Nieuw stuk, fotocoach en begeleid meten
+
+Op 12 november 2026 vastgelegd. Martijn deelt het Claude Design-artefact "Beheerkant Nikki's Boetiek" met Codex en werkt het daar samen verder uit. "Jouw collectie" ligt vast; dit zijn de open onderdelen.
+
+### 1. Inloggen en Nieuw stuk afmaken in het ontwerp
+
+- In het artefact staan al eerste versies van **Inloggen**, **Nieuw stuk · foto's** en **Nieuw stuk · controleren**. Werk ze verder uit in dezelfde stijl als "Jouw collectie", tot Martijn ze vaststelt.
+- Houd de bestaande stappen en controles: foto's → (Gemini-)voorstellen → verplichte controle → bevestigen en opslaan.
+- Na de + op "Jouw collectie" opent de camera. De eerste foto komt direct in de fotostap.
+
+### 2. Fotocoach (nieuw scherm of onderdeel van de fotostap)
+
+- Na elke foto geeft Gemini korte, concrete aanwijzingen: "jas niet helemaal in beeld", "te donker", "kraag scheef".
+- Gemini zegt ook welke foto's nog ontbreken: voorkant, achterkant, etiket, details.
+- De bestaande analyse geeft per foto al een rol en "bruikbaar"; bouw daarop voort.
+- Coaching is advies: Nikki kan altijd doorgaan.
+- Geen tekst over de foto. De aanwijzingen staan eronder of ernaast.
+
+### 3. Begeleid meten (nieuw scherm in de controlestap)
+
+- **Standaard: begeleid meten met het meetlint.** Per maat, dus borstbreedte, schouderbreedte, mouwlengte en ruglengte, laat het scherm zien waar en hoe Nikki meet, bijvoorbeeld met een eenvoudige lijntekening van een plat gelegde jas met het meetpunt.
+- Nikki maakt een foto van het meetlint op dat punt. De AI leest het getal af en vult het in als voorstel. Nikki bevestigt met één tik of past het aan.
+- **Proef, alleen na akkoord van Martijn:** een schatting van alle maten in één keer, van een foto op een meetmat met een raster van bekende afmetingen. Laat zo'n schatting duidelijk als schatting zien. Nikki moet elke waarde bevestigen of corrigeren.
+- **Niet doen:** maten schatten van een foto zonder maatstaf.
+- **Harde regels:**
+  - maten in cm;
+  - een ontbrekende maat blijft leeg (`null`);
+  - plat gemeten is geen lichaamsomtrek;
+  - geen enkele door AI voorgestelde maat wordt opgeslagen of gepubliceerd zonder bevestiging van Nikki;
+  - geen verzonnen maat- of pasvormclaims.
+
+### Grenzen en volgorde
+
+- **Eerst ontwerp, dan bouwen.** Lever per scherm een ontwerp in het artefact op 390 px (en 320 px als controle). Bouw pas na vaststelling door Martijn.
+- **De frontend kan zonder backendwijziging** in kleine PR's volgens de werkwijze hierboven.
+- **De AI-onderdelen zijn wél een backendwijziging:** het meetlint aflezen, de fotocoach-aanwijzingen en eventueel de meetmat. Ze vragen een aanpassing van de Supabase-functie `analyse` of een nieuwe functie, en dus een eigen PR met:
+  - een gedocumenteerd contract;
+  - tests met nagebootste antwoorden;
+  - een aparte melding dat live Gemini niet getest is zolang een account ontbreekt.
+
+  Productieschrijfacties en het uitrollen van functies gebeuren alleen met akkoord van Martijn.
+- **Gegevens:** geen privévelden, kosten of tokens in de browser. Foto's blijven alleen voor het analyseren en opslaan van het stuk. EXIF verwijderen en verkleinen blijven.

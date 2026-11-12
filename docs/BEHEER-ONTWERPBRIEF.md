@@ -74,10 +74,18 @@ Lever per onderdeel eerst schermafbeeldingen of een mock op 390 en 320 px en des
 
 ## Besluiten van Martijn (11 november 2026)
 
+**Vastgesteld ontwerp voor "Jouw collectie":** het scherm "Jouw collectie" in het Claude Design-artefact "Beheerkant Nikki's Boetiek" (https://claude.ai/artifact/QJQ9iW4aZkmPKtiqW7nmE6), zoals goedgekeurd door Martijn op 11 november 2026. Het artefact is privé; Martijn deelt het of levert schermafbeeldingen aan. Hoofdpunten:
+
+- een raster van twee kolommen, met als eerste vakje de +-kaart;
+- per stuk een fototegel met daaronder titel, prijs en een statuslabel, plus de iconen potlood (bewerken) en label (markeer verkocht), elk 44 px;
+- filterknoppen Alle, Beschikbaar en Verkocht;
+- een bovenbalk met de merknaam in Newsreader en drie lijniconen: een kledinghanger (naar de boetiek), vernieuwen en account.
+
+
 Deze besluiten gaan vóór de voorgestelde richting hierboven:
 
 1. **"Jouw collectie" wordt een raster** van mooie, aanraakbare tegels. Elke tegel toont de hoofdfoto van het stuk, met titel, prijs en status naast of onder de foto, niet eroverheen.
-   - **Bovenaan staat een knop met een +.** Daar begint het toevoegen van een nieuw stuk.
+   - **Het eerste vakje linksboven in het raster is een +-kaart.** Die heeft dezelfde opbouw als een stuk: een tegel in fotoformaat in de zachte zandkleur `#F3ECE3`, met een lichte ronde +, en daaronder "Nieuw stuk" en in de zachte kleur "Foto maken". Daar begint het toevoegen van een nieuw stuk. (Bijgesteld op 11 november 2026; dit vervangt de eerdere knop rechtsboven.)
    - **De + opent meteen de camera.** Op een telefoon kan dat met een bestandsveld met `accept="image/*"` en `capture="environment"`; de gemaakte foto komt direct in de fotostap van het invoerscherm. Waar geen camera is (desktop), opent dezelfde knop de bestandskeuze. Foto's uit de galerij kiezen moet in het invoerscherm mogelijk blijven.
    - Bewerken en Markeer verkocht blijven bereikbaar vanuit een tegel, met de bestaande bevestigingen.
 2. **De bovenbalk gebruikt iconen, als dat elegant kan.** Maak ze in dezelfde lijnstijl en grootte als de iconen van de boetiek, met `aria-label`. Is een icoon niet ondubbelzinnig, kies dan een rustige oplossing (bijvoorbeeld een korte tooltip of een menu) in plaats van een rij tekstknoppen, en leg die keuze voor in de PR.
@@ -90,3 +98,46 @@ Deze besluiten gaan vóór de voorgestelde richting hierboven:
 - daarna het invoerscherm.
 
 Lever per stap eerst een mock op 390 en 320 px en desktop, naast de huidige versie, en bouw pas na akkoord.
+
+## Vervolg: inloggen, Nieuw stuk, fotocoach en begeleid meten
+
+Op 12 november 2026 vastgelegd. Martijn deelt het Claude Design-artefact "Beheerkant Nikki's Boetiek" met Codex en werkt het daar samen verder uit. "Jouw collectie" ligt vast; dit zijn de open onderdelen.
+
+### 1. Inloggen en Nieuw stuk afmaken in het ontwerp
+
+- In het artefact staan al eerste versies van **Inloggen**, **Nieuw stuk · foto's** en **Nieuw stuk · controleren**. Werk ze verder uit in dezelfde stijl als "Jouw collectie", tot Martijn ze vaststelt.
+- Houd de bestaande stappen en controles: foto's → (Gemini-)voorstellen → verplichte controle → bevestigen en opslaan.
+- Na de + op "Jouw collectie" opent de camera. De eerste foto komt direct in de fotostap.
+
+### 2. Fotocoach (nieuw scherm of onderdeel van de fotostap)
+
+- Na elke foto geeft Gemini korte, concrete aanwijzingen: "jas niet helemaal in beeld", "te donker", "kraag scheef".
+- Gemini zegt ook welke foto's nog ontbreken: voorkant, achterkant, etiket, details.
+- De bestaande analyse geeft per foto al een rol en "bruikbaar"; bouw daarop voort.
+- Coaching is advies: Nikki kan altijd doorgaan.
+- Geen tekst over de foto. De aanwijzingen staan eronder of ernaast.
+
+### 3. Begeleid meten (nieuw scherm in de controlestap)
+
+- **Standaard: begeleid meten met het meetlint.** Per maat, dus borstbreedte, schouderbreedte, mouwlengte en ruglengte, laat het scherm zien waar en hoe Nikki meet, bijvoorbeeld met een eenvoudige lijntekening van een plat gelegde jas met het meetpunt.
+- Nikki maakt een foto van het meetlint op dat punt. De AI leest het getal af en vult het in als voorstel. Nikki bevestigt met één tik of past het aan.
+- **Proef, alleen na akkoord van Martijn:** een schatting van alle maten in één keer, van een foto op een meetmat met een raster van bekende afmetingen. Laat zo'n schatting duidelijk als schatting zien. Nikki moet elke waarde bevestigen of corrigeren.
+- **Niet doen:** maten schatten van een foto zonder maatstaf.
+- **Harde regels:**
+  - maten in cm;
+  - een ontbrekende maat blijft leeg (`null`);
+  - plat gemeten is geen lichaamsomtrek;
+  - geen enkele door AI voorgestelde maat wordt opgeslagen of gepubliceerd zonder bevestiging van Nikki;
+  - geen verzonnen maat- of pasvormclaims.
+
+### Grenzen en volgorde
+
+- **Eerst ontwerp, dan bouwen.** Lever per scherm een ontwerp in het artefact op 390 px (en 320 px als controle). Bouw pas na vaststelling door Martijn.
+- **De frontend kan zonder backendwijziging** in kleine PR's volgens de werkwijze hierboven.
+- **De AI-onderdelen zijn wél een backendwijziging:** het meetlint aflezen, de fotocoach-aanwijzingen en eventueel de meetmat. Ze vragen een aanpassing van de Supabase-functie `analyse` of een nieuwe functie, en dus een eigen PR met:
+  - een gedocumenteerd contract;
+  - tests met nagebootste antwoorden;
+  - een aparte melding dat live Gemini niet getest is zolang een account ontbreekt.
+
+  Productieschrijfacties en het uitrollen van functies gebeuren alleen met akkoord van Martijn.
+- **Gegevens:** geen privévelden, kosten of tokens in de browser. Foto's blijven alleen voor het analyseren en opslaan van het stuk. EXIF verwijderen en verkleinen blijven.

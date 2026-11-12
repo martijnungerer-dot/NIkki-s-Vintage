@@ -73,6 +73,13 @@ test('review MED-2: one IPv6 /64 counts as one visitor',async()=>{
   assert.notEqual(await id('203.0.113.9'),await id('203.0.113.10'),'IPv4 stays per address');
 });
 
+test('PERSONALISE_MODEL overrides the shared photo-analysis model; an invalid name falls back',async()=>{
+  const s=setup({settings:{PERSONALISE_MODEL:'gemini-lite-test'}});await s.request();
+  assert.ok(ai(s.calls)[0].url.includes('/models/gemini-lite-test:generateContent'));
+  const bad=setup({settings:{PERSONALISE_MODEL:'../evil'}});const r=await bad.request();
+  assert.equal((await r.json()).source,'fallback');assert.equal(ai(bad.calls).length,0);
+});
+
 test('model failure, bad JSON or missing Gemini settings fall back to the local order',async()=>{
   for(const options of [{geminiOK:false},{gemini:'not json'},{settings:{GEMINI_API_KEY:''}},{settings:{GEMINI_MODEL:'evil/model'}}]){
     const s=setup(options);const r=await s.request();

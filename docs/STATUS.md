@@ -19,6 +19,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Loslaten van meer/minder zet het profiel van vóór de tik terug en past de tussentijdse hartjes en mandacties opnieuw toe. Dat is per constructie exact, na Gemini- en Codex-reviews die elk met een falende test zijn aangetoond.
 - Alle unit- en browsertests geslaagd. Gemerged als `8ca8e4a`. Niet live getest.
 
+### 11 november 2026 — livegang voorbereid
+- [LIVEGANG.md](LIVEGANG.md): stappen voor Gemini-sleutel, budget, modelkeuze met kostenschatting (~$0,005 per aanvraag met een Flash-Lite-model; slechtste geval de daglimiet), secrets, uitrol, controle en terugdraaien.
+- `npm run check:live` (`scripts/check-live.mjs`) controleert na uitrol: website, catalogus (alleen gepubliceerd, alleen publieke velden), herkomstcontrole, lege aanvraag gratis, en of Gemini echt rangschikt zonder meer terug te geven dan volgorde en fotorol. Getest tegen de echte serverfunctie met nagebootste diensten (4 tests).
+- Serverfunctie: optioneel `PERSONALISE_MODEL`, zodat rangschikken een goedkoper model kan gebruiken dan fotoanalyse.
+- Live niet gecontroleerd: deze agentomgeving mag de website en Supabase niet bereiken. Martijn draait de controle na uitrol op zijn eigen computer.
+
 ### 11 november 2026 — delen en stuklinks (onderdeel B)
 - Begonnen op main 5d5e74e (PR #26 gemerged). Codex bouwt tegelijk "Mijn smaak" (onderdeel 4); dit werk raakt andere bestanden.
 - Het deelicoon werkt nu. Op een telefoon opent één tik het deelmenu met titel en link, anders wordt de link gekopieerd en staat er twee seconden een vinkje in hetzelfde icoon. De link bevat alleen de stuk-ID (`#stuk=<id>`), nooit een fotolink of token. Wie hem opent, komt op dat stuk uit. Een onbekend, ongeldig of verkocht stuk toont gewoon de winkel, en het `#stuk`-deel verdwijnt na gebruik uit de adresbalk.

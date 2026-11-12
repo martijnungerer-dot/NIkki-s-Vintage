@@ -39,7 +39,8 @@ export function createHandler({env,fetcher,now=()=>new Date()}){return async req
   if(req.method!=='POST')return reply(405,{error:'METHOD'});
   let key;try{key=JSON.parse(env('SUPABASE_SECRET_KEYS')||'{}').default;}catch{}
   key ||= env('SUPABASE_SERVICE_ROLE_KEY');
-  const url=env('SUPABASE_URL'),geminiKey=env('GEMINI_API_KEY'),model=env('GEMINI_MODEL');
+  // PERSONALISE_MODEL: optioneel een goedkoper model voor rangschikken dan voor fotoanalyse (docs/LIVEGANG.md).
+  const url=env('SUPABASE_URL'),geminiKey=env('GEMINI_API_KEY'),model=env('PERSONALISE_MODEL')||env('GEMINI_MODEL');
   if(!url||!key)return reply(503,{error:'NOT_CONFIGURED'});
   let body,summary;
   try{body=await readBody(req);summary=sanitizeSummary(body?.profile);}catch{return reply(400,{error:'BAD_INPUT'});}

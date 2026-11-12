@@ -101,7 +101,7 @@ npx supabase db push
 npx supabase functions deploy personalise
 ```
 
-De functie is openbaar (bezoekers loggen niet in), daarom staat de platform-JWT-controle uit in `supabase/config.toml`. Ze controleert zelf de herkomst (`ALLOWED_ORIGINS`), een body van hoogstens 8 kB, en een daglimiet: 20 aanvragen per bezoeker per UTC-dag en 2000 voor het hele project. Een aanvraag zonder voorkeuren telt niet mee. Een bezoeker wordt alleen herkend aan een dagelijks wisselende, versleutelde afgeleide van het IP-adres (bij IPv6 per /64-blok); het IP-adres zelf wordt niet bewaard. De browser stuurt alleen de compacte smaaksamenvatting; de server leest zelf de gepubliceerde stukken. Zonder Gemini-sleutel of bij een storing geeft de functie de lokale volgorde terug, zodat de winkel blijft werken.
+De functie is openbaar (bezoekers loggen niet in), daarom staat de platform-JWT-controle uit in `supabase/config.toml`. Ze controleert zelf de herkomst (`ALLOWED_ORIGINS`), een body van hoogstens 8 kB, en een daglimiet: 20 aanvragen per bezoeker per UTC-dag en 2000 voor het hele project. Een aanvraag zonder voorkeuren telt niet mee. Een bezoeker wordt alleen herkend aan een dagelijks wisselende, versleutelde afgeleide van het IP-adres (bij IPv6 per /64-blok); het IP-adres zelf wordt niet bewaard. De browser stuurt alleen de compacte smaaksamenvatting; de server leest zelf de gepubliceerde stukken. Zonder Gemini-sleutel of bij een storing geeft de functie de lokale volgorde terug, zodat de winkel blijft werken. Met `PERSONALISE_MODEL` kun je een goedkoper model kiezen dan voor fotoanalyse. Volledige stappen, kosten en controle met `npm run check:live`: [LIVEGANG.md](LIVEGANG.md).
 
 ## 7. Online proefomgeving
 

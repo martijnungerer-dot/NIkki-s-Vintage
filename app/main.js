@@ -7,13 +7,13 @@ import {createAdmin} from './admin/index.js';
 const api=new Api(config);
 const $=id=>document.getElementById(id);
 document.body.dataset.screen='shop';
-const admin=createAdmin({api,$,show});
 function show(screen){
   if(screen==='intake'&&!admin.state.staff)screen='manage';
   document.body.dataset.screen=screen;
   for(const name of ['shop','intake','manage'])$(name).hidden=name!==screen;
   document.querySelectorAll('button[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
 }
+const admin=createAdmin({api,$,show});
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
 window.NikkiApp={
   openAccount:()=>show('manage'),

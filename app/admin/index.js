@@ -23,7 +23,7 @@ export function createAdmin({api,$,show}) {
   async function start(){
     syncStoreStyle($);
     if(!api.configured()){
-      say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.','error');$('login').querySelector('button').disabled=true;$('reload').disabled=true;
+      say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.','error');$('login').querySelector('[type=submit]').disabled=true;$('reload').disabled=true;
     }else await action(async()=>{
       await restoreSession(context);
       controls();await collection.refresh();say(loaded('Collectie geladen.'));

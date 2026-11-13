@@ -10,6 +10,17 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 13 november 2026 — fase 0 gecorrigeerd voor eigen PR
+- Beide Claude Code-reviews op PR #36 gelezen. `function show` vóór `createAdmin` gezet; de configuratiecontrole selecteert `[type=submit]` en de bestaande knop heeft dat type expliciet gekregen.
+- Vanaf opnieuw opgehaalde main `516df19`; bestaande fase-0-geschiedenis behouden. Build en 51 tests slagen. De browsersuite slaagt voor cloud-UI en layout, maar faalt op de bestaande klembordrace in de deelt-test; die test slaagt bij afzonderlijke herhaling. Project- en diffcontrole slagen.
+- Nieuwe voor/na-beelden op 390 en 320 px: vijf pixelgelijk, collectie 320 px met 70 vrijwel gelijke randpixels (maximaal 2/255). [Bewijs en beperkingen](screenshots/beheer-fase-0/README.md), waaronder fallbackfont en geblokkeerde toegang tot Claude Design.
+- PR #36 wacht op Martijns merge van fase 0. De ontwerp-, login- en documentatiecorrecties voor die PR zijn nog niet uitgevoerd.
+
+### 12 november 2026 — beheer fase 0, stap 2 voorbereid voor review
+- Vanaf main `516df19`, branch `codex/beheer-fase-0-modules`: `app/main.js` opgesplitst in `app/admin/` en optie-B-tokens toegevoegd. Bestaande werking, testselectors en bevestigingen behouden; geen boetiek- of backendwijziging.
+- Build, 51 tests, volledige bestaande browsersuite, projectcheck en diffcheck geslaagd. De baseline had een bestaande timingfout bij de klembordcontrole (`tests/storefront-share.cjs:65`); die is niet gewijzigd of opgelost.
+- Inloggen, collectie en boetiek zijn pixelgelijk voor/na op 390 en 320 px. [Beelden, beperkingen en overdracht](screenshots/beheer-fase-0/README.md). Nog niet gemerged of gepubliceerd; live Supabase/Gemini niet getest.
+
 ### 12 november 2026 — opslag geblokkeerd, plannen voor de beheerkant
 - `app/store-screens/personalise.js` vangt nu een geblokkeerde browseropslag op. Daardoor laadt de collectie, in Nikki's volgorde en zonder AI-aanroep. Daarvoor faalde het laden; dat liet een nieuwe test eerst zien. Alle tests geslaagd.
 - Beheerkant: het ontwerp van "Jouw collectie" is door Martijn vastgesteld in Claude Design. De ontwerpbrief (PR #30, #33 en #34) en het plan in vijf fasen ([BEHEER-PLAN.md](BEHEER-PLAN.md)) staan op main. Er is nog niets van gebouwd.

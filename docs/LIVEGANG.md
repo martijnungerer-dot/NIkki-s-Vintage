@@ -45,9 +45,11 @@ Op je eigen computer, in de projectmap:
 ```sh
 npx supabase login
 npx supabase link --project-ref naxjrskfdedwvoeltigs
-npx supabase db push
+npx supabase db push --remote
 npx supabase functions deploy personalise
 ```
+
+Zonder `--remote` richt de huidige Supabase-CLI zich op een lokale database en stopt met `ECONNREFUSED 127.0.0.1:54322`. In Windows PowerShell gebruik je `npx.cmd` in plaats van `npx`, omdat het script achter `npx` standaard geblokkeerd is.
 
 `db push` voegt de tabel voor de daglimiet toe (`personalise_usage`). Bestaande stukken en rechten veranderen niet.
 
@@ -67,7 +69,7 @@ Het script gebruikt alleen de publieke gegevens uit `app/config.js` en kost éé
 | Niet-publieke velden zichtbaar / niet-gepubliceerde stukken leesbaar | **Stop.** Maak de site niet bekend en laat een agent de rechten nakijken. |
 | Smaakfunctie niet gevonden | `npx supabase functions deploy personalise` |
 | Staat het adres niet toe | Zet het exacte website-adres in `ALLOWED_ORIGINS`. |
-| Geeft geen volgorde, of mist serversleutel | `npx supabase db push`; kijk de logs na onder Edge Functions → personalise. |
+| Geeft geen volgorde, of mist serversleutel | `npx supabase db push --remote`; kijk de logs na onder Edge Functions → personalise. |
 | Werkt, maar zonder Gemini (terugval) | Controleer `GEMINI_API_KEY` en de modelnaam; die moet beginnen met `gemini-`. |
 | Daglimiet bereikt | Wacht tot de volgende dag (UTC). |
 

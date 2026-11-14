@@ -31,7 +31,7 @@ Test: `tests/review-kit.cjs` (Playwright).
 
 - Zichtbaar alleen voor ingelogde beheerders (`app/admin/review.js`).
 - Opmerkingen gaan naar de tabel `public.review_notes` via de serverfunctie `add_review_note` (`supabase/migrations/20261114120000_review_notes.sql`). Alleen beheerders kunnen schrijven en lezen; niemand kan opmerkingen wijzigen of wissen via de app. Hoogstens 500 per tester per dag.
-- Uitrollen: `npx supabase db push` (voegt alleen deze tabel en functie toe).
+- Uitrollen: `npx supabase db push --remote` (voegt alleen deze tabel en functie toe). Uitgerold op 14 november 2026.
 - Lezen, in de SQL-editor van Supabase:
 
 ```sql

@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — review gebruiksvriendelijkheid verwerkt
+- Gemini-review nagekeken en gemeten; besluiten per bevinding in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md). Boetiek en beheer voldoen gemeten aan 44 px / 16 px / 4,5:1.
+- Invoerscherm: alle bediening minstens 44 px met 8 px ruimte op de fotokaarten, alle tekst minstens 16 px, statusregels niet meer afgekapt. De melding wat nog ontbreekt staat boven de opslagknop (donkerrood). "Volgend stuk" is secundair en vraagt bevestiging bij niet-opgeslagen invoer. Browsertest controleert de maten in het invoerscherm.
+
 ### 15 november 2026 — na verversen terug op hetzelfde scherm
 - Na verversen kwam je altijd in de boetiek terecht. De app onthoudt nu per tabblad (`sessionStorage`) of je in het beheer zat en keert daarheen terug. Vanuit Nieuw stuk kom je op Jouw collectie terecht, omdat een niet-opgeslagen stuk niet bewaard blijft. Een gedeelde link of resetlink in het adres gaat voor. Browsertest toegevoegd.
 

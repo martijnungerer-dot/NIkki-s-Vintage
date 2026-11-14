@@ -188,9 +188,24 @@ async function realNewsreader(p){
       assert.match(await intake.locator('#publish').getAttribute('class'),/incomplete/);
       await intake.locator('#publish').click();
       await intake.locator('#review-err').filter({hasText:'Nog niet af: Bijzonderheden'}).waitFor();
+      // The message sits right above the save button, inside the sticky bar.
+      assert.equal(await intake.locator('.bar #review-err + #publish').count(),1);
+      // Project rules in the intake too: every control at least 44 px, all text at least 16 px.
+      const shortfalls=await intake.locator('body').evaluate(()=>{const out=[];
+        for(const el of document.querySelectorAll('button,input,select,label.picker')){const r=el.getBoundingClientRect();if(el.offsetParent===null||!r.width)continue;if(r.width<44||r.height<44)out.push('size '+(el.getAttribute('aria-label')||el.textContent.trim()).slice(0,30)+' '+Math.round(r.width)+'x'+Math.round(r.height));}
+        for(const el of document.querySelectorAll('body *')){if(el.closest('svg')||el.offsetParent===null)continue;if([...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&parseFloat(getComputedStyle(el).fontSize)<16)out.push('text '+el.textContent.trim().slice(0,30));}
+        return out;});
+      assert.deepEqual(shortfalls,[]);
       assert.equal(await intake.locator('[data-step=bijz] .stephead').getAttribute('aria-expanded'),'true');
       assert.equal(f.state.saved,undefined,'nothing saved while incomplete');
       await p.screenshot({path:'test-results/admin/opslaan-ontbreekt-390.png'});
+      // "Volgend stuk" is secondary and asks before throwing away unsaved input.
+      assert.equal(await intake.locator('#new-draft').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
+      const frame=p.frames().find(x=>x.name()==='intake');
+      await frame.evaluate(()=>{window.__confirm=window.confirm;window.confirm=m=>{window.__asked=m;return false;};});
+      await intake.locator('#new-draft').click();
+      assert.match(await frame.evaluate(()=>window.__asked),/nog niet opgeslagen/);
+      await frame.evaluate(()=>{window.confirm=window.__confirm;});assert.equal(await intake.locator('#step-review').isVisible(),true,'cancel keeps the input');
       await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
       assert.doesNotMatch(await intake.locator('#publish').getAttribute('class'),/incomplete/);
       await intake.locator('#publish').click();

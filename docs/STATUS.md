@@ -10,6 +10,13 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 14 november 2026 — PR #36 op de gemergede fase 0
+- `main` opgehaald op `b636a36` (PR #37). Zeven conflicten in PR #36 via een gewone merge opgelost; één set beheermodules en alle API/UI-koppelingen in `app/admin/index.js`. `main.js` blijft gelijk aan fase 0.
+- Beide Claude Code-reviews verwerkt: action-bewaking, lokale authenticatiefouten, wachtwoord wissen/verbergen vóór staff/controls/refresh, zichtbare fouten na authenticatie, juiste submitselector, wisselende toegankelijke naam zonder aria-pressed en geen focus op de alert.
+- Eén rij in de bovenbalk, Newsreader voor alle beheertekst, witte kaart op `#9B3A2F`, proefmelding onder de kaart, geen statusregel boven inloggen en opgeschoonde CSS. [Beelden op 390/320 px](screenshots/beheer-login/README.md), met werkelijk gerenderde Newsreader; de rechtstreekse Claude Design-vergelijking blijft geblokkeerd door de netwerkproxy.
+- [PR-reeks](BEHEER-PR-REEKS.md) aangevuld met snel bewerken, vijf seconden ongedaan maken, concepten bewaren, uploadwachtrij en reeksen fotograferen. Geen backend- of winkelwijziging.
+- `npm run build`, `npm test` (51/51), de volledige `npm run test:browser`, `npm run check` en `git diff --check` slagen lokaal. Nieuwe beheertests slagen voor login/logout, 401/403, vernieuwingsfout na login en herstel, dubbele submit, oude fotolinks tijdens login, ontbrekende configuratie, toetsenbord en mobiele layout. De bestaande deelt-test wacht nu op de asynchrone kopieerbevestiging vóór klembordcontrole. Live Supabase/Gemini en telefooncamera niet getest.
+
 ### 13 november 2026 — fase 0 gecorrigeerd voor eigen PR
 - Beide Claude Code-reviews op PR #36 gelezen. `function show` vóór `createAdmin` gezet; de configuratiecontrole selecteert `[type=submit]` en de bestaande knop heeft dat type expliciet gekregen.
 - Vanaf opnieuw opgehaalde main `516df19`; bestaande fase-0-geschiedenis behouden. Build en 51 tests slagen. De browsersuite slaagt voor cloud-UI en layout, maar faalt op de bestaande klembordrace in de deelt-test; die test slaagt bij afzonderlijke herhaling. Project- en diffcontrole slagen.

@@ -1,44 +1,47 @@
 @import url('./admin/tokens.css');
-
-:root {
-  color-scheme: light;
-}
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
-.app-header { flex: none; border-bottom: 1px solid var(--line); }
-.app-toolbar { max-width: 1120px; margin: auto; padding: 14px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.app-toolbar strong { font-family: Georgia, serif; font-size: 1.2rem; font-weight: 400; }
-nav, .app-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.app-actions { margin-left: auto; }
-button { font: inherit; min-height: 44px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); cursor: pointer; }
+body { margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--serif); }
+.app-header { flex: none; border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top); }
+.app-toolbar { max-width: 720px; margin: auto; padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app-toolbar strong { font-size: clamp(20px, 6vw, 24px); font-weight: 400; white-space: nowrap; }
+.app-toolbar nav, #manage-actions { display: flex; gap: 4px; }
+button { font: inherit; min-height: 44px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); cursor: pointer; touch-action: manipulation; }
 button:hover { background: var(--surface); }
-button[aria-pressed=true], #login button { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button[aria-pressed=true] { background: var(--surface); }
 button:disabled { opacity: .55; cursor: not-allowed; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
-.app-messages { flex: none; width: 100%; max-width: 1120px; margin: auto; padding: 10px 16px 12px; display: flex; flex-wrap: wrap; gap: 4px 24px; align-items: baseline; }
-#status { margin: 0; font-size: .82rem; overflow-wrap: anywhere; }
-.notice { margin: 0; font-size: .75rem; color: var(--muted); }
+button[data-icon] { flex: none; padding: 10px; width: 44px; height: 44px; border: 0; }
+button[data-icon] svg { display: block; width: 24px; height: 24px; }
+.app-toolbar button[aria-pressed=true] { box-shadow: inset 0 -2px var(--muted); }
+.app-messages { flex: none; width: 100%; max-width: 720px; margin: 0 auto; padding: 10px 16px; }
+.app-messages:has(#status[hidden]), .app-messages:has(#status:empty) { display: none; }
+#status { margin: 0; overflow-wrap: anywhere; }
 body > main { flex: 1; min-height: 0; }
 iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--bg); }
-/* The store owns its complete option-B screen. Account opens the existing management shell. */
+/* The store owns its complete option-B screen. Account opens the management shell. */
 body[data-screen="shop"] > .app-header,
-body[data-screen="shop"] > .app-messages { display: none; }
-#manage { height: 100%; overflow-y: auto; padding: 32px max(16px, calc((100% - 1088px) / 2)) 48px; }
-h1 { margin: 0 0 24px; font: 400 clamp(1.8rem, 3vw, 2.5rem)/1.2 Georgia, serif; }
-#login { max-width: 480px; padding: 28px; border: 1px solid var(--line); border-radius: 12px; }
+body[data-screen="shop"] > .app-messages,
+body:has(#manage[data-auth="guest"]) > .app-messages { display: none; }
+#manage { height: 100%; overflow-y: auto; padding: 28px max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.manage-content { max-width: 680px; margin: auto; }
+.manage-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
+h1 { margin: 0; font-size: clamp(28px, 7vw, 36px); line-height: 1.2; font-weight: 400; text-wrap: balance; }
+#manage[data-auth="guest"] { background: var(--admin-login-bg); padding-top: 40px; }
+#manage[data-auth="guest"] .manage-content { max-width: 420px; padding: 28px 24px; border-radius: 12px; background: var(--admin-card); }
 #login p { margin-top: 0; color: var(--muted); }
-label { display: block; margin: 16px 0; font-size: .9rem; }
-input { display: block; width: 100%; margin-top: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--fg); font: inherit; }
+#login label { display: block; margin: 24px 0 6px; }
+input { display: block; width: 100%; min-height: 52px; padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--admin-card); color: var(--fg); font: inherit; }
+#login [type=submit] { width: 100%; min-height: 52px; margin-top: 16px; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.password-field { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 5px; }
+.password-field input { min-width: 0; border: 0; }
+#password-toggle { background: transparent; color: var(--fg); border: 0; padding-inline: 12px; }
+#password-toggle:hover { background: var(--surface); }
+#login-error:empty { display: none; }
+#login #login-error { color: var(--admin-login-bg); margin: 16px 0 0; }
+#login .login-note { margin: 20px 0 0; text-align: center; }
+#trial-note { margin: 24px 0 0; text-align: center; color: white; }
 ul { list-style: none; padding: 0; }
+#manage[data-auth="guest"] #items { margin: 0; }
 li { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px 0; border-bottom: 1px solid var(--line); align-items: center; }
 li span { flex: 1; min-width: 180px; overflow-wrap: anywhere; }
-@media (max-width: 600px) {
-  .app-toolbar { padding: 10px 16px; gap: 8px 12px; }
-  .app-toolbar strong { flex: 1 0 100%; font-size: 1.1rem; }
-  button { padding-inline: 12px; font-size: .82rem; }
-  .app-actions { margin-left: 0; }
-  .app-messages { padding: 8px 16px; gap: 4px; }
-  #manage { padding: 24px 16px; }
-  #login { padding: 20px; }
-}

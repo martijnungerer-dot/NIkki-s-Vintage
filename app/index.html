@@ -1,9 +1,19 @@
 <!doctype html>
-<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Nikki’s Boetiek</title><link rel="stylesheet" href="style.css"></head>
-<body data-screen="shop"><header class="app-header"><div class="app-toolbar"><strong>Nikki’s Boetiek</strong><nav aria-label="Schermen"><button data-screen="shop" aria-pressed="true">Boetiek</button><button data-screen="manage" aria-pressed="false">Beheer</button><button data-screen="intake" id="new" hidden aria-pressed="false">Nieuw stuk</button></nav><div class="app-actions"><button id="reload">Collectie vernieuwen</button><button id="logout" hidden>Uitloggen</button></div></div></header>
-<div class="app-messages"><p id="status" role="status">Collectie laden…</p><p class="notice">Proefboetiek · bekijken en uitproberen, nog niet afrekenen.</p></div>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#FAF6F0"><title>Nikki’s Boetiek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap"><link rel="stylesheet" href="style.css"></head>
+<body data-screen="shop"><header class="app-header"><div class="app-toolbar"><strong>Nikki’s Boetiek</strong><nav aria-label="Schermen">
+<button data-screen="shop" aria-label="Boetiek" title="Boetiek" data-icon="hanger" aria-pressed="true"></button>
+<button id="reload" aria-label="Collectie vernieuwen" title="Collectie vernieuwen" data-icon="refresh"></button>
+<button data-screen="manage" aria-label="Jouw collectie" title="Jouw collectie" data-icon="account" aria-pressed="false"></button></nav></div></header>
+<div class="app-messages"><p id="status" role="status">Collectie laden…</p></div>
 <main><iframe id="shop" title="Boetiek"></iframe><iframe id="intake" title="Kledingstuk invoeren" hidden></iframe>
-<section id="manage" hidden><h1>Jouw collectie</h1>
-<form id="login"><p>Log in om kledingstukken toe te voegen en aan te passen.</p><label>E-mailadres<input id="email" type="email" autocomplete="username" required></label><label>Wachtwoord<input id="password" type="password" autocomplete="current-password" required></label><button type="submit">Inloggen</button></form>
-<p id="empty" hidden>Nog geen stukken toegevoegd. Begin bij Nieuw stuk.</p><ul id="items"></ul></section></main>
+<section id="manage" data-auth="guest" hidden><div class="manage-content"><div class="manage-heading"><h1 id="manage-title">Welkom terug</h1><div id="manage-actions" hidden>
+<button data-screen="intake" id="new" hidden aria-label="Nieuw stuk" title="Nieuw stuk" data-icon="camera" aria-pressed="false"></button>
+<button id="logout" hidden aria-label="Uitloggen" title="Uitloggen" data-icon="logout"></button></div></div>
+<form id="login"><p>Log in voor jouw collectie.</p><label for="email">E-mailadres</label><input id="email" name="email" type="email" autocomplete="username" spellcheck="false" required>
+<label for="password">Wachtwoord</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" aria-describedby="login-error" required><button type="button" id="password-toggle" aria-label="Wachtwoord tonen">Tonen</button></div>
+<p id="login-error" role="alert"></p><button type="submit">Inloggen</button><p class="login-note">Alleen voor Nikki en de beheerders.</p></form>
+<p id="empty" hidden>Nog geen stukken toegevoegd. Begin bij Nieuw stuk.</p><ul id="items"></ul></div>
+<p id="trial-note">Proefboetiek · nog niet afrekenen</p></section></main>
 <script type="module" src="main.js"></script></body></html>

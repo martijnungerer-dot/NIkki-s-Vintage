@@ -1,19 +1,24 @@
+import {icon} from './icons.js';
+
 export function updateControls({api,$,state}) {
-    $('login').hidden=state.staff;$('new').hidden=!state.staff;$('logout').hidden=!api.session;
+  $('manage-title').textContent=state.staff?'Jouw collectie':'Welkom terug';
+  $('manage').dataset.auth=state.staff?'staff':'guest';
+  $('login').hidden=state.staff;$('trial-note').hidden=state.staff;
+  $('manage-actions').hidden=!state.staff;
+  $('new').hidden=!state.staff;$('logout').hidden=!api.session;
+  for(const id of ['new','reload','logout'])$(id).disabled=state.busy||!api.configured();
 }
 
-export function bindHeader({$,show,action,refresh,say,loaded}) {
+export function setupHeader({$,show,reload,logout}) {
+  document.querySelectorAll('[data-icon]').forEach(el=>el.prepend(icon(el.dataset.icon)));
   document.querySelectorAll('button[data-screen]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.screen)));
-  $('reload').addEventListener('click',()=>action(async()=>{await refresh();say(loaded('Collectie vernieuwd.'));}));
+  $('reload').addEventListener('click',reload);
+  $('logout').addEventListener('click',logout);
 }
 
 export function syncStoreStyle($){
-  // The management shell uses the palette of the chosen storefront.
   const shopRoot=$('shop').contentDocument.documentElement;
-  const syncStyle=()=>{
-    const style=$('shop').contentWindow.getComputedStyle(shopRoot);
-    for(const name of ['bg','fg','muted','line'])document.documentElement.style.setProperty('--'+name,style.getPropertyValue('--'+name));
-    document.documentElement.style.colorScheme=style.colorScheme;
-  };
-  syncStyle();
+  const style=$('shop').contentWindow.getComputedStyle(shopRoot);
+  for(const name of ['bg','fg','muted','line'])document.documentElement.style.setProperty('--'+name,style.getPropertyValue('--'+name));
+  document.documentElement.style.colorScheme=style.colorScheme;
 }

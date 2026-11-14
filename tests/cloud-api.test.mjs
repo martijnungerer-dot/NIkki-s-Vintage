@@ -38,3 +38,33 @@ test('photos are signed in one batch and unreachable ones are left out',async()=
   assert.equal(urls.get(ok),'https://test.supabase.co/storage/v1/object/sign/garment-photos/'+ok+'?token=t');
   assert.equal((await a.imageUrls([])).size,0);assert.equal(calls.length,1);
 });
+
+test('a reset link request goes to Supabase with the redirect, and a rate limit gets its own message',async()=>{
+  const {a,calls}=api({'/auth/v1/recover':()=>Response.json({})});
+  await a.recover('nikki@example.test','https://shop.example/');
+  assert.deepEqual(JSON.parse(calls[0].opts.body),{email:'nikki@example.test'});
+  assert.equal(calls[0].opts.headers.Authorization,undefined,'no session is sent');
+  const {a:b}=api({'/auth/v1/recover':()=>Response.json({code:'over_email_send_rate_limit'},{status:429})});
+  await assert.rejects(b.recover('nikki@example.test','https://shop.example/'),e=>/net al een link/.test(e.message));
+});
+
+test('a new password is set with the link session, which is stored only after the staff check',async()=>{
+  const link={access_token:'recovery-token',refresh_token:'r',expires_at:Date.now()/1000+3600};
+  const store=memory();const calls=[];
+  const routes={'/auth/v1/user':()=>Response.json({id:'u'}),'/rest/v1/rpc/require_staff':()=>Response.json(null)};
+  const a=new Api(config,async(url,opts={})=>{const path=new URL(url).pathname;calls.push({path,opts,stored:store.getItem(a.sessionKey)});return routes[path](opts);},store);
+  await a.setPassword(link,'nieuw-wachtwoord-1');
+  assert.equal(calls[0].opts.method,'PUT');assert.equal(calls[0].opts.headers.Authorization,'Bearer recovery-token');
+  assert.equal(calls.every(c=>c.stored===null),true,'not stored while checking');
+  assert.equal(JSON.parse(store.getItem(a.sessionKey)).access_token,'recovery-token');
+
+  const denied=memory();const b=new Api(config,async(url)=>{const path=new URL(url).pathname;
+    return path==='/rest/v1/rpc/require_staff'?Response.json({},{status:403}):path==='/auth/v1/logout'?new Response(null,{status:204}):Response.json({id:'u'});},denied);
+  await assert.rejects(b.setPassword(link,'nieuw-wachtwoord-1'),e=>e.status===403);
+  assert.equal(b.session,null);assert.equal(denied.getItem(b.sessionKey),null);
+
+  const c=new Api(config,async()=>Response.json({code:'bad_jwt'},{status:401}),memory());
+  await assert.rejects(c.setPassword(link,'nieuw-wachtwoord-1'),e=>e.expired&&/verlopen/.test(e.message));
+  const d=new Api(config,async()=>Response.json({code:'same_password'},{status:422}),memory());
+  await assert.rejects(d.setPassword(link,'nieuw-wachtwoord-1'),e=>!e.expired&&/ander wachtwoord/.test(e.message));
+});

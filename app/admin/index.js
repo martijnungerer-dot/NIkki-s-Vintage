@@ -1,5 +1,5 @@
 import {createCollection} from './collection.js';
-import {setupLogin,restoreSession} from './login.js';
+import {setupLogin,restoreSession,takeRecovery,MIN_PASSWORD} from './login.js';
 import {setupHeader,updateControls,syncStoreStyle} from './header.js';
 
 export function createAdmin({api,$,show}) {
@@ -35,11 +35,39 @@ export function createAdmin({api,$,show}) {
     login.resetPassword();
     state.staff=true;controls();
     await collection.refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
+  }),
+  forgot:()=>action(async()=>{
+    const email=$('email').value.trim();
+    if(!$('email').checkValidity()||!email){login.error('Vul je e-mailadres in.');return;}
+    try{await api.recover(email,location.origin+location.pathname);}
+    catch(error){login.error(error.message);return;}
+    login.done('Als dit adres bij ons bekend is, staat er zo een e-mail klaar. Open de link op dit toestel om een nieuw wachtwoord te kiezen.');
+  }),
+  reset:()=>action(async()=>{
+    const password=$('password').value;
+    if(password.length<MIN_PASSWORD){login.error('Kies een wachtwoord van minstens '+MIN_PASSWORD+' tekens.');return;}
+    try{await api.setPassword(recovery,password);}
+    catch(error){
+      login.error(error.message);
+      if(error.expired){recovery=null;login.setMode('forgot');login.error(error.message);}
+      return;
+    }
+    recovery=null;login.resetPassword();login.setMode('login');
+    state.staff=true;controls();
+    await collection.refresh();say('Je nieuwe wachtwoord is opgeslagen. Je bent ingelogd.');
   })});
+  let recovery=null;
   async function start(){
+    const link=api.configured()?takeRecovery():null;
     syncStoreStyle($);controls();
     if(!api.configured()){
       say('De boetiek wordt ingericht. Inloggen en opslaan zijn nog niet aangesloten.','error');
+    }else if(link){
+      // Opened from a reset e-mail: ask for the new password before anything else.
+      show('manage');
+      if(link.session){recovery=link.session;login.setMode('reset');$('password').focus();}
+      else{login.setMode('forgot');login.error(link.error);}
+      await action(async()=>{await collection.refresh();say(loaded('Collectie geladen.'));});
     }else await action(async()=>{
       await restoreSession(context);
       controls();await collection.refresh();say(loaded('Collectie geladen.'));

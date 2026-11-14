@@ -111,5 +111,70 @@ async function realNewsreader(p){
       assert.equal(await f.page.locator('.app-messages').isVisible(),false);assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, busy renewal guard and missing configuration.');
+  {
+    // Wachtwoord vergeten: same form, e-mail only, neutral answer, redirect back to this page.
+    const f=await fixture(390),p=f.page;try {
+      await p.locator('#forgot').click();
+      assert.equal(await p.locator('#login').getAttribute('data-mode'),'forgot');
+      assert.equal(await p.locator('#password').isVisible(),false);
+      assert.equal(await p.locator('#login [type=submit]').textContent(),'Stuur de link');
+      await p.locator('#login [type=submit]').click();
+      assert.equal(await p.locator('#email').evaluate(e=>e.matches(':invalid')),true,'the browser asks for the address first');
+      assert.equal(f.state.requests.some(r=>r.path==='/auth/v1/recover'),false,'no request without an address');
+      await p.locator('#email').fill('nikki@example.test');await p.locator('#login [type=submit]').click();
+      await p.locator('#login-done').filter({hasText:'Als dit adres bij ons bekend is'}).waitFor();
+      assert.equal(await p.locator('#login-error').textContent(),'');
+      assert.deepEqual(f.state.requests.find(r=>r.path==='/auth/v1/recover').body,{email:'nikki@example.test'});
+      assert.equal(f.state.recoverRedirect,'https://app.test/');
+      for(const el of await p.locator('#forgot, #login [type=submit]').evaluateAll(es=>es.map(e=>({h:e.getBoundingClientRect().height,size:parseFloat(getComputedStyle(e).fontSize)}))))
+        assert.ok(el.h>=44&&el.size>=16,JSON.stringify(el));
+      await p.screenshot({path:'test-results/admin/forgot-390.png'});
+      f.state.limitRecover=true;await p.locator('#login [type=submit]').click();
+      await p.locator('#login-error').filter({hasText:'net al een link gevraagd'}).waitFor();
+      await p.locator('#forgot').click();
+      assert.equal(await p.locator('#login').getAttribute('data-mode'),'login');
+      assert.equal(await p.locator('#password').isVisible(),true);
+      assert.equal(await p.locator('#login-error').textContent(),'');assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  for(const width of [390,320]){
+    // Opened from the reset e-mail: the token leaves the address bar at once and is never stored
+    // until the new password is saved and the account is confirmed as staff.
+    const hash='#access_token=recovery-token&refresh_token=recovery-refresh&expires_in=3600&token_type=bearer&type=recovery';
+    const f=await fixture(width,{hash,weakPassword:true}),p=f.page;try {
+      assert.equal(await p.evaluate(()=>location.hash),'');
+      assert.equal(await p.locator('#manage').isVisible(),true);
+      assert.equal(await p.locator('#login').getAttribute('data-mode'),'reset');
+      assert.equal(await p.locator('#email').isVisible(),false);
+      assert.equal(await p.locator('#forgot').isVisible(),false);
+      assert.equal(await p.locator('#password-label').textContent(),'Nieuw wachtwoord');
+      assert.equal(await p.locator('#password').getAttribute('autocomplete'),'new-password');
+      assert.equal(await p.evaluate(()=>JSON.stringify(sessionStorage)).then(s=>s.includes('recovery-token')),false,'recovery token not stored before saving');
+      await p.screenshot({path:`test-results/admin/reset-${width}.png`});
+      await p.locator('#password').fill('kort');await p.locator('#login [type=submit]').click();
+      await p.locator('#login-error').filter({hasText:'minstens 8 tekens'}).waitFor();
+      assert.equal(f.state.requests.some(r=>r.path==='/auth/v1/user'),false,'short password is not sent');
+      await p.locator('#password').fill('nieuw-wachtwoord-1');await p.locator('#login [type=submit]').click();
+      await p.locator('#login-error').filter({hasText:'sterker wachtwoord'}).waitFor();
+      assert.equal(await p.locator('#login').getAttribute('data-mode'),'reset','a weak password can be retried with the same link');
+      await p.locator('#login [type=submit]').click();
+      await p.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Je nieuwe wachtwoord is opgeslagen'));
+      assert.equal(f.state.userAuth,'Bearer recovery-token');
+      assert.equal(await p.locator('#login').isVisible(),false);
+      assert.equal(await p.locator('#password').inputValue(),'');
+      assert.equal(await p.evaluate(()=>JSON.stringify(sessionStorage)).then(s=>s.includes('recovery-token')),true,'stored as a normal login after saving');
+      await p.locator('#items li').waitFor();assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  for(const [name,options] of [['expired',{hash:'#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired'}],
+    ['rejected',{hash:'#access_token=old&refresh_token=old-refresh&expires_in=3600&type=recovery',expiredLink:true}]]){
+    const f=await fixture(320,options),p=f.page;try {
+      assert.equal(await p.evaluate(()=>location.hash),'');
+      if(name==='rejected'){await p.locator('#password').fill('nieuw-wachtwoord-1');await p.locator('#login [type=submit]').click();}
+      await p.locator('#login-error').filter({hasText:'verlopen of al gebruikt'}).waitFor();
+      assert.equal(await p.locator('#login').getAttribute('data-mode'),'forgot',name+': offers a new link');
+      assert.equal(await p.evaluate(()=>sessionStorage.length),0);assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

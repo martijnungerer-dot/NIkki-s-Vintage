@@ -42,6 +42,11 @@ input { display: block; width: 100%; min-height: 52px; padding: 12px; border: 1p
 #login-error:empty { display: none; }
 #login #login-error { color: var(--admin-error); margin: 16px 0 0; }
 #login .login-note { margin: 20px 0 0; text-align: center; }
+#login-done:empty { display: none; }
+#login #login-done { color: var(--fg); margin: 16px 0 0; }
+#forgot { display: block; width: 100%; min-height: 44px; margin-top: 8px; background: transparent; border: 0; color: var(--muted); font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+#forgot:hover { color: var(--fg); background: transparent; }
+#login[data-mode="forgot"] .login-password, #login[data-mode="reset"] .login-email { display: none; }
 #trial-note { margin: 24px 0 0; text-align: center; color: var(--muted); }
 ul { list-style: none; padding: 0; }
 #manage[data-auth="guest"] #items { margin: 0; }

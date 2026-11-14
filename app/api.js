@@ -53,6 +53,31 @@ export class Api {
       this.keep(null); throw e;
     }
   }
+  // Asks Supabase to e-mail a reset link. The answer never says whether the address exists.
+  async recover(email, redirectTo) {
+    try { await this.request('/auth/v1/recover?redirect_to=' + encodeURIComponent(redirectTo), {method:'POST', auth:false, body:{email}}); }
+    catch(e) {
+      if (e.status === 429) e.message = 'Er is net al een link gevraagd. Kijk in je mail of probeer het over een uur opnieuw.';
+      throw e;
+    }
+  }
+  // Sets a new password with the short-lived session from the reset link. That session stays
+  // in memory only; it is stored like a normal login once the password is saved and the
+  // account has been confirmed as staff.
+  async setPassword(session, password) {
+    this.session = session;
+    try {
+      await this.request('/auth/v1/user', {method:'PUT', body:{password}});
+    } catch(e) {
+      this.session = null;
+      if (e.status === 401 || e.status === 403) { e.expired = true; e.message = 'Deze link is verlopen of al gebruikt. Vraag hieronder een nieuwe aan.'; }
+      else if (e.status === 422) e.message = e.code === 'same_password' ? 'Kies een ander wachtwoord dan je vorige.' : 'Kies een sterker wachtwoord van minstens 8 tekens.';
+      throw e;
+    }
+    try { await this.request('/rest/v1/rpc/require_staff', {method:'POST', body:{}}); }
+    catch(e) { try { await this.request('/auth/v1/logout', {method:'POST'}); } catch {} this.session = null; throw e; }
+    this.keep(this.session);
+  }
   async logout() {
     try {if(this.session) await this.request('/auth/v1/logout', {method:'POST'});} finally {this.keep(null);}
   }

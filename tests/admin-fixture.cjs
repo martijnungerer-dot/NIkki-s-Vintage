@@ -39,6 +39,13 @@ async function fixture(width = 390, options = {}) {
       if(state.failLogin)return json({error:'Invalid login credentials'},401);
       return json({access_token:'session',refresh_token:'refresh',expires_at:Date.now()/1000+3600});
     }
+    if(url.pathname==='/auth/v1/recover'){state.recoverRedirect=url.searchParams.get('redirect_to');return state.limitRecover?json({code:'over_email_send_rate_limit'},429):json({});}
+    if(url.pathname==='/auth/v1/user'&&req.method()==='PUT'){
+      state.userAuth=req.headers().authorization;
+      if(state.expiredLink)return json({code:'bad_jwt'},401);
+      if(state.weakPassword){state.weakPassword=false;return json({code:'weak_password'},422);}
+      return json({id:'user'});
+    }
     if(url.pathname==='/rest/v1/rpc/require_staff'&&state.denyStaff)return json({},403);
     if(url.pathname==='/rest/v1/garments'&&state.failList)return json({},503);
     if(url.pathname==='/rest/v1/rpc/require_staff'||url.pathname==='/auth/v1/logout')return json(null);
@@ -48,7 +55,7 @@ async function fixture(width = 390, options = {}) {
     if(url.pathname==='/functions/v1/personalise')return json({source:'fallback',ranking:[]});
     return json({error:'fixture route unavailable'},500);
   });
-  await page.goto('https://app.test');
+  await page.goto('https://app.test/'+(options.hash||''));
   await page.waitForFunction(unconfigured=>document.getElementById('status').textContent.includes(unconfigured?'niet aangesloten':'Collectie geladen.'),Boolean(options.unconfigured));
   await page.evaluate(()=>window.NikkiApp.openAccount());
   await page.evaluate(async()=>{await document.fonts.load('16px Newsreader');await document.fonts.ready;});

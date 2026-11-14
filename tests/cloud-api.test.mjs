@@ -68,3 +68,35 @@ test('a new password is set with the link session, which is stored only after th
   const d=new Api(config,async()=>Response.json({code:'same_password'},{status:422}),memory());
   await assert.rejects(d.setPassword(link,'nieuw-wachtwoord-1'),e=>!e.expired&&/ander wachtwoord/.test(e.message));
 });
+
+test('saving splits photos: internal ones only reach the staff-only function, never the public data',async()=>{
+  const id='33333333-3333-4333-8333-333333333333',pub=id+'/'+'a'.repeat(64)+'.jpg',intern=id+'/'+'b'.repeat(64)+'.jpg';
+  const product={key:id,title:'Jas',description:'',priceMinor:100,material:'Wol',species:null,model:'Cape',colour:'Zwart',length:'Kort',fit:'',era:'',details:[],measurements:[50,null,null,80],furClass:'Nee',
+    images:[{path:pub,role:'Voorkant',main:true,internal:false},{path:intern,role:'Label',main:false,internal:true}]};
+  const {a,calls}=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({id,version:1})});a.keep(session);
+  await a.save(product,0,{ai:{titel:'Jas'}});
+  const body=JSON.parse(calls[0].opts.body);
+  assert.deepEqual(body.p_data.images,[{path:pub,role:'Voorkant',main:true}]);
+  assert.deepEqual(body.p_internal,[{path:intern,role:'Label'}]);
+  assert.deepEqual(body.p_ai,{titel:'Jas'});
+  assert.doesNotMatch(JSON.stringify(body.p_data),/bbbb|titel/);
+
+  // Before the migration: without internal photos fall back to the old save; with them, stop.
+  const old=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>Response.json({id,version:1})});old.a.keep(session);
+  await old.a.save({...product,images:[product.images[0]]},0);
+  assert.deepEqual(old.calls.map(c=>c.path),['/rest/v1/rpc/save_garment_with_private','/rest/v1/rpc/save_garment']);
+  const blocked=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>assert.fail('must not publish')});blocked.a.keep(session);
+  await assert.rejects(blocked.a.save(product,0),/database is nog niet bijgewerkt/);
+});
+
+test('internal photos are loaded with signed links, and a missing one stops editing',async()=>{
+  const id='33333333-3333-4333-8333-333333333333',intern=id+'/'+'b'.repeat(64)+'.jpg';
+  const routes={'/rest/v1/garment_private':()=>Response.json([{internal_images:[{path:intern,role:'Label'}]}]),
+    '/storage/v1/object/sign/garment-photos':()=>Response.json([{path:intern,signedURL:'/object/sign/x'}])};
+  const {a}=api(routes);a.keep(session);
+  assert.deepEqual(await a.internalPhotos(id),[{path:intern,role:'Label',src:'https://test.supabase.co/storage/v1/object/sign/x'}]);
+  const {a:b}=api({...routes,'/storage/v1/object/sign/garment-photos':()=>Response.json([])});b.keep(session);
+  await assert.rejects(b.internalPhotos(id),/Niet alle foto/);
+  const {a:c}=api({'/rest/v1/garment_private':()=>Response.json({code:'42P01'},{status:404})});c.keep(session);
+  assert.deepEqual(await c.internalPhotos(id),[],'before the migration there are none');
+});

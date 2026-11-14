@@ -10,6 +10,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — 8 foto's, foto's alleen voor controle en het Gemini-voorstel bewaard
+- `gemini-3.5-flash-lite` als `PERSONALISE_MODEL` (door Martijn in Supabase gezet): `npm run check:live` geeft alle regels OK, met als laatste "Gemini rangschikt: 1 stukken, 1 met een gekozen foto".
+- Invoer: maximaal 8 foto's; Gemini bekijkt ze allemaal. Per foto een aan/uit-knop "Alleen voor controle". Zo'n foto kan geen hoofdfoto zijn.
+- Nieuwe migratie `20261115090000_internal_photos.sql`: tabel `garment_private` (alleen beheerders) met de interne foto's en het laatste Gemini-voorstel, en de serverfunctie `save_garment_with_private`, die de bestaande `save_garment` aanroept. Interne foto's staan nooit in `garments.data.images`; daardoor zijn ze via de catalogus en de opslagregel `garment_photo_read` niet zichtbaar voor bezoekers. Een bewerking zonder nieuwe analyse houdt het eerdere voorstel. Zolang de migratie niet is uitgevoerd, slaat de website zonder interne foto's op de oude manier op en weigert ze stukken met interne foto's.
+- Fotoanalyse (`analyse`): 8 foto's, vast antwoordschema, `temperature` 1, kort nadenken (met herhaling zonder als het model dat niet kent), 90 seconden en een logregel `analyse failed: …` met de reden. Optioneel apart model via `ANALYSE_MODEL`.
+- Bovenbalk beheer: Martijn kiest variant A (naam op twee regels, drie iconen); vastgelegd in de ontwerpbrief.
+- Nieuwe tests voor database (PGlite: rechten, geen interne paden of foto's voor bezoekers, ook na omzetten van een openbare foto), API (splitsen, terugval vóór de migratie, laden bij bewerken), fotoanalyse (8 foto's, schema, herhaling, logregels) en de browserroute (8 foto's, intern markeren, opslaan, bezoeker ziet één foto, bewerken behoudt alles). Live Supabase/Gemini niet getest.
+
 ### 14 november 2026 — smaakfunctie live, Gemini nog in terugval
 - Martijn heeft `personalise` uitgerold, `ALLOWED_ORIGINS` gezet en de Gemini-sleutel onder de juiste naam `GEMINI_API_KEY` gezet. `npm run check:live` op zijn computer: website, catalogus, publieke velden, afscherming en herkomstcontrole OK; de smaakfunctie valt terug zonder Gemini.
 - De secret `GEMINI_MODEL` komt (via de SHA-256-controlecode, zonder de waarde te tonen) overeen met `gemini-3.8-flash`, het model dat Google AI Studio voor dit project toont. Het gebruiksoverzicht van AI Studio telt één aanvraag, dus Gemini werd bereikt.

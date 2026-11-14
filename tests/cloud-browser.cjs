@@ -2,7 +2,7 @@ const {chromium}=require('playwright');const fs=require('node:fs');const path=re
 (async()=>{
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
 try{
-const db=new Map(),photos=new Map();let failSave=true,analyses=0,signBatches=0;
+const db=new Map(),photos=new Map(),privateRows=new Map();let failSave=true,analyses=0,signBatches=0,lastAnalysisCount=0;
 // Hold the sale response so the test cannot accidentally pass before saving finishes.
 let releaseSoldResponse;
 const soldResponse=new Promise(resolve=>{releaseSoldResponse=resolve;});
@@ -39,9 +39,11 @@ async function context(){
    assert.ok(auth);const name=u.pathname.split('/garment-photos/')[1];
    if(photos.has(name))return json({error:'Duplicate'},409);photos.set(name,req.postDataBuffer());return json({Key:name});
   }
-  if(u.pathname==='/rest/v1/rpc/save_garment'){
+  if(u.pathname==='/rest/v1/garment_private'){assert.ok(auth);const key=u.searchParams.get('id').replace('eq.','');return json(privateRows.has(key)?[{internal_images:privateRows.get(key).internal}]:[]);}
+  if(u.pathname==='/rest/v1/rpc/save_garment_with_private'){
    assert.ok(auth);if(failSave){failSave=false;return json({error:'temporary'},503);}
-   const b=req.postDataJSON();const old=db.get(b.p_id);assert.equal(b.p_version,old?.version||0);
+   const b=req.postDataJSON();const before=privateRows.get(b.p_id);
+   privateRows.set(b.p_id,{internal:b.p_internal,ai:b.p_ai??before?.ai??null});const old=db.get(b.p_id);assert.equal(b.p_version,old?.version||0);
    const row={id:b.p_id,display_id:old?.display_id||db.size+1,data:b.p_data,version:(old?.version||0)+1,status:old?.status||'published'};db.set(row.id,row);return json(row);
   }
   if(u.pathname==='/rest/v1/rpc/mark_garment_sold'){
@@ -49,7 +51,7 @@ async function context(){
    const b=req.postDataJSON();const row=db.get(b.p_id);row.status='sold';row.version++;return json(row);
   }
   if(u.pathname==='/functions/v1/analyse'){
-   assert.ok(auth);analyses++;assert.equal(req.postDataJSON().images[0].mimeType,'image/jpeg');
+   assert.ok(auth);analyses++;lastAnalysisCount=req.postDataJSON().images.length;assert.equal(req.postDataJSON().images[0].mimeType,'image/jpeg');
    return json({titel:'AI voorstel',beschrijving:'Controleerbare tekst',kleur:{waarde:'Zwart',zekerheid:'middel',waarom:'Zichtbaar'},fotos:[{nr:1,rol:'Voorkant',bruikbaar:true}]});
   }
   if(u.pathname==='/functions/v1/personalise')return json({source:'fallback',ranking:[]});
@@ -177,6 +179,47 @@ const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.l
 assert.deepEqual(await p.evaluate(()=>window.photoWork),{decode:0,read:0});
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
 await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),0);
-assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, option B, local cart/likes, edit sold without resurrection. Remote services mocked.');
+// Photos "Alleen voor controle": Gemini sees them, the boutique never does, and editing keeps them.
+{
+ await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
+ const n=intake();await n.evaluate(()=>document.getElementById('again').click());
+ const colours=['#111','#933','#393','#339','#990','#909','#099','#777','#abc'];
+ const files=[];for(const [i,colour] of colours.entries())files.push({name:'foto-'+i+'.png',mimeType:'image/png',buffer:Buffer.from(await p.evaluate(c=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=c;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},colour),'base64')});
+ await n.locator('#gallery').setInputFiles(files);
+ assert.equal(await n.locator('#thumbs .thumb').count(),8,'at most eight photos');
+ assert.match(await n.locator('#photo-count').innerText(),/meer kan niet/);
+ for(let i=7;i>=2;i--){await n.locator(`[data-del="${i}"]`).dispatchEvent("click");assert.equal(await n.locator("#thumbs .thumb").count(),i);}
+ await n.locator('#analyse').click();await n.locator('#step-review').waitFor({state:'visible'});assert.equal(lastAnalysisCount,2,'Gemini sees every photo');
+ await n.locator('#intern-1').click();assert.equal(await n.locator('#intern-1').getAttribute('aria-pressed'),'true');
+ assert.equal(await n.locator('[data-main="1"]').count(),0,'an internal photo cannot be the main photo');
+ assert.equal(await n.locator('#intern-1').evaluate(e=>document.activeElement===e),true);
+ await n.locator('[data-allok]').click();await n.locator('[data-open=wat]').click();
+ for(const [k,v]of [['bont','Nee'],['materiaal','Wol'],['model','Cape'],['lengte','Kort']])await n.locator(`[data-k="${k}"][data-v="${v}"]`).click();
+ await n.locator('[data-open=maten]').click();await n.locator('#m-chest').fill('50');await n.locator('#m-length').fill('80');
+ await n.locator('[data-open=bijz]').click();await n.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+ await n.locator('[data-open=tekst]').click();await n.locator('#t-titel').fill('Cape met controlefoto');await n.locator('#t-prijs').fill('90');
+ await n.locator('[data-open=fotos]').click();await n.locator('[data-main="0"]').click();
+ await n.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
+ const cape=[...db.values()].find(r=>r.data.title==='Cape met controlefoto'),hidden=privateRows.get(cape.id);
+ assert.equal(cape.data.images.length,1);assert.equal(cape.data.images[0].main,true);
+ assert.equal(hidden.internal.length,1);assert.deepEqual(Object.keys(hidden.internal[0]).sort(),['path','role']);
+ assert.notEqual(hidden.internal[0].path,cape.data.images[0].path);assert.equal(photos.has(hidden.internal[0].path),true,'internal photo uploaded');
+ assert.equal(hidden.ai.titel,'AI voorstel','the Gemini proposal is kept next to the piece');
+ assert.doesNotMatch(JSON.stringify(cape.data),new RegExp(hidden.internal[0].path.split('/')[1]),'internal path never in public data');
+ await reloadCatalog(v);const vs=v.frames().find(f=>f.name()==='shop');
+ assert.equal(await vs.locator('#title').textContent(),'Cape met controlefoto');assert.equal(await vs.locator('#track .slide').count(),1,'visitor sees only the boutique photo');
+ // Editing loads the internal photo again, marked, and saving without a new analysis keeps it and the proposal.
+ await p.evaluate(()=>window.NikkiApp.openAccount());
+ await p.locator('#items li').filter({hasText:'Cape met controlefoto'}).getByRole('button',{name:'Bewerken'}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
+ const e=intake();await e.locator('.ph').first().waitFor();
+ assert.equal(await e.locator('.ph').count(),2);assert.equal(await e.locator('.ph.intern').count(),1);assert.equal(await e.locator('#intern-1').getAttribute('aria-pressed'),'true');assert.equal(await e.locator('#intern-0').getAttribute('aria-pressed'),'false');
+ fs.mkdirSync('test-results/intake',{recursive:true});
+ for(const width of [390,320]){await p.setViewportSize({width,height:844});await e.locator('.ph-grid').scrollIntoViewIfNeeded();await p.screenshot({path:`test-results/intake/fotos-${width}.png`});}
+ await p.setViewportSize({width:390,height:844});
+ await e.locator('[data-open=tekst]').click();await e.locator('#t-prijs').fill('95');await e.locator('#publish').click();
+ await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
+ assert.equal(privateRows.get(cape.id).internal.length,1);assert.equal(privateRows.get(cape.id).ai.titel,'AI voorstel');
+}
+assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, option B, local cart/likes, edit sold without resurrection, eight photos with internal ones hidden from visitors. Remote services mocked.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

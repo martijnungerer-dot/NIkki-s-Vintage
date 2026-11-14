@@ -21,7 +21,7 @@ async function realNewsreader(p){
     try {
       assert.equal(await p.locator('#manage-title').textContent(),'Welkom terug');
       assert.equal(await p.locator('.app-messages').isVisible(),false);
-      assert.equal(await p.locator('#manage').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(155, 58, 47)');
+      assert.equal(await p.locator('#manage').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)','login area stays cream, no red (Martijn, 14 Nov 2026)');
       assert.equal(await p.locator('.manage-content').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)');
       assert.equal(await p.locator('#trial-note').textContent(),'Proefboetiek · nog niet afrekenen');
       assert.ok((await p.locator('#trial-note').boundingBox()).y>=(await p.locator('.manage-content').boundingBox()).y+(await p.locator('.manage-content').boundingBox()).height);

@@ -4,6 +4,7 @@ Status: **brainstorm**. Niets in dit document is een bouwopdracht of definitief 
 
 ## Vastgesteld door Martijn
 
+- **Naam (14 november 2026): Guaranteed Secondhand Fur (afgekort GSF).** In de website staat overal de volledige naam; GSF alleen op het app-icoon. De website heet niet meer Nikki's Boetiek. Bij elk stuk gaat een broche mee (ontwerp in uitvoering, wel vaststaand; beeld: [brand/gsf-broche.webp](brand/gsf-broche.webp), met de tekst "Reworn. Respected. Responsible."). Het app-icoon is een abstracte versie: een ovaal met een kantrand en GSF in het midden ([brand/gsf-app-icoon.svg](brand/gsf-app-icoon.svg)).
 - Assortiment: vooral vintage bontjassen, leren jassen, shearling en vergelijkbare outerwear.
 - Inkoop: Nikki koopt zelf in op markten en via connecties en houdt eigen voorraad. Geen marketplace van andere verkopers, voor nu.
 - Focus: de website en de verkoopervaring. De meet-/verstelbare paspop staat **on hold** (zie onderaan).

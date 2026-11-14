@@ -54,7 +54,7 @@ export function createHandler({env,fetcher,now=()=>new Date(),log=message=>conso
   const wantRationale=false;
   // Zonder voorkeuren of budget valt er niets te rangschikken: geen quotum, catalogus of AI (review MED-2).
   if(!Object.keys(summary.prefer).length&&!Object.keys(summary.avoid).length&&!summary.budget_max_minor)return reply(200,{source:'none',ranking:[]});
-  const call=(u,opts={})=>fetcher(u,{...opts,signal:AbortSignal.timeout(20000)});
+  const call=(u,opts={},ms=20000)=>fetcher(u,{...opts,signal:AbortSignal.timeout(ms)});
   const serverHeaders={apikey:key,...(key.startsWith('eyJ')?{Authorization:'Bearer '+key}:{}),'Content-Type':'application/json'};
   try{
     const quota=await call(url+'/rest/v1/rpc/consume_personalise',{method:'POST',headers:serverHeaders,
@@ -73,9 +73,12 @@ export function createHandler({env,fetcher,now=()=>new Date(),log=message=>conso
     if(!model||!/^gemini-[a-z0-9.-]+$/.test(model))return fallback('BAD_MODEL_NAME');
     let raw;
     try{
-      const result=await call('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
-        method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':geminiKey},body:JSON.stringify(geminiBody(request.payload))});
-      const answer=await result.json().catch(()=>null);
+      // Gemini krijgt 40 seconden; de winkel toont intussen al de eigen volgorde.
+      const ask=briefThinking=>call('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
+        method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':geminiKey},body:JSON.stringify(geminiBody(request.payload,{briefThinking}))},40000);
+      let result=await ask(true),answer=await result.json().catch(()=>null);
+      // Een ouder model kent de denkinstelling niet en weigert met 400; dat kost geen tokens. Vraag dan opnieuw zonder.
+      if(result.status===400&&/thinking/i.test(String(answer?.error?.message||''))){result=await ask(false);answer=await result.json().catch(()=>null);}
       if(!result.ok)return fallback('HTTP_'+result.status+(typeof answer?.error?.status==='string'?' '+answer.error.status.replace(/[^A-Z_]/g,'').slice(0,40):''));
       const candidate=answer?.candidates?.[0];
       const text=candidate?.content?.parts?.filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');

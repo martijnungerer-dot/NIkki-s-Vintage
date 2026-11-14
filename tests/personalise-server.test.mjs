@@ -117,3 +117,17 @@ test('JSON wrapped in a markdown fence is still read as the ranking',async()=>{
   const out=await (await s.request()).json();
   assert.equal(out.source,'ai');assert.deepEqual(s.logs,[]);
 });
+
+test('Gemini is asked to think briefly; a model that rejects that setting is asked again without it',async()=>{
+  const s=setup();await s.request();
+  const body=JSON.parse(ai(s.calls)[0].opts.body);
+  assert.deepEqual(body.generationConfig.thinkingConfig,{thinkingLevel:'low'});
+  let n=0;
+  const old=setup({geminiReply:()=>++n===1?Response.json({error:{code:400,status:'INVALID_ARGUMENT',message:'Thinking level is not supported for this model.'}},{status:400})
+    :Response.json({candidates:[{content:{parts:[{text:JSON.stringify({ranking:[{id:'c1'}]})}]}}]})});
+  const out=await (await old.request()).json();
+  assert.equal(out.source,'ai');assert.equal(ai(old.calls).length,2);
+  assert.equal(JSON.parse(ai(old.calls)[1].opts.body).generationConfig.thinkingConfig,undefined);
+  const other=setup({geminiReply:()=>Response.json({error:{code:400,status:'INVALID_ARGUMENT',message:'Bad request'}},{status:400})});
+  assert.equal((await (await other.request()).json()).source,'fallback');assert.equal(ai(other.calls).length,1,'no retry for other errors');
+});

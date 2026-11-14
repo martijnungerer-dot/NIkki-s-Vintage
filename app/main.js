@@ -4,6 +4,7 @@ import {prepareImage} from './images.js';
 import {transferPhotos} from './photo-transfer.js';
 import {shopSource,intakeSource} from './views.js';
 import {createAdmin} from './admin/index.js';
+import {startReview} from './admin/review.js'; // temporary review mode, see app/review-kit/README.md
 const api=new Api(config);
 const $=id=>document.getElementById(id);
 document.body.dataset.screen='shop';
@@ -35,3 +36,4 @@ window.NikkiApp={
 };
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
 await admin.start();
+startReview({api,admin});

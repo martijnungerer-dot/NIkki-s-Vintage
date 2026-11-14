@@ -50,5 +50,8 @@ await mkdir(new URL('dist/cloud/admin/',root),{recursive:true});
 for(const file of await readdir(new URL('app/admin/',root))) {
   if(/\.(js|css)$/.test(file))await copyFile(new URL('app/admin/'+file,root),new URL('dist/cloud/admin/'+file,root));
 }
+// Temporary review mode (app/review-kit/README.md); remove with the folder when the app is finished.
+await mkdir(new URL('dist/cloud/review-kit/',root),{recursive:true});
+await copyFile(new URL('app/review-kit/review-kit.js',root),new URL('dist/cloud/review-kit/review-kit.js',root));
 await writeFile(new URL('dist/cloud/views.js',root),'export const shopSource='+JSON.stringify(shop)+';\nexport const intakeSource='+JSON.stringify(intake)+';\n');
 console.log('Built dist/cloud. No credentials or live connections needed.');

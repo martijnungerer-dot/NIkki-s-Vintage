@@ -49,7 +49,7 @@ npx supabase db push --remote
 npx supabase functions deploy personalise
 ```
 
-Zonder `--remote` richt de huidige Supabase-CLI zich op een lokale database en stopt met `ECONNREFUSED 127.0.0.1:54322`. In Windows PowerShell gebruik je `npx.cmd` in plaats van `npx`, omdat het script achter `npx` standaard geblokkeerd is.
+Zonder `--remote` richt de huidige Supabase-CLI zich op een lokale database en stopt met `ECONNREFUSED 127.0.0.1:54322`. In Windows PowerShell gebruik je `npx.cmd` en `npm.cmd` in plaats van `npx` en `npm`, omdat de scripts daarachter standaard geblokkeerd zijn.
 
 `db push` voegt de tabel voor de daglimiet toe (`personalise_usage`). Bestaande stukken en rechten veranderen niet.
 

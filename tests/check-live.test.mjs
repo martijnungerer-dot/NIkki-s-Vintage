@@ -19,7 +19,7 @@ function world({deployed=true,gemini=true,leak=false,origins=site,hiddenVisible=
   const handler=createHandler({env:k=>({ALLOWED_ORIGINS:origins,SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-only',GEMINI_API_KEY:gemini?'k':'',GEMINI_MODEL:'gemini-test'})[k],fetcher:supabase});
   return async(url,opts={})=>{
     const u=new URL(url);
-    if(u.origin===site)return new Response('<script type="module">import "./views.js"</script>');
+    if(u.origin===site)return new Response('<script type="module" src="main.js"></script>');
     if(u.pathname==='/functions/v1/personalise')return deployed?handler(new Request(url,{method:opts.method,headers:opts.headers,body:opts.body})):new Response('',{status:404});
     return supabase(url,opts);
   };

@@ -51,7 +51,16 @@ insert into public.staff (user_id)
 values ('PLAK-HIER-DE-GEBRUIKERS-UUID');
 ```
 
-Die UUID is een identifier, geen wachtwoord. Alleen een account in Authentication aanmaken geeft nog geen beheerrechten. De whitelist `staff` doet dat. Nikki kan vervolgens met e-mail en wachtwoord inloggen. Wachtwoordherstel en accountuitnodigingen via de app volgen later; voor de pilot beheert Martijn de accounts in Supabase.
+Die UUID is een identifier, geen wachtwoord. Alleen een account in Authentication aanmaken geeft nog geen beheerrechten. De whitelist `staff` doet dat. Nikki kan vervolgens met e-mail en wachtwoord inloggen. Accountuitnodigingen via de app volgen later; voor de pilot beheert Martijn de accounts in Supabase.
+
+### Wachtwoord vergeten
+
+Het inlogscherm heeft de knop **Wachtwoord vergeten?**. Supabase mailt dan een link die terugkomt op de website, waar Nikki een nieuw wachtwoord kiest (minstens 8 tekens). Eenmalig instellen in [Authentication → URL Configuration](https://supabase.com/dashboard/project/naxjrskfdedwvoeltigs/auth/url-configuration):
+
+1. **Site URL**: `https://nikki-s-vintage.martijnungerer.workers.dev/`
+2. Onder **Redirect URLs** dezelfde link toevoegen.
+
+Zonder die instelling stuurt Supabase de link naar een verkeerd adres. De standaardmail van Supabase werkt; die kan later een eigen tekst krijgen onder Authentication → Emails. Supabase verstuurt via de ingebouwde mailserver maar enkele mails per uur; de app meldt dat als er net al een link is gevraagd. De app laat nooit weten of een e-mailadres bekend is.
 
 ## 5. Alleen publieke projectgegevens invullen
 

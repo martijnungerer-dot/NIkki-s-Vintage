@@ -184,3 +184,10 @@ Details zijn belangrijk bij vintage mode. Een detailfoto met een vaste rol krijg
 **Grenzen:**
 - Een periode, merk of echtheid alleen na bevestiging door Nikki. Een AI-aanwijzing (zoals "rits lijkt uit de jaren 60") is een hint, geen verkoopclaim.
 - De lijst met rollen en de bijbehorende kenmerken zijn een contractwijziging: documenteren, testen, en akkoord van Martijn.
+
+### Uniform en minimaal (Martijn, 14 november 2026)
+
+- Alle iconen en knoppen van dezelfde soort zien er hetzelfde uit. Geen opvallend vakje of streepje voor het actieve scherm; `aria-pressed` blijft voor schermlezers.
+- Geen geel of oranje in de werkende schermen. De gele melding met de oranje streep in het huidige invoerscherm ("Gemini bekijkt maximaal vier foto's") wordt een rustige regel in crème en bruin, met de nieuwe grens van 8 foto's. Alleen het tijdelijke opmerkingenpotloodje is geel.
+- Uitleg over functies die (nog) niet werken of tijdelijk zijn ("Dit is een oefenscherm…", "Gemini bekijkt…", proefmeldingen) staat niet als vast tekstblok in het scherm. Ze verschijnt één keer als rustig venster dat Nikki wegtikt (onthouden op het toestel), en is daarna terug te lezen via een klein info-icoon. Fouten en dingen die Nikki moet doen blijven wel direct in het scherm staan.
+- De naam staat voluit: Guaranteed Secondhand Fur. Het app-icoon is de kantrand met GSF (`app/icons/gsf-kantrand.svg`).

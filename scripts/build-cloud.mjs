@@ -14,7 +14,7 @@ const patchIntake=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,
 const patchShop=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'cloud store (concept/ontdekken-optie-b.html)',count});
 let intake=intakeSource;
 intake=patchIntake(intake,"draftId ||= 'stuk-' + Date.now() + '-' + Math.random().toString(36).slice(2);","draftId ||= crypto.randomUUID();");
-intake=patchIntake(intake,'window.parent.NikkiApp.publish(product);','await window.parent.NikkiApp.publish(product);');
+intake=patchIntake(intake,'window.parent.NikkiApp.publish(product);','await window.parent.NikkiApp.publish(product); savedJustNow = true;');
 intake=patchIntake(intake,'key:draftId, title:', 'furClass:sel.bont, key:draftId, title:');
 intake=replaceRegion(intake,'PHOTO_TRANSFER','    const images = await window.parent.NikkiApp.preparePhotos(photos, mainPhoto());','demo/intake-bridge.js');
 intake=patchIntake(intake,'Toevoegen aan proefwinkel','Opslaan en tonen in boetiek',2);

@@ -25,7 +25,7 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
 
   // 1. Website
   try{const r=await fetcher(site,{signal:AbortSignal.timeout(30000)});const t=await r.text();
-    if(r.ok&&t.includes('views.js'))ok('Website bereikbaar: '+site);else fail('Website antwoordt niet zoals verwacht ('+r.status+'): '+site);}
+    if(r.ok&&/<script type="module" src="main.js">/.test(t))ok('Website bereikbaar: '+site);else fail('Website antwoordt niet zoals verwacht ('+r.status+'): '+site);}
   catch{fail('Website niet bereikbaar: '+site);}
 
   // 2. Catalogus: alleen gepubliceerde stukken, alleen publieke velden

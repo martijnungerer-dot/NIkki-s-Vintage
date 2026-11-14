@@ -67,11 +67,14 @@ export function buildRequest({summary,rows,wantRationale=false}){
 }
 
 /** Body voor Gemini generateContent. Model en instructies kiest de server, nooit de browser. */
-export function geminiBody(payload){
+export function geminiBody(payload,{briefThinking=true}={}){
   return {systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},contents:[{role:'user',parts:[{text:JSON.stringify(payload)}]}],
     // Ruim plafond: 40 kandidaten kosten al ~1000 uitvoertokens, en denkstappen tellen mee binnen dit plafond.
     // Alleen gebruikte tokens worden gerekend. thinkingBudget:0 wordt niet door elk model geaccepteerd.
-    generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192,temperature:0}};
+    // Rangschikken is eenvoudig werk: vraag om kort nadenken (Gemini 3-modellen), anders duurt het
+    // antwoord langer dan de tijdslimiet. Een model dat dit niet kent, krijgt het verzoek zonder.
+    generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192,temperature:0,
+      ...(briefThinking?{thinkingConfig:{thinkingLevel:'low'}}:{})}};
 }
 
 function cleanWhy(v){

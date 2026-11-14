@@ -17,7 +17,7 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
   if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!key){fail('app/config.js bevat geen geldige Supabase-URL en publieke sleutel.');return out;}
   if(/^sb_secret_|service_role/.test(key)){fail('app/config.js bevat een geheime sleutel. Verwijder die meteen en vervang hem.');return out;}
   const call=async(path,opts={})=>{
-    try{const r=await fetcher(url+path,{...opts,headers:{apikey:key,...(opts.headers||{})},signal:AbortSignal.timeout(30000)});
+    try{const r=await fetcher(url+path,{...opts,headers:{apikey:key,...(opts.headers||{})},signal:AbortSignal.timeout(opts.ms||30000)});
       return {status:r.status,headers:r.headers,text:await r.text()};}
     catch(e){return {status:0,headers:new Headers(),text:String(e?.message||e)};}
   };
@@ -49,7 +49,7 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
   else ok('Niet-gepubliceerde stukken zijn afgeschermd.');
 
   // 3. Smaakfunctie: herkomst, lege aanvraag, echte aanvraag
-  const fn='/functions/v1/personalise',post=(body,from=origin)=>call(fn,{method:'POST',headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify(body)});
+  const fn='/functions/v1/personalise',post=(body,from=origin)=>call(fn,{method:'POST',headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify(body),ms:60000});
   const evil=await post({profile:{v:1,budget_max_minor:null,prefer:{},avoid:{}}},'https://niet-toegestaan.example');
   if(evil.status===0){fail('Smaakfunctie niet bereikbaar.');return out;}
   if(evil.status===404){fail('Smaakfunctie niet gevonden. Rol uit met: npx supabase functions deploy personalise');return out;}

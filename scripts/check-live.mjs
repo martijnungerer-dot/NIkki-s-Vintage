@@ -72,7 +72,7 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
     if(!valid)fail('De volgorde bevat onbekende of dubbele stukken.');
     else if(!clean||/priceMinor|storage|token/i.test(real.text))fail('Het antwoord bevat meer dan volgorde en fotorol.');
     else if(answer.source==='ai')ok('Gemini rangschikt: '+ids.length+' stukken, '+answer.ranking.filter(r=>r.photoRole).length+' met een gekozen foto.');
-    else if(answer.source==='fallback')warn('Smaakfunctie werkt, maar zonder Gemini (terugval). Controleer GEMINI_API_KEY en GEMINI_MODEL, of de Gemini-status.');
+    else if(answer.source==='fallback')warn('Smaakfunctie werkt, maar zonder Gemini (terugval). De reden staat in Supabase onder Edge Functions → personalise → Logs, op de regel "personalise fallback". Zie docs/LIVEGANG.md.');
     else fail('Onbekende bron in het antwoord: '+answer.source);
   }
   return out;

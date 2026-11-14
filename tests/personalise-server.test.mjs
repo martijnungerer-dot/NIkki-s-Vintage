@@ -10,18 +10,19 @@ const rows=[
   {id:uuid(3),status:'published',data:{priceMinor:9000,material:'Wol',model:'Cape',colour:'Crème',length:'Kort',fit:'',era:'',details:[],furClass:'Nee',images}}
 ];
 const profile={v:1,budget_max_minor:30000,prefer:{'material:wol':0.8},avoid:{'colour:creme':-0.5}};
-function setup({quota=true,catalogOK=true,gemini={ranking:[{id:'c2',photo:'Detail',why:'Wol, zoals je graag ziet.'},{id:'c1'}]},geminiOK=true,settings={}}={}){
-  const calls=[];
+function setup({quota=true,catalogOK=true,gemini={ranking:[{id:'c2',photo:'Detail',why:'Wol, zoals je graag ziet.'},{id:'c1'}]},geminiOK=true,geminiReply,settings={}}={}){
+  const calls=[],logs=[];
   const env={ALLOWED_ORIGINS:'https://shop.test',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-only',GEMINI_API_KEY:'secret-gemini',GEMINI_MODEL:'gemini-test',...settings};
-  const handler=createHandler({env:k=>env[k],now:()=>new Date('2026-11-10T12:00:00Z'),fetcher:async(url,opts={})=>{
+  const handler=createHandler({env:k=>env[k],log:m=>logs.push(m),now:()=>new Date('2026-11-10T12:00:00Z'),fetcher:async(url,opts={})=>{
     calls.push({url,opts});
     if(url.endsWith('/rpc/consume_personalise'))return Response.json(quota?null:{message:'RATE_LIMIT'},{status:quota?200:400});
     if(url.includes('/rest/v1/garments'))return catalogOK?Response.json(rows):new Response('{}',{status:500});
+    if(geminiReply)return geminiReply();
     return geminiOK?Response.json({candidates:[{content:{parts:[{text:typeof gemini==='string'?gemini:JSON.stringify(gemini)}]}}]}):new Response('{}',{status:429});
   }});
   const request=(body={profile},headers={},method='POST')=>handler(new Request('https://test.supabase.co/functions/v1/personalise',{
     method,headers:{origin:'https://shop.test','x-forwarded-for':'203.0.113.9, 10.0.0.1',...headers},...(method==='POST'?{body:typeof body==='string'?body:JSON.stringify(body)}:{})}));
-  return {request,calls};
+  return {request,calls,logs};
 }
 const ai=calls=>calls.filter(c=>c.url.includes('googleapis'));
 
@@ -92,4 +93,27 @@ test('model failure, bad JSON or missing Gemini settings fall back to the local 
 test('catalog or configuration problems give a plain error without details',async()=>{
   const s=setup({catalogOK:false});const r=await s.request();assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'CATALOG_UNAVAILABLE'});
   const n=setup({settings:{SUPABASE_URL:''}});assert.equal((await n.request()).status,503);assert.equal(n.calls.length,0);
+});
+
+test('a fallback logs a short reason without the key, profile or catalog',async()=>{
+  const cases=[
+    [{settings:{GEMINI_API_KEY:''}},/fallback: NO_KEY/],
+    [{settings:{GEMINI_MODEL:'Gemini 3 Flash'}},/fallback: BAD_MODEL_NAME/],
+    [{geminiReply:()=>Response.json({error:{code:404,status:'NOT_FOUND',message:'models/x is not found'}},{status:404})},/fallback: HTTP_404 NOT_FOUND \(model gemini-test\)/],
+    [{geminiReply:()=>Response.json({candidates:[{finishReason:'MAX_TOKENS',content:{parts:[{thought:true,text:'...'}]}}]})},/fallback: EMPTY MAX_TOKENS/],
+    [{geminiReply:()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:'{"ranking":['}]}}]})},/fallback: NOT_JSON STOP/],
+    [{geminiReply:()=>{throw Object.assign(Error('t'),{name:'TimeoutError'});}},/fallback: TIMEOUT/]
+  ];
+  for(const [options,pattern] of cases){
+    const s=setup(options);const out=await (await s.request()).json();
+    assert.equal(out.source,'fallback');assert.equal(s.logs.length,1);assert.match(s.logs[0],pattern);
+    assert.doesNotMatch(s.logs[0],/secret-gemini|server-only|wol|Sjaalkraag/i);
+  }
+  const ok=setup();await ok.request();assert.deepEqual(ok.logs,[]);
+});
+
+test('JSON wrapped in a markdown fence is still read as the ranking',async()=>{
+  const s=setup({gemini:'```json\n'+JSON.stringify({ranking:[{id:'c2'},{id:'c1'}]})+'\n```'});
+  const out=await (await s.request()).json();
+  assert.equal(out.source,'ai');assert.deepEqual(s.logs,[]);
 });

@@ -10,6 +10,13 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 14 november 2026 — migraties `personalise_usage` en `review_notes` live
+- Martijn heeft op zijn Windows-computer `npx.cmd supabase db push --remote` gedraaid tegen project `naxjrskfdedwvoeltigs`. De CLI paste precies twee migraties toe: `20261110210000_personalise_usage.sql` en `20261114120000_review_notes.sql`. Er werd verder niets toegevoegd of gewijzigd.
+- Opmerkingenlaag (PR #38) gecontroleerd: opmerkingen van het gele potloodje staan in `public.review_notes`, gelezen via de SQL Editor.
+- De live site toont de naam uit PR #39 ("Guaranteed Secondhand Fur").
+- Niet gecontroleerd: of `supabase functions deploy personalise` al is uitgevoerd en of `npm run check:live` slaagt.
+- Documentatie bijgewerkt: de huidige CLI vraagt `--remote` bij `db push`; in Windows PowerShell `npx.cmd`.
+
 ### 14 november 2026 — PR #36 op de gemergede fase 0
 - `main` opgehaald op `b636a36` (PR #37). Zeven conflicten in PR #36 via een gewone merge opgelost; één set beheermodules en alle API/UI-koppelingen in `app/admin/index.js`. `main.js` blijft gelijk aan fase 0.
 - Beide Claude Code-reviews verwerkt: action-bewaking, lokale authenticatiefouten, wachtwoord wissen/verbergen vóór staff/controls/refresh, zichtbare fouten na authenticatie, juiste submitselector, wisselende toegankelijke naam zonder aria-pressed en geen focus op de alert.

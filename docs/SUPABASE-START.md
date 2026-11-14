@@ -97,7 +97,7 @@ Bij een storing kun je altijd **Liever zelf invullen** gebruiken. De AI vult mat
 De tweede serverfunctie, [supabase/functions/personalise](../supabase/functions/personalise/handler.mjs), rangschikt de collectie per bezoeker (zie [SMAAKPROFIEL.md](SMAAKPROFIEL.md)). Ze gebruikt dezelfde secrets als hierboven. Nodig: de migratie `20261110210000_personalise_usage.sql` en de uitrol:
 
 ```sh
-npx supabase db push
+npx supabase db push --remote
 npx supabase functions deploy personalise
 ```
 

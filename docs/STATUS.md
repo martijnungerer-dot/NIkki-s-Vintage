@@ -14,6 +14,7 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Martijn heeft `personalise` uitgerold, `ALLOWED_ORIGINS` gezet en de Gemini-sleutel onder de juiste naam `GEMINI_API_KEY` gezet. `npm run check:live` op zijn computer: website, catalogus, publieke velden, afscherming en herkomstcontrole OK; de smaakfunctie valt terug zonder Gemini.
 - De secret `GEMINI_MODEL` komt (via de SHA-256-controlecode, zonder de waarde te tonen) overeen met `gemini-3.8-flash`, het model dat Google AI Studio voor dit project toont. Het gebruiksoverzicht van AI Studio telt één aanvraag, dus Gemini werd bereikt.
 - Log na uitrol van PR #42: `personalise fallback: TIMEOUT (model gemini-3.8-flash)`. Daarop: Gemini krijgt nu de instelling om kort na te denken (met een herhaling zonder als een model die niet kent), 40 seconden op de server en 50 in de browser, die intussen al de eigen volgorde toont.
+- Ook na PR #43 (kort nadenken, 40 s) nog `TIMEOUT`. Op advies van een tweede LLM: vast antwoordschema (`responseSchema`), `temperature` 1 zoals Google voor Gemini 3 aanraadt, `thinkingLevel` minimal en een plafond van 4096 tokens, tegen herhalingslussen en lang nadenken.
 - De functie schrijft de reden van een terugval nu als korte code in de functielogs (zonder sleutel, profiel of catalogus) en leest JSON tussen een markdown-omlijsting. Nog uitrollen met `npx.cmd supabase functions deploy personalise`.
 
 ### 14 november 2026 — Wachtwoord vergeten

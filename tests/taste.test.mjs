@@ -147,7 +147,9 @@ test('payload: only published pieces within budget, no prices, UUIDs or private 
   assert.deepEqual(req.payload.candidates.map(c=>c.id),['c1','c2']);
   assert.ok(text.length<2000);
   const body=geminiBody(req.payload);
-  assert.equal(body.systemInstruction.parts[0].text,SYSTEM_PROMPT);assert.equal(body.generationConfig.temperature,0);
+  assert.equal(body.systemInstruction.parts[0].text,SYSTEM_PROMPT);assert.equal(body.generationConfig.temperature,1);
+  assert.ok(body.generationConfig.responseSchema,'fixed answer schema');
+  assert.ok(geminiBody({...req.payload,want_rationale:true}).generationConfig.responseSchema.properties.ranking.items.properties.why);
   assert.ok(body.generationConfig.maxOutputTokens>=4096,'review HIGH-2: room for 40 candidates plus thinking');
 });
 

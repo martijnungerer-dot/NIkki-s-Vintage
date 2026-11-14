@@ -9,7 +9,7 @@ $('ai-off').hidden=false;
 $('analyse').textContent='Voorstellen met Gemini';
 // Internal photos stay visible to Nikki, marked with a dashed outline.
 const internalStyle=document.createElement('style');
-internalStyle.textContent='.ph.intern .thumb{outline:2px dashed var(--muted,#6B5A50);outline-offset:-2px}';
+internalStyle.textContent='.ph.intern .thumb{outline:2px dashed var(--muted,#6B5A50);outline-offset:-2px}#publish.incomplete{opacity:.4}';
 document.head.append(internalStyle);
 // A new piece forgets the Gemini proposal of the previous one.
 $('again').addEventListener('click',()=>window.parent.NikkiApp.forgetAnalysis?.());
@@ -31,5 +31,6 @@ window.NikkiIntake = {
     m=Object.fromEntries(['chest','shoulder','sleeve','length'].map((k,i)=>[k,record.measurements[i]===null?'':String(record.measurements[i])]));
     text={titel:record.title,beschrijving:record.description,prijs:String(record.priceMinor/100)};
     speciesChecked=true; renderThumbs(); startReview({},0,'Opgeslagen stuk. Controleer je wijzigingen.');
+    $('publish').textContent='Wijziging opslaan';
   }
 };

@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — opslaan bij bewerken op de telefoon
+- Martijn kon op zijn telefoon een bewerkt stuk niet opslaan: de knop bleef grijs zonder reden. Nagespeeld: een onderdeel onder de vouw (in de test Bijzonderheden) was nog niet afgevinkt.
+- De opslagknop blijft nu tikbaar. Is nog iets open, dan opent een tik dat onderdeel, scrolt ernaartoe en noemt wat ontbreekt; er wordt niets opgeslagen. Bij bewerken heet de knop meteen "Wijziging opslaan". Browsertest toegevoegd; schermafbeelding in `docs/screenshots/acht-fotos/`.
+
 ### 15 november 2026 — 8 foto's, foto's alleen voor controle en het Gemini-voorstel bewaard
 - `gemini-3.5-flash-lite` als `PERSONALISE_MODEL` (door Martijn in Supabase gezet): `npm run check:live` geeft alle regels OK, met als laatste "Gemini rangschikt: 1 stukken, 1 met een gekozen foto".
 - Invoer: maximaal 8 foto's; Gemini bekijkt ze allemaal. Per foto een aan/uit-knop "Alleen voor controle". Zo'n foto kan geen hoofdfoto zijn.

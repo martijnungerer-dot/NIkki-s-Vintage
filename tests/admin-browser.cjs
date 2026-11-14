@@ -176,5 +176,27 @@ async function realNewsreader(p){
       assert.equal(await p.evaluate(()=>sessionStorage.length),0);assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, busy renewal guard and missing configuration.');
+  {
+    // Editing on a phone: a tap on save with an unfinished step opens that step and names it,
+    // instead of a grey button without a reason.
+    const f=await fixture(390),p=f.page;try {
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await p.getByRole('button',{name:'Bewerken'}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
+      const intake=p.frameLocator('#intake');
+      assert.equal(await intake.locator('#publish').isDisabled(),false,'save stays tappable');
+      assert.equal(await intake.locator('#publish').textContent(),'Wijziging opslaan');
+      assert.match(await intake.locator('#publish').getAttribute('class'),/incomplete/);
+      await intake.locator('#publish').click();
+      await intake.locator('#review-err').filter({hasText:'Nog niet af: Bijzonderheden'}).waitFor();
+      assert.equal(await intake.locator('[data-step=bijz] .stephead').getAttribute('aria-expanded'),'true');
+      assert.equal(f.state.saved,undefined,'nothing saved while incomplete');
+      await p.screenshot({path:'test-results/admin/opslaan-ontbreekt-390.png'});
+      await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+      assert.doesNotMatch(await intake.locator('#publish').getAttribute('class'),/incomplete/);
+      await intake.locator('#publish').click();
+      await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
+      assert.deepEqual(f.state.saved.p_data.details,['Geen']);assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

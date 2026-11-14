@@ -46,6 +46,8 @@ async function fixture(width = 390, options = {}) {
       if(state.weakPassword){state.weakPassword=false;return json({code:'weak_password'},422);}
       return json({id:'user'});
     }
+    if(url.pathname==='/rest/v1/garment_private')return json([]);
+    if(url.pathname==='/rest/v1/rpc/save_garment_with_private'){const b=req.postDataJSON();state.saved=b;return json({...state.rows[0],data:b.p_data,version:state.rows[0].version+1});}
     if(url.pathname==='/rest/v1/rpc/require_staff'&&state.denyStaff)return json({},403);
     if(url.pathname==='/rest/v1/garments'&&state.failList)return json({},503);
     if(url.pathname==='/rest/v1/rpc/require_staff'||url.pathname==='/auth/v1/logout')return json(null);

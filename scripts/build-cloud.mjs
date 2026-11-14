@@ -38,6 +38,11 @@ intake=patchIntake(intake,"'</select>' +\n          '<button type=\"button\" cla
 intake=patchIntake(intake,"'<div class=\"ph' + (p.bruikbaar ? '' : ' bad') + '\">","'<div class=\"ph' + (p.bruikbaar ? '' : ' bad') + (p.internal ? ' intern' : '') + '\">");
 intake=patchIntake(intake,"    if ((t = e.target.closest('[data-main]'))) {",
   "    if ((t = e.target.closest('[data-intern]'))) { var zi = Number(t.getAttribute('data-intern')), pz = photos[zi]; pz.internal = !pz.internal; if (pz.internal) pz.main = false; renderPath(); var back = $('intern-' + zi); if (back) back.focus(); return; }\n    if ((t = e.target.closest('[data-main]'))) {");
+// The save button stays tappable. If something is still open, a tap opens that step and says what
+// is missing, instead of a grey button that gives no reason (Martijn on his phone, 15 November 2026).
+intake=patchIntake(intake,"    $('publish').disabled = !all;","    $('publish').disabled = false; $('publish').classList.toggle('incomplete', !all);");
+intake=patchIntake(intake,"  if (sending || !STEPS.every(s => s.done())) return;",
+  "  if (sending) return;\n  const missing = STEPS.filter(s => !s.done());\n  if (missing.length) {\n    open = missing[0].id; adding = null; renderPath();\n    $('review-err').textContent = 'Nog niet af: ' + missing.map(s => s.title + ' (' + s.sum() + ')').join(', ') + '.';\n    const head = document.querySelector('[data-step=\"' + missing[0].id + '\"] .stephead');\n    if (head) { head.scrollIntoView({block:'center'}); head.focus({preventScroll:true}); }\n    return;\n  }");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 // The chosen design supplies the actual markup and CSS, not a second approximation.
 let shop=await read('concept/ontdekken-optie-b.html');

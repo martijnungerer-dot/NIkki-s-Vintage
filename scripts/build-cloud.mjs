@@ -26,6 +26,18 @@ intake=patchIntake(intake,"  sending = true; $('publish').disabled = true;", "  
 intake=patchIntake(intake,"}[e && e.code] || 'Er ging iets mis. Probeer het opnieuw of vul zelf in.';", "}[e && e.code] || (e && e.message) || 'Er ging iets mis. Vul zelf in.';");
 // Photo analysis uses the same resized images as storage.
 intake=patchIntake(intake,"sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })", "Promise.all(files.map(f=>window.parent.NikkiApp.prepareImage(f))).then(prepared=>sample.json('', { images: prepared, signal: ctl.signal }))");
+// Eight photos; a photo can be marked "Alleen voor controle" (internal; never shown to visitors).
+// The main photo is always one for the boutique.
+intake=patchIntake(intake,"function mainPhoto() { return photos.filter(function (p) { return p.main; })[0] || photos.filter(function (p) { return p.rol === 'Voorkant'; })[0] || null; }",
+  "function mainPhoto() { return photos.filter(function (p) { return p.main && !p.internal; })[0] || photos.filter(function (p) { return p.rol === 'Voorkant' && !p.internal; })[0] || null; }");
+intake=patchIntake(intake,"Array.from(list || []).forEach(function (f) { photos.push(","Array.from(list || []).slice(0, Math.max(0, maxPhotos() - photos.length)).forEach(function (f) { photos.push(");
+intake=patchIntake(intake,"$('photo-count').textContent = n ? n + (n === 1 ? ' foto' : \" foto's\") + ' klaar.' : 'Voeg eerst een foto toe.';",
+  "$('photo-count').textContent = n ? n + (n === 1 ? ' foto' : \" foto's\") + ' klaar' + (n >= maxPhotos() ? ', meer kan niet.' : ' (maximaal ' + maxPhotos() + ').') : 'Voeg eerst een foto toe. Maximaal ' + maxPhotos() + \" foto's.\";");
+intake=patchIntake(intake,"'</select>' +\n          '<button type=\"button\" class=\"okb\" data-main=\"' + i + '\" aria-pressed=\"' + (mainPhoto() === p) + '\">' + (mainPhoto() === p ? '★ Hoofdfoto' : '☆ Hoofdfoto') + '</button>' +",
+  "'</select>' +\n          '<button type=\"button\" class=\"okb\" id=\"intern-' + i + '\" data-intern=\"' + i + '\" aria-pressed=\"' + !!p.internal + '\" aria-label=\"Foto ' + (i + 1) + ' alleen voor controle\">Alleen voor controle</button>' +\n          (p.internal ? '' : '<button type=\"button\" class=\"okb\" data-main=\"' + i + '\" aria-pressed=\"' + (mainPhoto() === p) + '\">' + (mainPhoto() === p ? '★ Hoofdfoto' : '☆ Hoofdfoto') + '</button>') +");
+intake=patchIntake(intake,"'<div class=\"ph' + (p.bruikbaar ? '' : ' bad') + '\">","'<div class=\"ph' + (p.bruikbaar ? '' : ' bad') + (p.internal ? ' intern' : '') + '\">");
+intake=patchIntake(intake,"    if ((t = e.target.closest('[data-main]'))) {",
+  "    if ((t = e.target.closest('[data-intern]'))) { var zi = Number(t.getAttribute('data-intern')), pz = photos[zi]; pz.internal = !pz.internal; if (pz.internal) pz.main = false; renderPath(); var back = $('intern-' + zi); if (back) back.focus(); return; }\n    if ((t = e.target.closest('[data-main]'))) {");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 // The chosen design supplies the actual markup and CSS, not a second approximation.
 let shop=await read('concept/ontdekken-optie-b.html');

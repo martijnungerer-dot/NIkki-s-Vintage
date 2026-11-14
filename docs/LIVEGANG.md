@@ -15,7 +15,8 @@ Stappenlijst voor Martijn om de serverfunctie `personalise` live te zetten en te
 Rangschikken is een eenvoudige taak met kleine aanvragen, dus een goedkoop en snel model volstaat.
 
 - **Advies voor de smaakfunctie:** een Flash-Lite-model van de nieuwste generatie, zoals Gemini 3.5 Flash-Lite. Zet de exacte naam uit AI Studio in `PERSONALISE_MODEL`.
-- **Fotoanalyse bij het invoeren** (`analyse`) mag een sterker model gebruiken via `GEMINI_MODEL`. Zonder `PERSONALISE_MODEL` gebruiken beide functies `GEMINI_MODEL`.
+- **Fotoanalyse bij het invoeren** (`analyse`) mag een sterker model gebruiken via `GEMINI_MODEL`. Zonder `PERSONALISE_MODEL` gebruiken beide functies `GEMINI_MODEL`. Met `ANALYSE_MODEL` kies je een apart model alleen voor de fotoanalyse, bijvoorbeeld een Flash-Lite-model als het sterkere model te traag is.
+- **Gezien op 14 november 2026:** `gemini-3.8-flash` was op de gratis tier te traag voor de smaakfunctie (`TIMEOUT` na 40 seconden); `gemini-3.5-flash-lite` als `PERSONALISE_MODEL` werkt.
 - Gebruik geen model waarvan AI Studio meldt dat het wordt uitgefaseerd.
 
 **Kostenschatting**, op basis van de prijslijst van Google in november 2026; controleer [de actuele prijzen](https://ai.google.dev/gemini-api/docs/pricing):
@@ -34,6 +35,7 @@ Zet onder **Edge Functions → Secrets**:
 | `GEMINI_API_KEY` | De Gemini-sleutel |
 | `GEMINI_MODEL` | Het model voor fotoanalyse |
 | `PERSONALISE_MODEL` | Optioneel: het goedkopere model voor de smaakfunctie |
+| `ANALYSE_MODEL` | Optioneel: een apart model alleen voor de fotoanalyse |
 | `ALLOWED_ORIGINS` | `https://nikki-s-vintage.martijnungerer.workers.dev`, eventueel gevolgd door `,http://localhost:4173` voor lokaal testen |
 
 `SUPABASE_URL` en de serversleutel levert Supabase zelf.
@@ -71,6 +73,7 @@ Het script gebruikt alleen de publieke gegevens uit `app/config.js` en kost éé
 | Staat het adres niet toe | Zet het exacte website-adres in `ALLOWED_ORIGINS`. |
 | Geeft geen volgorde, of mist serversleutel | `npx supabase db push --remote`; kijk de logs na onder Edge Functions → personalise. |
 | Werkt, maar zonder Gemini (terugval) | Open Supabase → Edge Functions → personalise → Logs en zoek de regel `personalise fallback: …`. `NO_KEY`: secret `GEMINI_API_KEY` ontbreekt. `BAD_MODEL_NAME`: de modelnaam moet beginnen met `gemini-`. `HTTP_400`/`HTTP_403`: sleutel of project geweigerd. `HTTP_404 NOT_FOUND`: model bestaat niet voor deze sleutel. `HTTP_429`: limiet van Google bereikt. `EMPTY MAX_TOKENS` of `NOT_JSON`: het model gaf geen bruikbaar antwoord. `TIMEOUT`: Gemini antwoordde niet binnen 40 seconden; kies eventueel een sneller model met `PERSONALISE_MODEL`. |
+| Fotoanalyse mislukt of duurt te lang | Open Supabase → Edge Functions → analyse → Logs en zoek `analyse failed: …`. Dezelfde codes als hierboven; bij `TIMEOUT` (90 seconden) kies je met `ANALYSE_MODEL` een sneller model. |
 | Daglimiet bereikt | Wacht tot de volgende dag (UTC). |
 
 ## 6. Proef op je telefoon (na merge van "Mijn smaak")

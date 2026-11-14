@@ -70,7 +70,7 @@ Het script gebruikt alleen de publieke gegevens uit `app/config.js` en kost éé
 | Smaakfunctie niet gevonden | `npx supabase functions deploy personalise` |
 | Staat het adres niet toe | Zet het exacte website-adres in `ALLOWED_ORIGINS`. |
 | Geeft geen volgorde, of mist serversleutel | `npx supabase db push --remote`; kijk de logs na onder Edge Functions → personalise. |
-| Werkt, maar zonder Gemini (terugval) | Controleer `GEMINI_API_KEY` en de modelnaam; die moet beginnen met `gemini-`. |
+| Werkt, maar zonder Gemini (terugval) | Open Supabase → Edge Functions → personalise → Logs en zoek de regel `personalise fallback: …`. `NO_KEY`: secret `GEMINI_API_KEY` ontbreekt. `BAD_MODEL_NAME`: de modelnaam moet beginnen met `gemini-`. `HTTP_400`/`HTTP_403`: sleutel of project geweigerd. `HTTP_404 NOT_FOUND`: model bestaat niet voor deze sleutel. `HTTP_429`: limiet van Google bereikt. `EMPTY MAX_TOKENS` of `NOT_JSON`: het model gaf geen bruikbaar antwoord. `TIMEOUT`: Gemini antwoordde niet binnen 20 seconden. |
 | Daglimiet bereikt | Wacht tot de volgende dag (UTC). |
 
 ## 6. Proef op je telefoon (na merge van "Mijn smaak")

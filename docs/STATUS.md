@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 14 november 2026 — smaakfunctie live, Gemini nog in terugval
+- Martijn heeft `personalise` uitgerold, `ALLOWED_ORIGINS` gezet en de Gemini-sleutel onder de juiste naam `GEMINI_API_KEY` gezet. `npm run check:live` op zijn computer: website, catalogus, publieke velden, afscherming en herkomstcontrole OK; de smaakfunctie valt terug zonder Gemini.
+- De secret `GEMINI_MODEL` komt (via de SHA-256-controlecode, zonder de waarde te tonen) overeen met `gemini-3.8-flash`, het model dat Google AI Studio voor dit project toont. Het gebruiksoverzicht van AI Studio telt één aanvraag, dus Gemini werd bereikt.
+- De functie schrijft de reden van een terugval nu als korte code in de functielogs (zonder sleutel, profiel of catalogus) en leest JSON tussen een markdown-omlijsting. Nog uitrollen met `npx.cmd supabase functions deploy personalise`.
+
 ### 14 november 2026 — Wachtwoord vergeten
 - PR #39 (naam Guaranteed Secondhand Fur, app-icoon) gemerged op `main` (`563e935`). Drie latere commits (gelijke iconen in de bovenbalk, ontwerpbrief uniform en minimaal, meldingen als eenmalig venster) gaan mee in de volgende PR.
 - Inlogformulier met drie standen in dezelfde velden: inloggen, link vragen en nieuw wachtwoord kiezen. De link vragen gaat via Supabase `/auth/v1/recover` met een neutrale melding; de token uit de link wordt meteen uit de adresbalk gehaald en pas na opslaan en de beheerderscontrole bewaard. Een verlopen link biedt direct een nieuwe aan.

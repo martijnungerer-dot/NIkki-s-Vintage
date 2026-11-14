@@ -28,7 +28,13 @@ export async function clientId(req,secret,day){
   return [...mac.slice(0,16)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-export function createHandler({env,fetcher,now=()=>new Date()}){return async req=>{
+// Sommige modellen zetten JSON toch tussen ```json … ```; haal die omlijsting weg.
+export function stripFence(text){
+  const m=/^\s*```(?:json)?\s*([\s\S]*?)\s*```\s*$/i.exec(text);
+  return m?m[1]:text;
+}
+
+export function createHandler({env,fetcher,now=()=>new Date(),log=message=>console.warn(message)}){return async req=>{
   const origin=req.headers.get('origin');
   const allowed=(env('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim()).filter(Boolean);
   const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin'};
@@ -58,17 +64,24 @@ export function createHandler({env,fetcher,now=()=>new Date()}){return async req
     const catalog=await call(url+'/rest/v1/garments?select=id,status,data&status=eq.published&order=created_at.desc,id.asc&limit=500',{headers:serverHeaders});
     if(!catalog.ok)return reply(503,{error:'CATALOG_UNAVAILABLE'});
     const request=buildRequest({summary,rows:await catalog.json(),wantRationale});
-    const fallback=()=>reply(200,{source:'fallback',ranking:normalizeRanking(null,request)});
+    // De reden van een terugval komt in de functielogs (Supabase → Edge Functions → personalise → Logs).
+    // Alleen een korte code, het HTTP-statuscijfer en de foutstatus van Google: nooit de sleutel,
+    // het profiel of de catalogus.
+    const fallback=reason=>{log('personalise fallback: '+reason+' (model '+(model||'-')+')');return reply(200,{source:'fallback',ranking:normalizeRanking(null,request)});};
     if(!request.ids.length)return reply(200,{source:'fallback',ranking:normalizeRanking(null,request)});
-    if(!geminiKey||!model||!/^gemini-[a-z0-9.-]+$/.test(model))return fallback();
+    if(!geminiKey)return fallback('NO_KEY');
+    if(!model||!/^gemini-[a-z0-9.-]+$/.test(model))return fallback('BAD_MODEL_NAME');
     let raw;
     try{
       const result=await call('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
         method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':geminiKey},body:JSON.stringify(geminiBody(request.payload))});
-      if(!result.ok)return fallback();
-      const text=(await result.json()).candidates?.[0]?.content?.parts?.filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');
-      raw=JSON.parse(text);
-    }catch{return fallback();}
+      const answer=await result.json().catch(()=>null);
+      if(!result.ok)return fallback('HTTP_'+result.status+(typeof answer?.error?.status==='string'?' '+answer.error.status.replace(/[^A-Z_]/g,'').slice(0,40):''));
+      const candidate=answer?.candidates?.[0];
+      const text=candidate?.content?.parts?.filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');
+      if(!text)return fallback('EMPTY'+(typeof candidate?.finishReason==='string'?' '+candidate.finishReason.replace(/[^A-Z_]/g,'').slice(0,40):''));
+      try{raw=JSON.parse(stripFence(text));}catch{return fallback('NOT_JSON'+(typeof candidate?.finishReason==='string'?' '+candidate.finishReason.replace(/[^A-Z_]/g,'').slice(0,40):''));}
+    }catch(error){return fallback(error?.name==='TimeoutError'?'TIMEOUT':'NETWORK');}
     return reply(200,{source:'ai',ranking:normalizeRanking(raw,{...request,wantRationale})});
   }catch{return reply(503,{error:'UNAVAILABLE'});}
 };}

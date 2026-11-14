@@ -121,7 +121,10 @@ test('JSON wrapped in a markdown fence is still read as the ranking',async()=>{
 test('Gemini is asked to think briefly; a model that rejects that setting is asked again without it',async()=>{
   const s=setup();await s.request();
   const body=JSON.parse(ai(s.calls)[0].opts.body);
-  assert.deepEqual(body.generationConfig.thinkingConfig,{thinkingLevel:'low'});
+  assert.deepEqual(body.generationConfig.thinkingConfig,{thinkingLevel:'minimal'});
+  assert.equal(body.generationConfig.temperature,1,'Gemini 3: default temperature avoids looping');
+  assert.deepEqual(body.generationConfig.responseSchema.required,['ranking']);
+  assert.deepEqual(Object.keys(body.generationConfig.responseSchema.properties.ranking.items.properties),['id','photo'],'no why when no rationale is wanted');
   let n=0;
   const old=setup({geminiReply:()=>++n===1?Response.json({error:{code:400,status:'INVALID_ARGUMENT',message:'Thinking level is not supported for this model.'}},{status:400})
     :Response.json({candidates:[{content:{parts:[{text:JSON.stringify({ranking:[{id:'c1'}]})}]}}]})});

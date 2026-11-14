@@ -66,15 +66,25 @@ export function buildRequest({summary,rows,wantRationale=false}){
   return {payload,ids:chosen.map(e=>e.id),fallback:fallback.map(e=>e.id),photos:Object.fromEntries(chosen.map(e=>[e.id,e.photos]))};
 }
 
+/** Vast antwoordschema: het model kan alleen deze vorm geven en niet eindeloos doorschrijven. */
+export function rankingSchema(wantRationale){
+  const item={type:'OBJECT',properties:{id:{type:'STRING'},photo:{type:'STRING',nullable:true}},required:['id']};
+  if(wantRationale)item.properties.why={type:'STRING',nullable:true};
+  return {type:'OBJECT',properties:{ranking:{type:'ARRAY',items:item}},required:['ranking']};
+}
+
 /** Body voor Gemini generateContent. Model en instructies kiest de server, nooit de browser. */
 export function geminiBody(payload,{briefThinking=true}={}){
   return {systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},contents:[{role:'user',parts:[{text:JSON.stringify(payload)}]}],
-    // Ruim plafond: 40 kandidaten kosten al ~1000 uitvoertokens, en denkstappen tellen mee binnen dit plafond.
-    // Alleen gebruikte tokens worden gerekend. thinkingBudget:0 wordt niet door elk model geaccepteerd.
-    // Rangschikken is eenvoudig werk: vraag om kort nadenken (Gemini 3-modellen), anders duurt het
-    // antwoord langer dan de tijdslimiet. Een model dat dit niet kent, krijgt het verzoek zonder.
-    generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192,temperature:0,
-      ...(briefThinking?{thinkingConfig:{thinkingLevel:'low'}}:{})}};
+    generationConfig:{responseMimeType:'application/json',responseSchema:rankingSchema(!!payload.want_rationale),
+      // 40 kandidaten met uitleg kosten ~2000 uitvoertokens; denkstappen tellen mee binnen dit plafond.
+      maxOutputTokens:4096,
+      // Gemini 3: Google raadt de standaard 1.0 aan; een lagere temperature kan tot herhalingslussen leiden.
+      // De volgorde blijft veilig, want normalizeRanking controleert elk antwoord.
+      temperature:1,
+      // Rangschikken is eenvoudig werk: zo min mogelijk nadenken (log 14 november 2026: TIMEOUT).
+      // Een model dat dit niet kent, krijgt het verzoek zonder (handler.mjs).
+      ...(briefThinking?{thinkingConfig:{thinkingLevel:'minimal'}}:{})}};
 }
 
 function cleanWhy(v){

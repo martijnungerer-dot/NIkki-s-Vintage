@@ -37,7 +37,9 @@ const screens=await Promise.all(screenFiles.map(f=>read('app/store-screens/'+f))
 // Taste profile modules (docs/SMAAKPROFIEL.md) come first; they only define window.NikkiTaste.
 const taste=await Promise.all(['profile','aggregate','ranking'].map(f=>read('app/taste/'+f+'.js')));
 shop=patchShop(shop,scripts[0],'<script>\n'+[...taste,await read('app/store-extension.js'),...screens].join('\n')+'\n</script>');
-shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>Nikki’s Boetiek</title>');
+shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>GSF · Guaranteed Secondhand Fur</title>');
+// Martijn, 14 november 2026: the shop is called GSF (Guaranteed Secondhand Fur), no longer Nikki’s Boetiek.
+shop=patchShop(shop,'<span class="brand">Nikki’s Boetiek</span>','<span class="brand" title="Guaranteed Secondhand Fur">GSF</span>');
 // Martijn, 10 november 2026: "Mijn favorieten" in plaats van "Mijn items".
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn items</button>','<button type="button" role="menuitem" data-act="menu">Mijn favorieten</button>');
 // Fourth Shop destination, using the same checked build anchor as Mijn favorieten.
@@ -45,7 +47,10 @@ shop=patchShop(shop,'<button type="button" role="menuitem" data-act="cart-open">
 shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});
-for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));
+for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js','manifest.webmanifest'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));
+// App icon from the GSF brooch (docs/brand/gsf-broche.webp).
+await mkdir(new URL('dist/cloud/icons/',root),{recursive:true});
+for(const file of await readdir(new URL('app/icons/',root)))if(file.endsWith('.png'))await copyFile(new URL('app/icons/'+file,root),new URL('dist/cloud/icons/'+file,root));
 await mkdir(new URL('dist/cloud/admin/',root),{recursive:true});
 for(const file of await readdir(new URL('app/admin/',root))) {
   if(/\.(js|css)$/.test(file))await copyFile(new URL('app/admin/'+file,root),new URL('dist/cloud/admin/'+file,root));

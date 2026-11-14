@@ -27,7 +27,7 @@ body:has(#manage[data-auth="guest"]) > .app-messages { display: none; }
 .manage-content { max-width: 680px; margin: auto; }
 .manage-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
 h1 { margin: 0; font-size: clamp(28px, 7vw, 36px); line-height: 1.2; font-weight: 400; text-wrap: balance; }
-#manage[data-auth="guest"] { background: var(--admin-login-bg); padding-top: 40px; }
+#manage[data-auth="guest"] { padding-top: 40px; }
 #manage[data-auth="guest"] .manage-content { max-width: 420px; padding: 28px 24px; border-radius: 12px; background: var(--admin-card); }
 #login p { margin-top: 0; color: var(--muted); }
 #login label { display: block; margin: 24px 0 6px; }
@@ -38,9 +38,9 @@ input { display: block; width: 100%; min-height: 52px; padding: 12px; border: 1p
 #password-toggle { background: transparent; color: var(--fg); border: 0; padding-inline: 12px; }
 #password-toggle:hover { background: var(--surface); }
 #login-error:empty { display: none; }
-#login #login-error { color: var(--admin-login-bg); margin: 16px 0 0; }
+#login #login-error { color: var(--admin-error); margin: 16px 0 0; }
 #login .login-note { margin: 20px 0 0; text-align: center; }
-#trial-note { margin: 24px 0 0; text-align: center; color: white; }
+#trial-note { margin: 24px 0 0; text-align: center; color: var(--muted); }
 ul { list-style: none; padding: 0; }
 #manage[data-auth="guest"] #items { margin: 0; }
 li { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px 0; border-bottom: 1px solid var(--line); align-items: center; }

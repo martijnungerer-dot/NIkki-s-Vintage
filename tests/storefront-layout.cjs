@@ -106,6 +106,8 @@ async function layout(frame,width) {
    // Normalize only the reference presentation box to the available app dimensions.
    // Its interior markup, CSS, padding, controls and container queries stay untouched.
    await ref.addStyleTag({content:'body{padding:0;gap:0}.note{display:none}.ph{width:'+expectedWidth+'px;height:844px;border-width:0}'});
+   // Approved name change (Martijn, 14 November 2026): the brand reads GSF in the app; give the reference the same text.
+   await ref.evaluate(()=>{document.querySelector('.brand').textContent='GSF';});
    const refGeometry=await layout(ref,width);
    for(const [selector,expected] of Object.entries(refGeometry))for(const [key,value] of Object.entries(expected)) {
     if(selector==='.ph' && key==='radius')continue; // approved removal of the presentation frame

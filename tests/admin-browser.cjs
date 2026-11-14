@@ -173,7 +173,7 @@ async function realNewsreader(p){
       if(name==='rejected'){await p.locator('#password').fill('nieuw-wachtwoord-1');await p.locator('#login [type=submit]').click();}
       await p.locator('#login-error').filter({hasText:'verlopen of al gebruikt'}).waitFor();
       assert.equal(await p.locator('#login').getAttribute('data-mode'),'forgot',name+': offers a new link');
-      assert.equal(await p.evaluate(()=>sessionStorage.length),0);assert.deepEqual(f.state.errors,[]);
+      assert.equal(await p.evaluate(()=>Object.keys(sessionStorage).some(k=>k.startsWith('nikki-session'))),false,'no session stored');assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
   {
@@ -198,5 +198,24 @@ async function realNewsreader(p){
       assert.deepEqual(f.state.saved.p_data.details,['Geen']);assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, busy renewal guard and missing configuration.');
+  {
+    // A refresh returns to the screen you were working on; a shared link still opens the boutique.
+    const f=await fixture(390),p=f.page;try {
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await p.locator('#manage').isVisible(),true,'back on Jouw collectie after refresh');
+      assert.equal(await p.locator('#login').isVisible(),false,'still logged in');
+      await p.locator('#new').click();assert.equal(await p.locator('#intake').isVisible(),true);
+      await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await p.locator('#manage').isVisible(),true,'an unsaved intake returns to Jouw collectie');
+      await p.locator('[data-screen=shop]').first().click();
+      await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await p.locator('#shop').isVisible(),true,'the boutique stays the boutique');
+      await p.evaluate(()=>window.NikkiApp.openAccount());
+      await p.goto('about:blank');await p.goto('https://app.test/#stuk-1');await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await p.locator('#shop').isVisible(),true,'a shared link opens the boutique');
+      assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, refresh keeps the screen, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

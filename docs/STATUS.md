@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — na verversen terug op hetzelfde scherm
+- Na verversen kwam je altijd in de boetiek terecht. De app onthoudt nu per tabblad (`sessionStorage`) of je in het beheer zat en keert daarheen terug. Vanuit Nieuw stuk kom je op Jouw collectie terecht, omdat een niet-opgeslagen stuk niet bewaard blijft. Een gedeelde link of resetlink in het adres gaat voor. Browsertest toegevoegd.
+
 ### 15 november 2026 — opslaan bij bewerken op de telefoon
 - Martijn kon op zijn telefoon een bewerkt stuk niet opslaan: de knop bleef grijs zonder reden. Nagespeeld: een onderdeel onder de vouw (in de test Bijzonderheden) was nog niet afgevinkt.
 - De opslagknop blijft nu tikbaar. Is nog iets open, dan opent een tik dat onderdeel, scrolt ernaartoe en noemt wat ontbreekt; er wordt niets opgeslagen. Bij bewerken heet de knop meteen "Wijziging opslaan". Browsertest toegevoegd; schermafbeelding in `docs/screenshots/acht-fotos/`.

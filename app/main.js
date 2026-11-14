@@ -13,7 +13,16 @@ function show(screen){
   document.body.dataset.screen=screen;
   for(const name of ['shop','intake','manage'])$(name).hidden=name!==screen;
   document.querySelectorAll('button[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
+  try{sessionStorage.setItem(SCREEN_KEY,screen);}catch{}
 }
+// After a refresh, return to the screen you were on (this tab only). An unsaved piece in the
+// intake is not kept, so a refresh there returns to Jouw collectie instead of an empty form.
+const SCREEN_KEY='gsf-screen';
+function lastScreen(){
+  let saved=null;try{saved=sessionStorage.getItem(SCREEN_KEY);}catch{}
+  return saved==='manage'||saved==='intake'?'manage':null;
+}
+const returnTo=location.hash?null:lastScreen();
 const admin=createAdmin({api,$,show});
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
 // Latest Gemini proposal for the piece being entered; saved staff-only next to Nikki's final version.
@@ -41,4 +50,6 @@ window.NikkiApp={
 };
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
 await admin.start();
+// A shared piece or a reset link in the address decides the screen itself.
+if(returnTo&&document.body.dataset.screen==='shop')show(returnTo);
 startReview({api,admin});

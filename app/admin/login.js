@@ -1,16 +1,27 @@
-export function setupLogin({login}) {
-  const form=document.getElementById('login'), submit=form.querySelector('[type=submit]');
-  const password=document.getElementById('password'), toggle=document.getElementById('password-toggle');
-  toggle.addEventListener('click',()=>{
-    const visible=password.type==='password';password.type=visible?'text':'password';
-    toggle.textContent=visible?'Verbergen':'Tonen';toggle.setAttribute('aria-pressed',String(visible));
+export function setupLogin({$,submit}) {
+  const form=$('login'), button=form.querySelector('[type=submit]');
+  const password=$('password'), toggle=$('password-toggle');
+  function visibility(visible){
+    password.type=visible?'text':'password';
+    toggle.textContent=visible?'Verbergen':'Tonen';
+    toggle.setAttribute('aria-label',visible?'Wachtwoord verbergen':'Wachtwoord tonen');
+  }
+  toggle.addEventListener('click',()=>visibility(password.type==='password'));
+  form.addEventListener('submit',event=>{
+    event.preventDefault();if(!button.disabled)submit();
   });
-  form.addEventListener('submit',async event=>{
-    event.preventDefault();if(submit.disabled)return;
-    const error=document.getElementById('login-error');error.textContent='';
-    submit.disabled=true;submit.textContent='Inloggen…';form.setAttribute('aria-busy','true');
-    try {await login(document.getElementById('email').value,password.value);password.value='';}
-    catch(e) {error.textContent=e.message;error.focus();}
-    finally {submit.disabled=false;submit.textContent='Inloggen';form.removeAttribute('aria-busy');}
-  });
+  return {
+    error:message=>{$('login-error').textContent=message;},
+    resetPassword(){password.value='';visibility(false);},
+    busy(busy,configured){
+      button.disabled=busy||!configured;
+      button.textContent=busy?'Inloggen…':'Inloggen';
+      toggle.disabled=busy;
+      if(busy)form.setAttribute('aria-busy','true');else form.removeAttribute('aria-busy');
+    }
+  };
+}
+
+export async function restoreSession({api,state}) {
+  if(api.session){try{await api.request('/rest/v1/rpc/require_staff',{method:'POST',body:{}});state.staff=true;}catch{api.keep(null);}}
 }

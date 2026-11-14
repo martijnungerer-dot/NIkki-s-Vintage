@@ -121,4 +121,7 @@ Bij elke AI-PR meld je apart dat live Gemini niet getest is zolang een account o
 | Ontwerp "Jouw collectie" | Vastgesteld (11 november 2026) |
 | Ontwerp inloggen, invoerscherm, fotocoach, meten | Open, in het Claude Design-artefact |
 | Besluit invoerscherm | Eigen bron `app/intake/` (12 november 2026) |
-| Fase 0–5 | Niet begonnen |
+| Fase 0, stap 1 | Skills gemerged in PR #31 |
+| Fase 0, stap 2 | Gemerged in PR #37 op 13 november 2026 (`b636a36`). [Bewijs en overdracht](screenshots/beheer-fase-0/README.md). |
+| Fase 1 | Bovenbalk/inloggen in PR #36, via merge op fase 0; overige onderdelen volgen volgens [de PR-reeks](BEHEER-PR-REEKS.md). |
+| Fase 2–5 | Gepland in de PR-reeks; vaststelling open ontwerpen en aparte backendakkoorden blijven vereist |

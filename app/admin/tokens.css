@@ -1,5 +1,15 @@
+/* Optie B and the approved admin login palette. One source for admin tokens. */
 :root {
-  --bg:#FAF6F0; --surface:#F3ECE3; --fg:#2E2420; --muted:#6B5A50; --line:#E3DAD0;
-  --serif:'Newsreader',Georgia,'Times New Roman',serif;
-  color-scheme:light;
+  color-scheme: light;
+  --admin-login-bg: #9B3A2F;
+  --admin-card: #FFFFFF;
+  --page: #EFE9E2; --bg: #FAF6F0; --fg: #2E2420; --muted: #6B5A50; --line: #E3DAD0;
+  --chip: #F3ECE3; --chip-line: #D9CFC4; --chip-on: #E4D6C5; --band: #F1E9DF; --bracket: #B9AA9C; --photo-bg: #E9E1D6;
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --surface: var(--chip);
+  --admin-text-min: 16px;
+  --admin-target-min: 44px;
+  --admin-radius-photo: 8px;
+  --admin-radius-control: 10px;
+  --admin-gap: 8px;
 }

@@ -10,6 +10,24 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 14 november 2026 — PR #36 op de gemergede fase 0
+- `main` opgehaald op `b636a36` (PR #37). Zeven conflicten in PR #36 via een gewone merge opgelost; één set beheermodules en alle API/UI-koppelingen in `app/admin/index.js`. `main.js` blijft gelijk aan fase 0.
+- Beide Claude Code-reviews verwerkt: action-bewaking, lokale authenticatiefouten, wachtwoord wissen/verbergen vóór staff/controls/refresh, zichtbare fouten na authenticatie, juiste submitselector, wisselende toegankelijke naam zonder aria-pressed en geen focus op de alert.
+- Eén rij in de bovenbalk, Newsreader voor alle beheertekst, witte kaart op `#9B3A2F`, proefmelding onder de kaart, geen statusregel boven inloggen en opgeschoonde CSS. [Beelden op 390/320 px](screenshots/beheer-login/README.md), met werkelijk gerenderde Newsreader; de rechtstreekse Claude Design-vergelijking blijft geblokkeerd door de netwerkproxy.
+- [PR-reeks](BEHEER-PR-REEKS.md) aangevuld met snel bewerken, vijf seconden ongedaan maken, concepten bewaren, uploadwachtrij en reeksen fotograferen. Geen backend- of winkelwijziging.
+- `npm run build`, `npm test` (51/51), de volledige `npm run test:browser`, `npm run check` en `git diff --check` slagen lokaal. Nieuwe beheertests slagen voor login/logout, 401/403, vernieuwingsfout na login en herstel, dubbele submit, oude fotolinks tijdens login, ontbrekende configuratie, toetsenbord en mobiele layout. De bestaande deelt-test wacht nu op de asynchrone kopieerbevestiging vóór klembordcontrole. Live Supabase/Gemini en telefooncamera niet getest.
+
+### 13 november 2026 — fase 0 gecorrigeerd voor eigen PR
+- Beide Claude Code-reviews op PR #36 gelezen. `function show` vóór `createAdmin` gezet; de configuratiecontrole selecteert `[type=submit]` en de bestaande knop heeft dat type expliciet gekregen.
+- Vanaf opnieuw opgehaalde main `516df19`; bestaande fase-0-geschiedenis behouden. Build en 51 tests slagen. De browsersuite slaagt voor cloud-UI en layout, maar faalt op de bestaande klembordrace in de deelt-test; die test slaagt bij afzonderlijke herhaling. Project- en diffcontrole slagen.
+- Nieuwe voor/na-beelden op 390 en 320 px: vijf pixelgelijk, collectie 320 px met 70 vrijwel gelijke randpixels (maximaal 2/255). [Bewijs en beperkingen](screenshots/beheer-fase-0/README.md), waaronder fallbackfont en geblokkeerde toegang tot Claude Design.
+- PR #36 wacht op Martijns merge van fase 0. De ontwerp-, login- en documentatiecorrecties voor die PR zijn nog niet uitgevoerd.
+
+### 12 november 2026 — beheer fase 0, stap 2 voorbereid voor review
+- Vanaf main `516df19`, branch `codex/beheer-fase-0-modules`: `app/main.js` opgesplitst in `app/admin/` en optie-B-tokens toegevoegd. Bestaande werking, testselectors en bevestigingen behouden; geen boetiek- of backendwijziging.
+- Build, 51 tests, volledige bestaande browsersuite, projectcheck en diffcheck geslaagd. De baseline had een bestaande timingfout bij de klembordcontrole (`tests/storefront-share.cjs:65`); die is niet gewijzigd of opgelost.
+- Inloggen, collectie en boetiek zijn pixelgelijk voor/na op 390 en 320 px. [Beelden, beperkingen en overdracht](screenshots/beheer-fase-0/README.md). Nog niet gemerged of gepubliceerd; live Supabase/Gemini niet getest.
+
 ### 12 november 2026 — opslag geblokkeerd, plannen voor de beheerkant
 - `app/store-screens/personalise.js` vangt nu een geblokkeerde browseropslag op. Daardoor laadt de collectie, in Nikki's volgorde en zonder AI-aanroep. Daarvoor faalde het laden; dat liet een nieuwe test eerst zien. Alle tests geslaagd.
 - Beheerkant: het ontwerp van "Jouw collectie" is door Martijn vastgesteld in Claude Design. De ontwerpbrief (PR #30, #33 en #34) en het plan in vijf fasen ([BEHEER-PLAN.md](BEHEER-PLAN.md)) staan op main. Er is nog niets van gebouwd.

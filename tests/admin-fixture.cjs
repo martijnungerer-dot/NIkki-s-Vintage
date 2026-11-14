@@ -9,16 +9,21 @@ const garment = {id, display_id:1, status:'published', version:1, data:{
   species:null, fit:null, era:null, details:[], measurements:[54,46,62,98],
   images:[{path:photo,role:'Voorkant',main:true}]
 }};
-async function fixture(width = 390) {
+async function fixture(width = 390, options = {}) {
   const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
   const context = await browser.newContext({viewport:{width,height:844}});
   const page = await context.newPage();
-  const state = {rows:[structuredClone(garment)],requests:[],errors:[]};
+  if(options.clock)await page.clock.install();
+  const state = {rows:[structuredClone(garment)],requests:[],errors:[],...options};
   page.on('pageerror', e=>state.errors.push(e.message));
   page.on('dialog', d=>d.accept());
   await context.route('**/*', async route=>{
     const req = route.request(), url = new URL(req.url());
+    // Test-only local copy of the real font; production keeps Google Fonts.
+    if(url.hostname==='fonts.googleapis.com')return route.fulfill({contentType:'text/css',body:"@font-face{font-family:Newsreader;font-style:normal;font-weight:200 800;src:url('https://app.test/__test-newsreader.ttf') format('truetype');font-display:swap}"});
     if (url.hostname === 'app.test') {
+      if(url.pathname==='/__test-newsreader.ttf')return route.fulfill({contentType:'font/ttf',body:fs.readFileSync(path.join(__dirname,'fixtures/fonts/Newsreader.ttf'))});
+      if(url.pathname==='/config.js'&&options.unconfigured)return route.fulfill({contentType:'text/javascript',body:"export const config={supabaseUrl:'',supabasePublishableKey:''}"});
       if (url.pathname === '/config.js') return route.fulfill({contentType:'text/javascript',body:"export const config={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test-public'}"});
       const file = url.pathname === '/' ? '/index.html' : url.pathname;
       try { return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(path.join('dist/cloud',file))}); }
@@ -29,7 +34,13 @@ async function fixture(width = 390) {
     const json = (data,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(data)});
     if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
     state.requests.push({path:url.pathname,body:req.postDataJSON()});
-    if(url.pathname==='/auth/v1/token')return json({access_token:'session',refresh_token:'refresh',expires_at:Date.now()/1000+3600});
+    if(url.pathname==='/auth/v1/token'){
+      if(state.loginHold)await state.loginHold;
+      if(state.failLogin)return json({error:'Invalid login credentials'},401);
+      return json({access_token:'session',refresh_token:'refresh',expires_at:Date.now()/1000+3600});
+    }
+    if(url.pathname==='/rest/v1/rpc/require_staff'&&state.denyStaff)return json({},403);
+    if(url.pathname==='/rest/v1/garments'&&state.failList)return json({},503);
     if(url.pathname==='/rest/v1/rpc/require_staff'||url.pathname==='/auth/v1/logout')return json(null);
     if(url.pathname==='/rest/v1/garments'||url.pathname==='/rest/v1/rpc/public_catalog')return json(state.rows);
     if(url.pathname==='/storage/v1/object/sign/garment-photos')return json(req.postDataJSON().paths.filter(p=>!p.includes('missing')).map(p=>({path:p,signedURL:'/object/sign/garment-photos/'+p})));
@@ -38,8 +49,9 @@ async function fixture(width = 390) {
     return json({error:'fixture route unavailable'},500);
   });
   await page.goto('https://app.test');
-  await page.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');
+  await page.waitForFunction(unconfigured=>document.getElementById('status').textContent.includes(unconfigured?'niet aangesloten':'Collectie geladen.'),Boolean(options.unconfigured));
   await page.evaluate(()=>window.NikkiApp.openAccount());
+  await page.evaluate(async()=>{await document.fonts.load('16px Newsreader');await document.fonts.ready;});
   return {browser,page,state,async login(){
     await page.locator('#email').fill('nikki@example.test');
     await page.locator('#password').fill('test-password');

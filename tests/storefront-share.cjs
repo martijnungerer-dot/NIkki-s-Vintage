@@ -62,6 +62,8 @@ function catalog(sold=-1){return names.map((title,i)=>({id:id(i),display_id:i+1,
     } else {
      // Without a share sheet the link is copied, and the same icon briefly shows a checkmark.
      await share.click();
+     // Clipboard writes finish asynchronously; wait for the actual success signal.
+     await shop.locator('#photo .photo-acts button[aria-label="Link gekopieerd"]').waitFor();
      assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),'https://app.test/#stuk='+id(1));
      assert.equal(await share.getAttribute('aria-label'),'Link gekopieerd');
      assert.equal(await share.locator('path').getAttribute('d'),'M5 12.5l4.5 4.5L19 7.5');

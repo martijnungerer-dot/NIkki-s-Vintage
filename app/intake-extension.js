@@ -27,19 +27,27 @@ internalStyle.textContent=[
 document.head.append(internalStyle);
 // The save message (what is missing, saving, saved) belongs next to the save button.
 $('publish').before($('review-err'));
-// True right after a successful save, false again after any change (set in the save patch).
-let savedJustNow=false;
-for(const id of ['path','cam','gallery','thumbs'])for(const type of ['input','change','click'])$(id).addEventListener(type,()=>{savedJustNow=false;},true);
+// Unsaved input = what is on screen differs from the last saved or opened state.
+function snapshot(){
+  return JSON.stringify({p:photos.map(x=>[x.url,x.rol,!!x.main,!!x.internal,!!x.ok]),sel:sel,m:m,t:text,sp:speciesChecked});
+}
+let baseline=snapshot();
+function markSaved(){baseline=snapshot();}
+// Typed but not yet added values of "+ nieuw", per field (kept when the checklist is redrawn).
+var addDraft={};
+$('path').addEventListener('input',e=>{if(e.target.id&&e.target.id.indexOf('add-')===0)addDraft[e.target.id.slice(4)]=e.target.value;});
+$('again').addEventListener('click',()=>{addDraft={};markSaved();});
+function unsavedInput(){return snapshot()!==baseline||Object.values(addDraft).some(v=>v.trim());}
 // "Volgend stuk" starts over; ask first if there is input that has not been saved.
 document.getElementById('new-draft')?.addEventListener('click',event=>{
-  const unsaved=photos.length>0||!!text.titel.trim()||!!text.prijs.trim()||Object.values(sel).some(v=>Array.isArray(v)?v.length:!!v);
-  if(unsaved&&!savedJustNow&&!confirm('Wat je hebt ingevuld is nog niet opgeslagen. Toch een nieuw stuk beginnen?')){event.stopImmediatePropagation();}
+  if(unsavedInput()&&!confirm('Wat je hebt ingevuld is nog niet opgeslagen. Toch een nieuw stuk beginnen?')){event.stopImmediatePropagation();}
 },true);
 // A new piece forgets the Gemini proposal of the previous one.
 $('again').addEventListener('click',()=>window.parent.NikkiApp.forgetAnalysis?.());
 renderThumbs();
 $('review-intro').textContent='Controleer alle gegevens voordat je opslaat.';
 window.NikkiIntake = {
+  hasUnsavedInput:()=>unsavedInput(),
   async load(record) {
     const incoming = [];
     // Internal photos are fetched separately (staff only); saving without them would drop them.
@@ -56,5 +64,6 @@ window.NikkiIntake = {
     text={titel:record.title,beschrijving:record.description,prijs:String(record.priceMinor/100)};
     speciesChecked=true; renderThumbs(); startReview({},0,'Opgeslagen stuk. Controleer je wijzigingen.');
     $('publish').textContent='Wijziging opslaan';
+    markSaved();
   }
 };

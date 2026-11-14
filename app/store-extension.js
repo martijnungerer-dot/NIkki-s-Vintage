@@ -22,7 +22,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var ph = $('ph'), N = ITEMS.length;
-  var S = { item: 0, photo: 0, prev: N - 1, liked: read('gsf-liked'), cart: read('nikki-cart'), zoom: false, open: null };
+  var S = { item: 0, photo: 0, prev: N - 1, liked: read('gsf-liked'), cart: read('nikki-cart'), goneFromCart: 0, zoom: false, open: null };
   var g = { start: null, axis: null, lastTap: 0, lastWheel: 0 };
 
   function renderTrack() {
@@ -329,8 +329,10 @@
       // Only an authoritative publication list can remove items; photo availability cannot.
       // put() or other partial updates do not supply that list.
       if(Array.isArray(publishedIds)) {
-        var published=new Set(publishedIds);
+        var published=new Set(publishedIds), before=Object.keys(S.cart).length;
         S.cart=Object.fromEntries(Object.keys(S.cart).filter(key=>published.has(key)).map(key=>[key,true]));
+        // Unique pieces: if one left the collection (sold), say so once in the basket.
+        S.goneFromCart+=before-Object.keys(S.cart).length;
       }
       save('nikki-cart',S.cart);
       var infoScroll=$('info').scrollTop, infoFocused=$('info').contains(document.activeElement); render(false);
@@ -365,6 +367,8 @@
     publicCopy,
     current:()=>ITEMS[S.item] || null,
     cartKeys:()=>Object.keys(S.cart),
+    // Number of basket pieces that left the collection since the last time the basket said so.
+    takeGoneFromCart:()=>{var n=S.goneFromCart;S.goneFromCart=0;return n;},
     toggleCart,
     isLiked:it=>!!S.liked[it.displayId],
     show:key=>{var i=ITEMS.findIndex(it=>it.key===key);if(i<0)return false;closeAll(false);goItem(i);return true;},

@@ -1,6 +1,7 @@
 // Downscale before upload/AI; canvas export removes original EXIF metadata.
 export async function prepareImage(file) {
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8*1024*1024) throw Error('Gebruik JPG, PNG of WebP van maximaal 8 MB.');
+  // Phone photos are often 5–15 MB; they are scaled down to 1600 px here, so only absurd files are refused.
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 30*1024*1024) throw Error('Gebruik een JPG-, PNG- of WebP-foto van maximaal 30 MB.');
   const bitmap = await createImageBitmap(file);
   try {
     const scale = Math.min(1,1600/Math.max(bitmap.width,bitmap.height));

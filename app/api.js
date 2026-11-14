@@ -118,13 +118,25 @@ export class Api {
   // Public photos go into the catalogue; photos "Alleen voor controle" (internal) only into the
   // staff-only table garment_private, so visitors can never see them. The latest Gemini proposal
   // is stored next to them for later comparison (never in the browser of a visitor).
-  async save(product, version, {ai = null} = {}) {
+  async save(product, version, {ai = null, onProgress = () => {}} = {}) {
+    // Upload up to three photos at a time (much faster on a phone than one by one), keeping order.
+    const stored = new Array(product.images.length); let next = 0, done = 0;
+    const total = product.images.length;
+    onProgress(total === 1 ? 'Foto opslaan…' : 'Foto’s opslaan: 0 van ' + total + '…');
+    const worker = async () => {
+      while(next < total) {
+        const index = next++;
+        stored[index] = await this.upload(product.key, product.images[index]);
+        done++; if(total > 1) onProgress('Foto’s opslaan: ' + done + ' van ' + total + '…');
+      }
+    };
+    await Promise.all(Array.from({length: Math.min(3, total)}, worker));
+    onProgress('Stuk opslaan…');
     const images = [], internal = [];
-    for(const image of product.images) {
-      const stored = await this.upload(product.key, image);
-      if(image.internal) internal.push({path:stored.path, role:stored.role});
-      else images.push(stored);
-    }
+    product.images.forEach((image, index) => {
+      if(image.internal) internal.push({path:stored[index].path, role:stored[index].role});
+      else images.push(stored[index]);
+    });
     // Explicit public allowlist: no session, private notes, cost or model output.
     const data = Object.fromEntries(['title','description','priceMinor','material','species','model','colour','length','fit','era','details','measurements','furClass'].map(k=>[k,product[k]]));
     data.images = images;

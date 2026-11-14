@@ -4,7 +4,8 @@
 body { margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--serif); }
 .app-header { flex: none; border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top); }
 .app-toolbar { max-width: 720px; margin: auto; padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.app-toolbar strong { font-size: clamp(20px, 6vw, 24px); font-weight: 400; white-space: nowrap; }
+/* Full brand name on two lines next to the icons (Martijn, 14 November 2026). */
+.app-toolbar strong { display: flex; flex-direction: column; font-size: 18px; line-height: 1.1; font-weight: 400; white-space: nowrap; }
 .app-toolbar nav, #manage-actions { display: flex; gap: 4px; }
 button { font: inherit; min-height: 44px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); cursor: pointer; touch-action: manipulation; }
 button:hover { background: var(--surface); }

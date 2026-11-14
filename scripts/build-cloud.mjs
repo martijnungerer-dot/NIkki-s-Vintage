@@ -37,9 +37,9 @@ const screens=await Promise.all(screenFiles.map(f=>read('app/store-screens/'+f))
 // Taste profile modules (docs/SMAAKPROFIEL.md) come first; they only define window.NikkiTaste.
 const taste=await Promise.all(['profile','aggregate','ranking'].map(f=>read('app/taste/'+f+'.js')));
 shop=patchShop(shop,scripts[0],'<script>\n'+[...taste,await read('app/store-extension.js'),...screens].join('\n')+'\n</script>');
-shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>GSF · Guaranteed Secondhand Fur</title>');
-// Martijn, 14 november 2026: the shop is called GSF (Guaranteed Secondhand Fur), no longer Nikki’s Boetiek.
-shop=patchShop(shop,'<span class="brand">Nikki’s Boetiek</span>','<span class="brand" title="Guaranteed Secondhand Fur">GSF</span>');
+shop=patchShop(shop,'<title>Ontdekken – optie B</title>','<title>Guaranteed Secondhand Fur</title>');
+// Martijn, 14 november 2026: the shop is called Guaranteed Secondhand Fur (GSF), no longer Nikki’s Boetiek.
+shop=patchShop(shop,'<span class="brand">Nikki’s Boetiek</span>','<span class="brand">Guaranteed Secondhand Fur</span>');
 // Martijn, 10 november 2026: "Mijn favorieten" in plaats van "Mijn items".
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn items</button>','<button type="button" role="menuitem" data-act="menu">Mijn favorieten</button>');
 // Fourth Shop destination, using the same checked build anchor as Mijn favorieten.

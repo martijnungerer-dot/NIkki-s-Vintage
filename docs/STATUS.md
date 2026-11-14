@@ -15,6 +15,13 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 - Inlogformulier met drie standen in dezelfde velden: inloggen, link vragen en nieuw wachtwoord kiezen. De link vragen gaat via Supabase `/auth/v1/recover` met een neutrale melding; de token uit de link wordt meteen uit de adresbalk gehaald en pas na opslaan en de beheerderscontrole bewaard. Een verlopen link biedt direct een nieuwe aan.
 - Nieuwe tests: API (redirect, 429, opslag pas na staff-controle, 401/422), het uitlezen van de link en de browserroute op 390/320 px. `npm run build`, `npm test` (57/57), `npm run test:browser`, `npm run check` en `git diff --check` slagen lokaal. Live Supabase-mail niet getest; de Site URL en Redirect URL moeten nog in Supabase worden ingesteld (zie SUPABASE-START.md).
 
+### 14 november 2026 — migraties `personalise_usage` en `review_notes` live
+- Martijn heeft op zijn Windows-computer `npx.cmd supabase db push --remote` gedraaid tegen project `naxjrskfdedwvoeltigs`. De CLI paste precies twee migraties toe: `20261110210000_personalise_usage.sql` en `20261114120000_review_notes.sql`. Er werd verder niets toegevoegd of gewijzigd.
+- Opmerkingenlaag (PR #38) gecontroleerd: opmerkingen van het gele potloodje staan in `public.review_notes`, gelezen via de SQL Editor.
+- De live site toont de naam uit PR #39 ("Guaranteed Secondhand Fur").
+- Niet gecontroleerd: of `supabase functions deploy personalise` al is uitgevoerd en of `npm run check:live` slaagt.
+- Documentatie bijgewerkt: de huidige CLI vraagt `--remote` bij `db push`; in Windows PowerShell `npx.cmd`.
+
 ### 14 november 2026 — PR #36 op de gemergede fase 0
 - `main` opgehaald op `b636a36` (PR #37). Zeven conflicten in PR #36 via een gewone merge opgelost; één set beheermodules en alle API/UI-koppelingen in `app/admin/index.js`. `main.js` blijft gelijk aan fase 0.
 - Beide Claude Code-reviews verwerkt: action-bewaking, lokale authenticatiefouten, wachtwoord wissen/verbergen vóór staff/controls/refresh, zichtbare fouten na authenticatie, juiste submitselector, wisselende toegankelijke naam zonder aria-pressed en geen focus op de alert.

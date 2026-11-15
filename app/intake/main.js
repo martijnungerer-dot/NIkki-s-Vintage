@@ -381,17 +381,23 @@
     var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition, step = current();
     if (!voice.on || !step) return setVoice('idle');
     if (!Recognition) { voice.note = 'Luisteren werkt hier niet. Typ, of dicteer met de microfoon van je toetsenbord.'; voice.on = false; setVoice('idle'); return renderAnswer(step); }
-    var rec = voice.rec = new Recognition(), heard = '';
+    var rec = voice.rec = new Recognition(), heard = '', started = false, guard = null;
     rec.lang = 'nl-NL'; rec.interimResults = false; rec.maxAlternatives = 1;
+    // Veiligheidstijd: start het luisteren niet (bijvoorbeeld een vraag om de microfoon die blijft staan),
+    // of hoort het niets, dan stopt het en zegt het scherm dat, in plaats van eindeloos te blijven luisteren.
+    var watch = function (ms) { clearTimeout(guard); guard = setTimeout(function () { if (voice.rec !== rec) return; try { rec.abort(); } catch (e) {} rec.onerror({ error: started ? 'no-speech' : 'failed' }); }, ms); };
+    rec.onstart = rec.onaudiostart = function () { if (!started) { started = true; watch(10000); } };
     rec.onresult = function (e) { heard = e.results[0][0].transcript; };
-    rec.onspeechstart = function () { voice.hearing = true; };
+    rec.onspeechstart = function () { voice.hearing = true; clearTimeout(guard); };
     rec.onspeechend = function () { voice.hearing = false; };
     rec.onerror = function (e) {
+      clearTimeout(guard);
       if (voice.rec !== rec) return; voice.rec = null; voice.on = false; setVoice('idle');
       voice.note = e.error === 'no-speech' ? 'Ik hoorde niets. Tik op de golfjes om het nog eens te proberen.' : 'Luisteren lukt hier niet. Typ, of dicteer met de microfoon van je toetsenbord.';
       renderAnswer(current());
     };
     rec.onend = function () {
+      clearTimeout(guard);
       if (voice.rec !== rec) return; voice.rec = null; setVoice('idle');
       var now = current(); if (!heard || !now) return;
       voice.note = '';
@@ -399,7 +405,7 @@
       if (now.kind === 'long') { var field = $('free'); if (field) field.value = (field.value ? field.value.trim() + ' ' : '') + heard; voice.on = false; return; }
       freeAnswer(now, heard);
     };
-    setVoice('listening');
+    setVoice('listening'); watch(5000);
     try { rec.start(); } catch (e) { rec.onerror({ error: 'failed' }); }
   }
   function speakQuestion(step) {

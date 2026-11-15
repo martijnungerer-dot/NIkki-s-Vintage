@@ -39,22 +39,46 @@ svg { display: block; }
 .top h1 { flex: 1; min-width: 0; margin: 0; font-size: 22px; font-weight: 400; }
 .steps { flex: none; padding-right: 8px; font-size: 16px; color: var(--muted); white-space: nowrap; }
 
-/* Foto's staan in een eigen strook; er staat nooit tekst op een foto. */
-.thumbs { flex: none; display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; border-bottom: 1px solid var(--line); }
-.thumbs img { flex: none; width: 52px; height: 64px; object-fit: cover; object-position: center top; border-radius: 8px; background: var(--photo-bg); }
+/* Het podium vult de ruimte die overblijft. Er staat nooit tekst op een foto. */
+.stage { flex: 1 1 0; min-height: 150px; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 4px; }
+.hero { position: relative; flex: 1; min-height: 0; border-radius: 14px; overflow: hidden; background: var(--photo-bg); }
+.hero img { width: 100%; height: 100%; object-fit: contain; object-position: center; animation: beeld 360ms ease-out both; }
+@keyframes beeld { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+/* De AI "kijkt": een zachte lichtbaan trekt over de foto. */
+.scan { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 35%, rgba(250,246,240,.55) 50%, transparent 65%); background-size: 250% 100%; animation: kijk 900ms ease-in-out infinite; }
+@keyframes kijk { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+.hero .camera { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--chip); font-size: 20px; text-align: center; cursor: pointer; }
+.camera .lens { width: 84px; height: 84px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; animation: adem 2600ms ease-in-out infinite; }
+@keyframes adem { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.camera:focus-within { outline: 2px solid var(--fg); outline-offset: -4px; }
+.thumbs { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 2px; }
+.thumbs button { flex: none; width: 46px; height: 56px; padding: 0; border: 0; border-radius: 8px; overflow: hidden; background: var(--photo-bg); opacity: .6; animation: val 380ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 70ms); }
+.thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--fg); outline-offset: 1px; }
+.thumbs img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+@keyframes val { from { opacity: 0; transform: translateY(-14px) scale(.9); } to { transform: none; } }
+[data-mode="overview"] .stage { display: none; }
 
-.talk { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.talk { position: relative; flex: 0 1 auto; min-height: 0; max-height: 46%; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+[data-mode="overview"] .talk { flex: 1; max-height: none; padding-top: 16px; gap: 12px; }
 .note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--band); color: var(--muted); font-size: 16px; }
 .ai { margin: 0; max-width: 34ch; }
-.ai.now { font-size: 24px; line-height: 1.25; max-width: 22ch; }
+.ai.now { font-size: 24px; line-height: 1.25; max-width: 24ch; }
+/* De vraag komt woord voor woord; schermlezers krijgen de hele zin. */
+.ai.fresh .w { opacity: 0; animation: woord 260ms ease-out forwards; animation-delay: calc(var(--i) * 45ms); }
+@keyframes woord { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.trail { flex: none; display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px; scrollbar-width: none; }
+.trail::-webkit-scrollbar { display: none; }
+.done-mark { width: 56px; height: 56px; border-radius: 50%; background: var(--chip-on); display: grid; place-items: center; }
+.done-mark path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: vink 420ms 120ms ease-out forwards; }
+@keyframes vink { to { stroke-dashoffset: 0; } }
 .ai .warm { display: block; color: var(--muted); font-size: 18px; padding-bottom: 4px; }
-.me { align-self: flex-end; max-width: 85%; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 16px 16px 4px 16px; background: var(--chip-on); text-align: left; display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.me { flex: none; max-width: 70vw; min-height: 44px; padding: 6px 12px; border: 0; border-radius: 22px; background: var(--chip-on); font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.me span { overflow: hidden; text-overflow: ellipsis; }
 .me svg { flex: none; }
 .dots { display: flex; gap: 6px; padding: 8px 0; }
 .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: wacht 900ms ease-in-out infinite; }
 .dots i:nth-child(2) { animation-delay: 150ms; } .dots i:nth-child(3) { animation-delay: 300ms; }
 @keyframes wacht { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-.measure { width: 120px; height: 150px; border-radius: 8px; background: var(--photo-bg); }
 
 /* Overzicht: zo komt het in de boetiek. */
 .card { border: 1px solid var(--line); border-radius: 14px; background: #FFFFFF; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -67,8 +91,10 @@ svg { display: block; }
 
 /* Antwoorden: grote knoppen, daaronder typen of dicteren. */
 .answer { flex: none; padding: 12px 16px 16px; border-top: 1px solid var(--line); background: var(--band); display: flex; flex-direction: column; gap: 10px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; max-height: 38vh; overflow-y: auto; }
-.chip { min-height: 44px; padding: 8px 14px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); text-align: left; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; max-height: 28vh; overflow-y: auto; }
+.chip { min-height: 44px; padding: 8px 14px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); text-align: left; transition: transform 120ms ease-out, background 160ms ease-out; }
+.chip:active { transform: scale(.96); }
+.chips.fresh .chip { animation: woord 260ms ease-out both; animation-delay: calc(120ms + var(--i) * 28ms); }
 .chip[aria-pressed="true"] { background: var(--chip-on); border-color: var(--fg); }
 .chip.main { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .chip.quiet { background: transparent; color: var(--muted); }
@@ -86,10 +112,8 @@ svg { display: block; }
 .voice[data-voice="speaking"] .bars { display: none; }
 .voice[data-voice="speaking"] .wave { display: block; }
 .voice .bars rect { transform-box: fill-box; transform-origin: center; transform: scaleY(.3); }
-.voice[data-voice="listening"] .bars rect { animation: luister 700ms ease-in-out infinite; }
-.voice .bars rect:nth-child(2) { animation-delay: 120ms; } .voice .bars rect:nth-child(3) { animation-delay: 240ms; }
-.voice .bars rect:nth-child(4) { animation-delay: 360ms; } .voice .bars rect:nth-child(5) { animation-delay: 480ms; }
-@keyframes luister { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+.voice .bars rect { transition: transform 110ms ease-out; }
+.voice .wave { transform: scaleY(var(--amp, 1)); transition: transform 140ms ease-out; }
 .voice[data-voice="speaking"] .wave path { animation: praat 900ms linear infinite; }
 @keyframes praat { from { transform: translateX(0); } to { transform: translateX(-16px); } }
 .voice-note { margin: 0; font-size: 16px; color: var(--muted); }
@@ -97,7 +121,14 @@ svg { display: block; }
 .pick { position: relative; overflow: hidden; }
 .pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-@media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: .6; } .voice .bars rect, .voice .wave path { animation: none !important; } .voice[data-voice="listening"] .bars rect { transform: scaleY(.8); } }
+@media (prefers-reduced-motion: reduce) {
+  .dots i { animation: none; opacity: .6; }
+  .voice .wave path, .hero img, .scan, .camera .lens, .thumbs button, .chips.fresh .chip, .done-mark path { animation: none !important; }
+  .ai.fresh .w { animation: none; opacity: 1; }
+  .done-mark path { stroke-dashoffset: 0; }
+  .scan { display: none; }
+  .voice[data-voice="listening"] .bars rect { transform: scaleY(.8); }
+}
 </style>
 </head>
 <body>
@@ -107,7 +138,11 @@ svg { display: block; }
     <h1>Nieuw stuk</h1>
     <span class="steps" id="steps" aria-live="polite"></span>
   </header>
-  <div class="thumbs" id="thumbs" hidden></div>
+  <!-- Het podium: de foto groot in beeld; bij een maatvraag de tekening van waar het meetlint ligt. -->
+  <section class="stage" id="stage" data-state="empty">
+    <div class="hero" id="hero"></div>
+    <div class="thumbs" id="thumbs" role="group" aria-label="Foto’s van dit stuk" hidden></div>
+  </section>
   <main class="talk" id="talk" aria-live="polite"></main>
   <form class="answer" id="answer" novalidate></form>
 </div>
@@ -144,7 +179,10 @@ svg { display: block; }
   var $ = function (id) { return document.getElementById(id); };
   var A = {}, photos = [], editing = null, thinking = false, saved = false, multi = null, error = '';
   // Praten (alleen na een tik op de golfjes): de AI leest de vraag voor en luistert daarna.
-  var voice = { on: false, state: 'idle', note: '', said: '', rec: null };
+  var voice = { on: false, state: 'idle', note: '', said: '', rec: null, hearing: false, timer: null };
+  // Wat er op het podium staat en welke vraag al getoond is (voor de overgangen).
+  var view = null, heroKey = '', thumbKey = '', askedKey = '';
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var VOICE_ICON = '<svg class="bars" width="30" height="24" viewBox="0 0 30 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="3" height="20" rx="1.5"/><rect x="8" y="2" width="3" height="20" rx="1.5"/><rect x="14" y="2" width="3" height="20" rx="1.5"/><rect x="20" y="2" width="3" height="20" rx="1.5"/><rect x="26" y="2" width="3" height="20" rx="1.5"/></svg>' +
     '<svg class="wave" width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M-16 12 q4 -9 8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0"/></svg>';
   var VOICE_LABEL = { idle: 'Praat met de AI', speaking: 'De AI praat. Tik om te stoppen', listening: 'De AI luistert. Tik om te stoppen' };
@@ -211,31 +249,56 @@ svg { display: block; }
     A[step.id] = value; if (step.set) step.set(value);
     editing = null; multi = null; saved = false; render();
   }
+  function words(text, from) {
+    return text.split(' ').map(function (w, i) { return '<span class="w" style="--i:' + (from + i) + '">' + esc(w) + '</span>'; }).join(' ');
+  }
+  // Het podium: cameravlak, de gekozen foto, of bij een maatvraag de tekening met het meetlint.
+  function renderStage(step) {
+    var hero = $('hero'), key, h;
+    if (!photos.length) { key = 'camera'; h = '<label class="camera pick"><span class="lens" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>Maak of kies foto’s</span><input type="file" id="files" accept="image/*" multiple aria-label="Foto’s maken of kiezen"></label>'; }
+    else if (step && step.kind === 'cm') { key = 'cm-' + step.id; h = '<img class="measure" src="' + coat('#4A342A', step.id === 'length', MEASURE[step.id]) + '" alt="Tekening: zo leg je het meetlint voor de ' + step.label.toLowerCase() + '">'; }
+    else { var at = Math.min(view === null ? 0 : view, photos.length - 1); key = 'photo-' + at + photos[at]; h = '<img src="' + esc(photos[at]) + '" alt="Foto ' + (at + 1) + ' van dit stuk">'; }
+    if (thinking) { key += '-scan'; h += '<div class="scan" aria-hidden="true"></div>'; }
+    if (key !== heroKey) { heroKey = key; hero.innerHTML = h; }
+    $('stage').setAttribute('data-state', !photos.length ? 'empty' : thinking ? 'looking' : 'photo');
+    var thumbs = $('thumbs'), shownAt = step && step.kind === 'cm' ? -1 : Math.min(view === null ? 0 : view, photos.length - 1);
+    thumbs.hidden = !photos.length;
+    if (photos.join('|') !== thumbKey) {
+      thumbKey = photos.join('|');
+      thumbs.innerHTML = photos.map(function (src, i) { return '<button type="button" data-view="' + i + '" style="--i:' + i + '" aria-label="Bekijk foto ' + (i + 1) + '"><img src="' + esc(src) + '" alt=""></button>'; }).join('');
+    }
+    Array.from(thumbs.children).forEach(function (b, i) { b.setAttribute('aria-pressed', String(i === shownAt)); });
+  }
   function render() {
     var list = active(), step = thinking ? null : current(), answered = list.filter(done), talk = $('talk'), h = '';
-    $('thumbs').hidden = !photos.length;
-    $('thumbs').innerHTML = photos.map(function (src, i) { return '<img src="' + esc(src) + '" alt="Foto ' + (i + 1) + '">'; }).join('');
-    $('steps').textContent = photos.length && !thinking ? Math.min(answered.length + (step ? 1 : 0), list.length) + ' van ' + list.length : '';
+    var overview = !!photos.length && !thinking && !step;
+    $('app').setAttribute('data-mode', overview ? 'overview' : 'talk');
+    $('steps').textContent = 'Proef' + (photos.length && !thinking ? ' · ' + Math.min(answered.length + (step ? 1 : 0), list.length) + ' van ' + list.length : '');
     $('back').disabled = !photos.length || thinking || (!answered.length && !saved);
-    h += '<p class="note">Proef. De AI is nagespeeld en ziet steeds dezelfde jas. Er wordt niets opgeslagen. Tik op de golfjes om te praten; je stem gaat dan naar de spraakherkenning van je browser.</p>';
-    if (!photos.length) h += '<p class="ai now">Hoi Nikki. Laat me het stuk zien: maak of kies foto’s.</p>';
-    else h += '<p class="ai">' + (photos.length === 1 ? 'Eén foto' : photos.length + ' foto’s') + ', dank je.</p>';
-    if (thinking) h += '<div class="dots" role="img" aria-label="De AI bekijkt de foto’s"><i></i><i></i><i></i></div>';
-    var warm = '';
+    renderStage(step);
+    if (!photos.length) h += '<p class="ai now">Hoi Nikki. Laat me het stuk zien.</p><p class="note">Proef. De AI is nagespeeld en ziet steeds dezelfde jas. Er wordt niets opgeslagen. Tik straks op de golfjes om te praten; je stem gaat dan naar de spraakherkenning van je browser.</p>';
+    if (thinking) h += '<p class="ai now">' + (photos.length === 1 ? 'Eén foto' : photos.length + ' foto’s') + ', dank je. Ik kijk even.</p><div class="dots" role="img" aria-label="De AI bekijkt de foto’s"><i></i><i></i><i></i></div>';
+    var warm = '', fresh = false;
     if (photos.length && !thinking) {
+      // Wat al gezegd is, staat als rij knoppen boven de vraag; een tik wijzigt het antwoord.
+      var trail = '';
       answered.forEach(function (s) {
         if (step && s.id === step.id) return;
-        h += '<p class="ai">' + (warm ? '<span class="warm">' + esc(warm) + '</span>' : '') + esc(s.ask()) + '</p>';
-        h += '<button type="button" class="me" data-edit="' + s.id + '" aria-label="' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(shown(s)) + '</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6"/></svg></button>';
+        trail += '<button type="button" class="me" data-edit="' + s.id + '" aria-label="' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(shown(s)) + '</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="flex:none"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6"/></svg></button>';
         warm = A[s.id] === SKIP ? 'Geen punt, dat kan later.' : s.warm ? s.warm(A[s.id]) : '';
       });
       if (step) {
-        h += '<p class="ai now" id="question">' + (warm && !editing ? '<span class="warm">' + esc(warm) + '</span>' : '') + esc(step.ask()) + '</p>';
-        if (step.kind === 'cm') h += '<img class="measure" src="' + coat('#4A342A', step.id === 'length', MEASURE[step.id]) + '" alt="Tekening: zo leg je het meetlint voor de ' + step.label.toLowerCase() + '">';
+        if (trail) h += '<div class="trail" id="trail">' + trail + '</div>';
+        var said = warm && !editing ? warm : '', ask = step.ask();
+        fresh = askedKey !== step.id + ask; askedKey = step.id + ask;
+        h += '<p class="ai now' + (fresh ? ' fresh' : '') + '" id="question">' + (said ? '<span class="warm">' + words(said, 0) + '</span>' : '') + words(ask, said ? said.split(' ').length + 2 : 0) + '</p>';
         if (step.hint) h += '<p class="ai" style="color:var(--muted);font-size:16px">' + esc(step.hint) + '</p>';
       } else if (saved) {
-        h += '<p class="ai now">' + (missing(list).length ? 'Bewaard als concept. Je maakt hem later af; in de boetiek staat hij nog niet.' : 'Klaar. In de echte versie staat hij nu in de boetiek.') + '</p>';
+        askedKey = '';
+        h += '<div class="done-mark" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
+          '<p class="ai now">' + (missing(list).length ? 'Bewaard als concept. Je maakt hem later af; in de boetiek staat hij nog niet.' : 'Klaar. In de echte versie staat hij nu in de boetiek.') + '</p>';
       } else {
+        askedKey = '';
         var open = missing(list);
         h += '<p class="ai now">' + (warm ? '<span class="warm">' + esc(warm) + '</span>' : '') + (open.length ? 'Bijna. Voor de boetiek heb ik dit nog nodig:' : 'Dat is alles. Zo komt hij in de boetiek:') + '</p>';
         if (open.length) h += '<div class="card" id="open">' + open.map(function (s) { return '<button type="button" class="kv" data-edit="' + s.id + '" style="border-top:0"><span style="color:var(--fg)">' + esc(s.label) + '</span><span>Nu invullen</span></button>'; }).join('') + '</div><p class="ai">Dit weet ik al:</p>';
@@ -243,11 +306,11 @@ svg { display: block; }
       }
     }
     talk.innerHTML = h;
-    renderAnswer(step);
-    // The newest question stays in view; the overview starts at its own first line.
-    var overview = talk.querySelector('.card'), lead = talk.querySelector('.ai.now');
+    renderAnswer(step, fresh);
     speakQuestion(step);
-    talk.scrollTop = overview && lead ? Math.max(0, lead.offsetTop - 12) : talk.scrollHeight;
+    // In het overzicht begint het beeld bij de eerste regel; de rij antwoorden toont steeds het laatste.
+    talk.scrollTop = 0;
+    var row = $('trail'); if (row) row.scrollLeft = row.scrollWidth;
   }
   function summary(list) {
     var skip = { zie: 1, titel: 1, prijs: 1 };
@@ -257,11 +320,10 @@ svg { display: block; }
         return '<button type="button" class="kv" data-edit="' + s.id + '" aria-label="' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(s.label) + '</span><span>' + esc(shown(s)) + '</span></button>';
       }).join('') + '</div>';
   }
-  function renderAnswer(step) {
+  function renderAnswer(step, fresh) {
     var box = $('answer'), h = '';
     if (!photos.length) {
-      h = '<div class="chips"><label class="chip main pick">Foto’s maken of kiezen<input type="file" id="files" accept="image/*" multiple aria-label="Foto’s maken of kiezen"></label>' +
-        '<button type="button" class="chip" data-sample>Voorbeeldfoto’s gebruiken</button></div>';
+      h = '<div class="chips"><button type="button" class="chip" data-sample>Voorbeeldfoto’s gebruiken</button></div>';
     } else if (thinking) h = '';
     else if (!step) {
       h = '<div class="chips">' + (saved ? '<button type="button" class="chip main" data-again>Volgend stuk</button>' : '<button type="button" class="chip main" data-save>' + (missing(active()).length ? 'Bewaar als concept (proef)' : 'Opslaan (proef)') + '</button>') + '</div>';
@@ -269,9 +331,9 @@ svg { display: block; }
       if (step.kind === 'multi' && !multi) multi = (A[step.id] || SEEN.bijzonderheden).slice();
       var options = step.options ? step.options().map(function (o) { return Array.isArray(o) ? o : [o, o]; }) : [];
       if (step.kind === 'multi') multi.forEach(function (v) { if (!options.some(function (o) { return o[0] === v; })) options.push([v, v]); });
-      if (options.length) h += '<div class="chips" role="group" aria-labelledby="question">' + options.map(function (o) {
+      if (options.length) h += '<div class="chips' + (fresh ? ' fresh' : '') + '" role="group" aria-labelledby="question">' + options.map(function (o, i) {
         var on = step.kind === 'multi' ? multi.indexOf(o[0]) >= 0 : A[step.id] === o[0];
-        return '<button type="button" class="chip" data-value="' + esc(o[0]) + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
+        return '<button type="button" class="chip" style="--i:' + i + '" data-value="' + esc(o[0]) + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
       }).join('') + '</div>';
       var numeric = step.kind === 'cm' || step.kind === 'euro';
       // Altijd dezelfde rij: golfjes (praten), typen of dicteren, versturen.
@@ -313,8 +375,20 @@ svg { display: block; }
   }
 
   function setVoice(state) {
-    voice.state = state; var b = $('voice');
+    voice.state = state; if (state !== 'listening') voice.hearing = false;
+    var b = $('voice');
     if (b) { b.setAttribute('data-voice', state); b.setAttribute('aria-label', VOICE_LABEL[state]); }
+    clearInterval(voice.timer); voice.timer = null;
+    if (state !== 'idle' && !calm) voice.timer = setInterval(moveVoice, 110);
+    moveVoice();
+  }
+  // De golfjes bewegen onregelmatig, zoals een stem: rustig zolang de AI wacht, hoog zodra hij
+  // Nikki hoort praten (de spraakherkenning meldt dat), en golvend als de AI zelf praat.
+  function moveVoice() {
+    var b = $('voice'); if (!b) return;
+    var bars = b.querySelectorAll('.bars rect'), low = voice.hearing ? .45 : .2, high = voice.hearing ? 1 : .45;
+    Array.prototype.forEach.call(bars, function (r) { r.style.transform = voice.state === 'listening' && !calm ? 'scaleY(' + (low + Math.random() * (high - low)).toFixed(2) + ')' : ''; });
+    b.style.setProperty('--amp', voice.state === 'speaking' && !calm ? (.55 + Math.random() * .6).toFixed(2) : '1');
   }
   function stopVoice() {
     voice.on = false; voice.said = '';
@@ -329,6 +403,8 @@ svg { display: block; }
     var rec = voice.rec = new Recognition(), heard = '';
     rec.lang = 'nl-NL'; rec.interimResults = false; rec.maxAlternatives = 1;
     rec.onresult = function (e) { heard = e.results[0][0].transcript; };
+    rec.onspeechstart = function () { voice.hearing = true; };
+    rec.onspeechend = function () { voice.hearing = false; };
     rec.onerror = function (e) {
       if (voice.rec !== rec) return; voice.rec = null; voice.on = false; setVoice('idle');
       voice.note = e.error === 'no-speech' ? 'Ik hoorde niets. Tik op de golfjes om het nog eens te proberen.' : 'Luisteren lukt hier niet. Typ, of dicteer met de microfoon van je toetsenbord.';
@@ -366,7 +442,7 @@ svg { display: block; }
     }
     if (b.hasAttribute('data-sample')) return start(SAMPLE.slice());
     if (b.hasAttribute('data-save')) { saved = true; return render(); }
-    if (b.hasAttribute('data-again')) { stopVoice(); A = {}; photos = []; saved = false; editing = null; return render(); }
+    if (b.hasAttribute('data-again')) { stopVoice(); A = {}; photos = []; saved = false; editing = null; view = null; askedKey = ''; return render(); }
     if (!step) return;
     if (b.hasAttribute('data-skip')) return give(step, SKIP);
     if (b.hasAttribute('data-ready')) return give(step, multi.slice());
@@ -377,10 +453,14 @@ svg { display: block; }
       b.setAttribute('aria-pressed', String(at < 0));
     }
   });
-  $('answer').addEventListener('change', function (e) {
+  $('app').addEventListener('change', function (e) {
     if (e.target.id !== 'files') return;
     var files = Array.from(e.target.files || []).filter(function (f) { return /^image\//.test(f.type); }).slice(0, 8);
     if (files.length) start(files.map(function (f) { return URL.createObjectURL(f); }));
+  });
+  $('thumbs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-view]'); if (!b) return;
+    view = Number(b.getAttribute('data-view')); renderStage(thinking ? null : current());
   });
   $('talk').addEventListener('click', function (e) {
     var b = e.target.closest('[data-edit]'); if (!b) return;

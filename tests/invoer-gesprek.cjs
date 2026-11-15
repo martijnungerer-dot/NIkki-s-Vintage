@@ -83,7 +83,7 @@ const output=path.resolve(process.env.NIKKI_SCREENSHOTS||path.join(root,'work/in
    await page.getByRole('button',{name:'Klaar',exact:true}).click();
    assert.match(await question(),/Dat komt eerlijk in de beschrijving/);
    // Measurements: cm, a wrong value is refused, optional ones can be skipped (stay empty).
-   assert.equal(await page.locator('img.measure').count(),1);
+   assert.equal(await page.locator('#hero img.measure').count(),1);
    await page.locator('#free').fill('abc');await page.locator('.send').click();assert.match(await page.locator('.err').innerText(),/Vul een getal in/);
    await page.locator('#free').fill('400');await page.locator('.send').click();assert.match(await page.locator('.err').innerText(),/meer dan 300/);
    await rules('maten');await shot('5-maten');

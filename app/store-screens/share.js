@@ -56,6 +56,7 @@
     var win = outer(), match = HASH.exec(win.location.hash || '');
     if (!match) return;
     if (UUID.test(match[1])) api.show(match[1]); // unknown or sold: show() finds nothing, the shop stays as it is
-    try { win.history.replaceState(null, '', win.location.pathname + win.location.search); } catch (e) {}
+    // Keep the app's history state, so the phone's back button keeps working after a shared link.
+    try { win.history.replaceState(win.history.state, '', win.location.pathname + win.location.search); } catch (e) {}
   });
 })();

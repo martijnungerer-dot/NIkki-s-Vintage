@@ -52,3 +52,6 @@ ul { list-style: none; padding: 0; }
 #manage[data-auth="guest"] #items { margin: 0; }
 li { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px 0; border-bottom: 1px solid var(--line); align-items: center; }
 li span { flex: 1; min-width: 180px; overflow-wrap: anywhere; }
+
+/* Room so the temporary review pencil (app/admin/review.js) never covers the last row. */
+#manage[data-auth="staff"] #items { padding-bottom: 72px; }

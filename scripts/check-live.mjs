@@ -15,7 +15,10 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
   const url=String(config?.supabaseUrl||'').replace(/\/$/,''),key=String(config?.supabasePublishableKey||'');
   const origin=new URL(site).origin;
   if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!key){fail('app/config.js bevat geen geldige Supabase-URL en publieke sleutel.');return out;}
-  if(/^sb_secret_|service_role/.test(key)){fail('app/config.js bevat een geheime sleutel. Verwijder die meteen en vervang hem.');return out;}
+  // Only a publishable key or a legacy anon JWT may be public; a legacy service_role JWT only shows
+  // its role inside the encoded payload, so decode it (as scripts/build-cloud.mjs does).
+  let jwtRole=null;try{jwtRole=JSON.parse(Buffer.from(key.split('.')[1],'base64url').toString()).role;}catch{}
+  if(/^sb_secret_|service_role/.test(key)||(jwtRole&&jwtRole!=='anon')||(!/^sb_publishable_/.test(key)&&jwtRole!=='anon')){fail('app/config.js bevat een geheime of onbekende sleutel. Verwijder die meteen en vervang hem door de publishable key.');return out;}
   const call=async(path,opts={})=>{
     try{const r=await fetcher(url+path,{...opts,headers:{apikey:key,...(opts.headers||{})},signal:AbortSignal.timeout(opts.ms||30000)});
       return {status:r.status,headers:r.headers,text:await r.text()};}
@@ -47,6 +50,13 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
   if(hidden.status!==200||!Array.isArray(drafts))fail('Afscherming van niet-gepubliceerde stukken niet te controleren ('+hidden.status+').');
   else if(drafts.length)fail('Bezoekers kunnen niet-gepubliceerde stukken lezen.');
   else ok('Niet-gepubliceerde stukken zijn afgeschermd.');
+
+  // 3. Foto's alleen voor controle (migratie 20261115090000): bestaat de tabel, en is hij dicht voor bezoekers?
+  const internal=await call('/rest/v1/garment_private?select=id&limit=1');
+  if(internal.status===404)warn('De tabel voor foto’s alleen voor controle ontbreekt: voer npx supabase db push --remote uit. Tot dan worden zulke foto’s niet bewaard.');
+  else if(internal.status===401||internal.status===403)ok('Foto’s alleen voor controle zijn afgeschermd voor bezoekers.');
+  else if(internal.status===200)fail('Bezoekers kunnen de tabel met foto’s alleen voor controle opvragen. Laat een agent de rechten nakijken.');
+  else warn('Afscherming van foto’s alleen voor controle niet te controleren ('+internal.status+').');
 
   // 3. Smaakfunctie: herkomst, lege aanvraag, echte aanvraag
   const fn='/functions/v1/personalise',post=(body,from=origin)=>call(fn,{method:'POST',headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify(body),ms:60000});

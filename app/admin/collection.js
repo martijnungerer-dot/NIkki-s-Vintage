@@ -26,16 +26,17 @@ export function createCollection({api,$,state,show,say,shopStatus,action}) {
     if(state.staff)for(const row of state.rows){
       const item=document.createElement('li');const label=document.createElement('span');
       label.textContent=row.data.title+' — '+(row.status==='sold'?'Verkocht':'Beschikbaar');item.append(label);
-      const edit=document.createElement('button');edit.textContent='Bewerken';
+      const edit=document.createElement('button');edit.textContent='Bewerken';edit.setAttribute('aria-label','Bewerken: '+row.data.title);
       edit.addEventListener('click',()=>action(async()=>{
-        if(!confirm('Dit opent het opgeslagen stuk. Eventuele niet-opgeslagen invoer wordt vervangen. Doorgaan?'))return;
+        const unsaved=(()=>{try{return $('intake').contentWindow.NikkiIntake.hasUnsavedInput();}catch{return true;}})();
+        if(unsaved&&!confirm('Dit opent het opgeslagen stuk. Je niet-opgeslagen invoer wordt vervangen. Doorgaan?'))return;
         await $('intake').contentWindow.NikkiIntake.load(await hydrate(row));state.editVersions.set(row.id,row.version);show('intake');say('Stuk geopend.');
       }));item.append(edit);
       if(row.status==='published'){
-        const sold=document.createElement('button');sold.textContent='Markeer verkocht';
+        const sold=document.createElement('button');sold.textContent='Markeer verkocht';sold.setAttribute('aria-label','Markeer verkocht: '+row.data.title);
         sold.addEventListener('click',()=>action(async()=>{
           if(!confirm('Markeer “'+row.data.title+'” als verkocht? Het verdwijnt uit de beschikbare collectie.'))return;
-          await api.sold(row.id,row.version);await refresh();say('Als verkocht opgeslagen.');
+          const sold=await api.sold(row.id,row.version);if(state.editVersions.has(row.id)&&sold?.version)state.editVersions.set(row.id,sold.version);await refresh();say('Als verkocht opgeslagen.');
         }));item.append(sold);
       }
       $('items').append(item);

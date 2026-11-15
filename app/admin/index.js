@@ -24,16 +24,16 @@ export function createAdmin({api,$,show}) {
   const collection=createCollection(context);
   setupHeader({$,show,
     reload:()=>action(async()=>{await collection.refresh();say(loaded('Collectie vernieuwd.'));}),
-    logout:()=>action(async()=>{try{await api.logout();}finally{location.reload();}})
+    logout:()=>action(async()=>{try{await window.NikkiApp?.clearDraft?.();await api.logout();}finally{location.reload();}})
   });
   const login=setupLogin({$,submit:()=>action(async()=>{
     login.error('');
     // Only authentication errors belong to the form. A later refresh failure
     // must remain visible after the form has been hidden.
     try{await api.login($('email').value,$('password').value);}
-    catch(error){login.error(error.message);return;}
+    catch(error){login.error(error.message);if(error.badLogin)$('password').focus();return;}
     login.resetPassword();
-    state.staff=true;controls();
+    state.staff=true;controls();window.NikkiApp?.staffReady?.();
     await collection.refresh();say('Ingelogd. Je kunt nu stukken invoeren.');
   }),
   forgot:()=>action(async()=>{
@@ -53,7 +53,7 @@ export function createAdmin({api,$,show}) {
       return;
     }
     recovery=null;login.resetPassword();login.setMode('login');
-    state.staff=true;controls();
+    state.staff=true;controls();window.NikkiApp?.staffReady?.();
     await collection.refresh();say('Je nieuwe wachtwoord is opgeslagen. Je bent ingelogd.');
   })});
   let recovery=null;

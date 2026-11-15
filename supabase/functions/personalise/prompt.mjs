@@ -59,7 +59,8 @@ export function buildRequest({summary,rows,wantRationale=false}){
   const eligible=rows.filter(r=>r&&r.status==='published'&&r.data&&Number.isInteger(r.data.priceMinor)&&(!s.budget_max_minor||r.data.priceMinor<=s.budget_max_minor))
     .map((r,i)=>({id:r.id,i,tags:itemFeatures(r.data),photos:[...new Set((r.data.images||[]).map(img=>img.role).filter(x=>typeof x==='string'&&x.length<=40))]}));
   eligible.forEach(e=>{e.score=localScore(e.tags,s);});
-  const fallback=[...eligible].sort((a,b)=>b.score-a.score||a.i-b.i);
+  // Rows arrive newest first; the boutique shows them oldest first (Nikki's order), so ties go that way too.
+  const fallback=[...eligible].sort((a,b)=>b.score-a.score||b.i-a.i);
   const chosen=fallback.slice(0,MAX_CANDIDATES);
   const payload={v:1,want_rationale:!!wantRationale,prefer:s.prefer,avoid:s.avoid,
     candidates:chosen.map((e,n)=>({id:'c'+(n+1),tags:e.tags,photos:e.photos}))};
@@ -67,16 +68,17 @@ export function buildRequest({summary,rows,wantRationale=false}){
 }
 
 /** Vast antwoordschema: het model kan alleen deze vorm geven en niet eindeloos doorschrijven. */
-export function rankingSchema(wantRationale){
-  const item={type:'OBJECT',properties:{id:{type:'STRING'},photo:{type:'STRING',nullable:true}},required:['id']};
+export function rankingSchema(wantRationale,count=MAX_CANDIDATES){
+  const ids=Array.from({length:Math.max(1,count)},(_,n)=>'c'+(n+1));
+  const item={type:'OBJECT',properties:{id:{type:'STRING',enum:ids},photo:{type:'STRING',nullable:true}},required:['id']};
   if(wantRationale)item.properties.why={type:'STRING',nullable:true};
-  return {type:'OBJECT',properties:{ranking:{type:'ARRAY',items:item}},required:['ranking']};
+  return {type:'OBJECT',properties:{ranking:{type:'ARRAY',maxItems:Math.max(1,count),items:item}},required:['ranking']};
 }
 
 /** Body voor Gemini generateContent. Model en instructies kiest de server, nooit de browser. */
 export function geminiBody(payload,{briefThinking=true}={}){
   return {systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},contents:[{role:'user',parts:[{text:JSON.stringify(payload)}]}],
-    generationConfig:{responseMimeType:'application/json',responseSchema:rankingSchema(!!payload.want_rationale),
+    generationConfig:{responseMimeType:'application/json',responseSchema:rankingSchema(!!payload.want_rationale,payload.candidates?.length),
       // 40 kandidaten met uitleg kosten ~2000 uitvoertokens; denkstappen tellen mee binnen dit plafond.
       maxOutputTokens:4096,
       // Gemini 3: Google raadt de standaard 1.0 aan; een lagere temperature kan tot herhalingslussen leiden.

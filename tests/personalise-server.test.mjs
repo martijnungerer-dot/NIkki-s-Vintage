@@ -134,3 +134,10 @@ test('Gemini is asked to think briefly; a model that rejects that setting is ask
   const other=setup({geminiReply:()=>Response.json({error:{code:400,status:'INVALID_ARGUMENT',message:'Bad request'}},{status:400})});
   assert.equal((await (await other.request()).json()).source,'fallback');assert.equal(ai(other.calls).length,1,'no retry for other errors');
 });
+
+test('an answer without any real candidate is a fallback, not an AI order',async()=>{
+  const s=setup({gemini:{ranking:[{id:'c99'},{id:'x'}]}});
+  const out=await (await s.request()).json();
+  assert.equal(out.source,'fallback');assert.match(s.logs[0],/NO_VALID_IDS/);
+  const e=setup({gemini:{ranking:[]}});assert.equal((await (await e.request()).json()).source,'fallback');
+});

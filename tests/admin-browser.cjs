@@ -64,9 +64,10 @@ async function realNewsreader(p){
     const f=await fixture();try {
       f.state[failure]=true;await fill(f.page);
       await f.page.locator('#login [type=submit]').click();
-      await f.page.locator('#login-error').filter({hasText:failure==='denyStaff'?'geen beheerrechten':'Log opnieuw in'}).waitFor();
+      await f.page.locator('#login-error').filter({hasText:failure==='denyStaff'?'geen beheerrechten':'wachtwoord klopt niet'}).waitFor();
       assert.equal(await f.page.locator('#login').isVisible(),true);
       assert.equal(await f.page.locator('#login-error').evaluate(e=>document.activeElement===e),false);
+      if(failure==='failLogin')assert.equal(await f.page.locator('#password').evaluate(e=>document.activeElement===e),true,'a wrong password puts the focus back in the password field');
       assert.equal(await f.page.locator('#login [type=submit]').isDisabled(),false);
       assert.equal(await f.page.locator('#new').isVisible(),false);
       assert.equal(await f.page.evaluate(()=>Object.values(sessionStorage).some(v=>v.includes('access_token'))),false);
@@ -270,7 +271,7 @@ async function realNewsreader(p){
         assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),true,'without storage, leaving still warns');
         assert.deepEqual(f.state.errors,[]);continue;
       }
-      await p.waitForTimeout(2600);
+      await p.waitForFunction(()=>!document.getElementById('intake').contentWindow.NikkiIntake.needsLeaveWarning(),null,{timeout:10000});
       assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),false,'stored on the device, so no warning needed');
       await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       await p.waitForFunction(()=>!document.getElementById('intake').hidden);
@@ -293,6 +294,39 @@ async function realNewsreader(p){
       await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
       await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       assert.equal(await p.locator('#manage').isVisible(),true,'no draft: back to Jouw collectie');
+      assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  {
+    // Gemini's "bijzonderheden" are suggestions only; its warnings stay; logout removes the draft.
+    const f=await fixture(390),p=f.page;try {
+      const intake=p.frameLocator('#intake'),frame=()=>p.frames().find(x=>x.name()==='intake');
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await p.locator('#new').click();
+      const png=await p.evaluate(()=>{const k=document.createElement('canvas');k.width=20;k.height=20;k.getContext('2d').fillRect(0,0,20,20);return k.toDataURL().split(',')[1];});
+      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
+      await intake.locator('#analyse').click();await intake.locator('#step-review').waitFor({state:'visible'});
+      // Gemini fills in, also material and fur; each filled step needs one tap on Klopt.
+      for(const step of ['wat','bijz','tekst'])assert.match(await intake.locator(`[data-step=${step}] .stepsum`).innerText(),/voorstel · controleer/,step+' waits for Klopt');
+      await intake.locator('[data-open=wat]').click();
+      assert.equal(await intake.locator('[data-k=materiaal][data-v=Leer]').getAttribute('aria-pressed'),'true','material proposed and filled in');
+      await intake.locator('[data-step=wat] .stephead').scrollIntoViewIfNeeded();await p.screenshot({path:'test-results/admin/gemini-klopt-390.png'});
+      await intake.locator('[data-aiok=wat]').click();
+      assert.doesNotMatch(await intake.locator('[data-step=wat] .stepsum').innerText(),/voorstel · controleer/);
+      await intake.locator('[data-open=bijz]').click();
+      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').getAttribute('aria-pressed'),'true','filled in, Nikki confirms');
+      await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').click();
+      assert.doesNotMatch(await intake.locator('[data-step=bijz] .stepsum').innerText(),/voorstel · controleer/,'changing a chip also counts as checked');
+      await intake.locator('[data-open=tekst]').click();
+      assert.match(await intake.locator('[data-step=tekst] .aiok').innerText(),/Gemini noemt in de titel: leren/);
+      assert.equal(await intake.locator('#t-titel').inputValue(),'Korte leren jas','title kept');
+      assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/);
+      await intake.locator('#back-photos').click();await intake.locator('#manual').click();
+      assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/,'warning still there after going back');
+      await p.waitForFunction(()=>!document.getElementById('intake').contentWindow.NikkiIntake.needsLeaveWarning(),null,{timeout:10000});
+      await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#logout').click();
+      await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await frame().evaluate(()=>new Promise(r=>{const q=indexedDB.open('gsf-intake',1);q.onsuccess=()=>{const g=q.result.transaction('drafts').objectStore('drafts').get('current');g.onsuccess=()=>r(g.result===undefined);};})),true,'logout removed the draft');
       assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }

@@ -5,6 +5,8 @@
   // nothing is paid, reserved or written to Supabase, and the basket stays as it is.
   var NOTE = '<p class="muted cart-note">Proefboetiek · betalen is een voorbeeld; er wordt niets afgeschreven of gereserveerd.</p>';
   var step = 'cart'; // 'cart' | 'pay' | 'done'
+  // Pieces that left the basket because they were sold; shown until the basket is closed.
+  var goneShown = 0;
   function euro(minor) {
     return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: minor % 100 ? 2 : 0 }).format(minor / 100);
   }
@@ -12,15 +14,18 @@
   window.NikkiShop.registerScreen('Winkelmand', {
     render: function (api) {
       // A fresh opening of the panel always starts at the basket; a catalog refresh keeps the step.
-      if (document.getElementById('cart').hidden) step = 'cart';
+      if (document.getElementById('cart').hidden) { step = 'cart'; goneShown = 0; }
       var esc = api.esc, keys = api.cartKeys();
       var lines = keys.map(function (key) { return api.items().find(function (it) { return it.key === key; }); }).filter(Boolean);
       // A published piece whose photos are temporarily unavailable stays selected but cannot be shown.
       var hidden = keys.length - lines.length;
       var hiddenNote = hidden ? '<p class="muted cart-note">' + (hidden === 1 ? '1 stuk in je winkelmand is' : hidden + ' stukken in je winkelmand zijn') + ' tijdelijk niet te zien.</p>' : '';
       // Every piece is unique: say so when one in the basket has meanwhile been sold.
-      var gone = api.takeGoneFromCart ? api.takeGoneFromCart() : 0;
-      if (gone) hiddenNote = '<p class="muted cart-note" role="status">' + (gone === 1 ? 'Eén stuk uit je winkelmand is inmiddels verkocht en weggehaald.' : gone + ' stukken uit je winkelmand zijn inmiddels verkocht en weggehaald.') + '</p>' + hiddenNote;
+      goneShown += api.takeGoneFromCart ? api.takeGoneFromCart() : 0;
+      var goneNote = goneShown ? '<p class="muted cart-note" role="status">' + (goneShown === 1 ? 'Eén stuk uit je winkelmand is inmiddels verkocht en weggehaald.' : goneShown + ' stukken uit je winkelmand zijn inmiddels verkocht en weggehaald.') + '</p>' : '';
+      hiddenNote = goneNote + hiddenNote;
+      // During the sample payment the basket goes back to the overview, so the change is visible.
+      if (goneShown && step !== 'cart') step = 'cart';
       if (!lines.length) { step = 'cart'; return (hidden ? '' : '<p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Je winkelmand is leeg.</p>') + hiddenNote + NOTE; }
       var total = euro(lines.reduce(function (sum, it) { return sum + it.priceMinor; }, 0));
       var totalRow = '<div class="kv" style="border:0;font-size:20px"><span>Totaal</span><span id="cart-total">' + esc(total) + '</span></div>';

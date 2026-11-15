@@ -46,3 +46,61 @@ Een eerdere poging op een zip leverde verzonnen functienamen op (31 van 32 besto
 | 4.3 Knoptekst blijft "Wijziging opslaan" | Opgelost. |
 | 5.1 Ingezoomde foto niet te verschuiven | Niet nu: gedrag van het goedgekeurde ontwerp; voorleggen aan Martijn. |
 | Eigen bevinding | De winkelmand meldt nu als een stuk erin inmiddels verkocht is. |
+
+## Derde ronde: zes Fable-agents (15 november 2026, op main 7cfadf3)
+
+Zes agents reviewden elk één gebied: beveiliging en privacy, invoer en verlies van werk, boetiek, Gemini, de app bedienen op 390/320 px, en tests/bouw/migraties. Geen kritieke of ernstige beveiligingsproblemen. Alle bevindingen hieronder zijn nagekeken in de code voordat ze zijn opgelost.
+
+### Opgelost
+
+| Gebied | Bevinding | Oplossing |
+| --- | --- | --- |
+| Gemini | Voorstellen van Gemini (zoals bijzonderheden) konden ongezien gepubliceerd worden | Besluit Martijn (15 november 2026): Gemini vult alles in wat het kan, ook materiaal, bont, bontsoort en periode; een onderdeel dat Gemini invulde wacht op één tik op **Klopt** (of een wijziging). De bontsoort houdt daarnaast het vinkje "zelf gecontroleerd" |
+| Gemini | Titel en beschrijving konden materiaal, diersoort, periode of echtheid noemen | De tekst blijft staan; de server noemt de woorden (`controleer`), en Titel en prijs wacht op Klopt of een aanpassing. Ingebakken JSON-voorbeeld weg |
+| Gemini | Schema zonder grenzen | `maxItems` op lijsten; kortere teksten; personalise: alleen bestaande `c1..cN` |
+| Gemini | Drukte bij Google leek een fout | Eigen melding `GEMINI_BUSY` ("wacht een minuut") |
+| Gemini | Geblokkeerde prompt zonder reden in de log | `blockReason` gelogd |
+| Gemini | Personalise noemde een onbruikbaar antwoord "AI" | `NO_VALID_IDS` geeft terugval |
+| Gemini | Herhaling zonder denkinstelling bij elke aanvraag | Per model onthouden |
+| Gemini | Eerdere voorstellen gingen als "Nikki's lijsten" mee | Lijsten uit standaard plus eigen woorden |
+| Privacy | Concept (met controlefoto's) bleef na uitloggen op het toestel | Gewist bij uitloggen; teruggezet alleen na inloggen als beheerder |
+| Privacy | Fotoplek niet afgeschermd in HTML | Ge-escaped |
+| Invoer | Uploadfout overschreven door vastgelopen teller | Na een fout stoppen de andere uploads en blijft de fout staan |
+| Invoer | Concept schreef bij elke wijziging alle foto's opnieuw, ook twee keer tegelijk | Foto's apart, alleen bij een andere fotoset; geen gelijktijdige schrijfacties; na 14 dagen vervallen |
+| Invoer | Laat Gemini-antwoord kwam in een ander stuk terecht | Generatieteller; voorstel alleen bewaard voor het juiste stuk |
+| Invoer | Verkocht markeren tijdens bewerken maakte opslaan onmogelijk | Versie bijgewerkt |
+| Invoer | Verloren antwoord na geslaagde eerste opslag | Herkend: "Dit stuk was al opgeslagen" |
+| Invoer | Gemini-waarschuwingen verdwenen | Blijven staan, ook in het concept |
+| Invoer | Verkeerde knoptekst na terugzetten | Op basis van nieuw/bewerken |
+| Invoer | Opslaan na wisselen naar ander stuk wiste dat stuk | Reset alleen als het opgeslagen stuk nog open is |
+| Invoer | Analyse zonder tijdslimiet | 120 seconden naast de stopknop |
+| Invoer | Maten > 300 cm en titel > 200 tekens pas door de database geweigerd | Zelfde grenzen in het scherm |
+| Invoer | Onbruikbare foto pas bij opslaan geweigerd | Meteen, met naam van de foto |
+| Invoer | Aan- en uittikken telde als invoer | Lege waarden tellen niet |
+| Invoer | Tekst "Zet ze op Voor de boetiek" klopte niet | Verwijst naar "Alleen voor controle" |
+| Bediening | Verkeerd wachtwoord gaf "De handeling is niet afgerond" | "E-mailadres of wachtwoord klopt niet", focus in het wachtwoordveld |
+| Bediening | Na opslaan toonde de boetiek een ander stuk | Het opgeslagen stuk wordt getoond |
+| Bediening | Vijf gelijke knoppen "Bewerken" voor schermlezers | Naam met de titel |
+| Bediening | "Bewerken" vroeg altijd bevestiging | Alleen bij niet-opgeslagen invoer |
+| Bediening | Potloodje bedekte de laatste rij | Ruimte onder de lijst |
+| Bediening | Verwijderkruisje 28 px en "Liever zelf invullen" 40 px | 44 px |
+| Bediening | Melding "Nog niet af" maakte de balk 192 px hoog | Alleen het eerste ontbrekende onderdeel |
+| Bediening | Bewerken heette "Nieuw stuk · proef" en sprak van een oefenscherm | "Stuk bewerken"; geen oefenschermtekst; bevestiging klopt |
+| Boetiek | Melding "verkocht" verdween of werd tijdens Betalen ingeslikt | Blijft tot de winkelmand sluit; terug naar het overzicht |
+| Boetiek | Volgorde bij gelijke score anders dan Nikki's volgorde | Server breekt gelijkspel zoals de winkel |
+| Boetiek | Na een gedeelde link werkte de Terug-knop niet | Geschiedenis behouden |
+| Boetiek | Twee tabbladen overschreven elkaars winkelmand | Andere tabbladen volgen; alleen schrijven bij een echte verwijdering |
+| Boetiek | Zoom sprong bij hartje of winkelmand | Zoom blijft |
+| Tests | Livecontrole zag de nieuwe migratie niet en herkende een oude geheime sleutel niet | Controle op `garment_private`; JWT-rol gedecodeerd |
+| Tests | Versieconflict (500/40001), paginering, uploadfout, verkeerd wachtwoord ongetest | Tests toegevoegd |
+| Tests | Bouwen schreef demobestanden | Alleen nog als dat script zelf draait |
+| Tests | Vaste wachttijd in concepttest | Wachten op een voorwaarde |
+
+### Bewust niet nu
+
+- Oude `save_garment` afsluiten: pas nadat de nieuwe migratie live staat (anders werkt opslaan niet meer).
+- Beveiligingsheader (CSP): de app gebruikt veel inline scripts in `srcdoc`-frames; vraagt een eigen, geteste wijziging.
+- Per-bezoekerlimiet personalise op `x-forwarded-for`: eerst live nagaan welke header Supabase doorgeeft.
+- Quota personalise na de catalogus: de catalogus zou dan zonder limiet opvraagbaar zijn.
+- Mijn smaak-labels ("Ja", "200-350"), meer/minder-knoppen verbergen als persoonlijke volgorde uit staat, menu met pijltjestoetsen, modale vensters, foto-aankondigingen: raken het goedgekeurde winkelontwerp; voorleggen aan Martijn.
+- Focus na elke actie, livemeldingen voor beheerders, invoerscherm in huisstijl: komt mee met het nieuwe invoerscherm.

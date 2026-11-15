@@ -1,17 +1,35 @@
 # Briefing voor Nikki: jouw stukken invoeren in de boetiek
 
-Dit is een korte handleiding voor het beheer van Nikki's Boetiek, geschreven op 15 november 2026. Je hebt geen technische kennis nodig. Alles gebeurt in de website zelf, het liefst op je telefoon.
+Dit is een korte handleiding voor het beheer van Nikki's Boetiek, geschreven op 15 november 2026. Je hebt geen technische kennis nodig. Alles gebeurt in de website zelf, het liefst op je telefoon. Volg de stappen in volgorde.
 
-## Waar en hoe
+## 1. Het icoontje op je telefoon zetten
 
-1. Open de boetiek: https://nikki-s-vintage.martijnungerer.workers.dev
+De boetiek is een website. Je zet hem als pictogram op je beginscherm, zodat hij opent als een gewone app, schermvullend en zonder adresbalk. Het pictogram heet "Guaranteed". Je doet dit één keer.
+
+**iPhone (gebruik Safari)**
+1. Open https://nikki-s-vintage.martijnungerer.workers.dev in **Safari**.
+2. Tik onderin op het deel-icoon (vierkantje met pijl omhoog).
+3. Scrol naar beneden en kies **Zet op beginscherm**.
+4. Tik rechtsboven op **Voeg toe**.
+
+**Android (gebruik Chrome)**
+1. Open dezelfde link in Chrome.
+2. Tik rechtsboven op het menu (drie puntjes).
+3. Kies **App installeren** of **Toevoegen aan startscherm**.
+4. Bevestig met **Installeren** of **Toevoegen**.
+
+Je hebt internet nodig om de app te gebruiken; hij werkt niet offline.
+
+## 2. Inloggen
+
+1. Open de app via het pictogram op je beginscherm.
 2. Tik op het menu en kies onderaan **Beheer**.
 3. Log in met je e-mailadres en wachtwoord. Martijn heeft je account gemaakt. Je wachtwoord deel je met niemand en je zet het niet in een chat.
 4. Wachtwoord vergeten? Tik op **Wachtwoord vergeten?**. Je krijgt een mail met een link. Kies daar een nieuw wachtwoord van minstens 8 tekens.
 
 Je ziet nu **Jouw collectie**: al je stukken als foto's in een raster.
 
-## Een nieuw stuk invoeren
+## 3. Een nieuw stuk invoeren
 
 1. Tik linksboven op de **+-kaart** (het kleerhangertje). Het scherm Nieuw stuk opent.
 2. **Foto's.** Neem foto's of kies ze uit je galerij. Maximaal 8 per stuk. Maak het volgende:
@@ -46,7 +64,7 @@ Eenvoudig getal in euro's, bijvoorbeeld `285` of `285.50`.
 - **Een tik op de opslagknop terwijl er nog iets ontbreekt?** De app opent het onderdeel dat nog open staat en zegt wat er mist. Er wordt dan niets opgeslagen.
 - **Een stuk wijzigen:** tik in Jouw collectie op de kaart. De knop heet dan **Wijziging opslaan**.
 
-## Een stuk als verkocht markeren
+## 4. Een stuk als verkocht markeren
 
 1. Tik in Jouw collectie op het **labeltje** op de kaart van het stuk.
 2. Je ziet **vijf seconden** de knop **Ongedaan maken**. Heb je per ongeluk getikt, tik daar dan op.
@@ -54,7 +72,7 @@ Eenvoudig getal in euro's, bijvoorbeeld `285` of `285.50`.
 
 Elk stuk is uniek: één stuk is één exemplaar. Een stuk dat je opnieuw wilt aanbieden voer je als nieuw stuk in.
 
-## Als er iets misgaat
+## 5. Als er iets misgaat
 
 | Wat je ziet | Wat je doet |
 |---|---|
@@ -64,19 +82,19 @@ Elk stuk is uniek: één stuk is één exemplaar. Een stuk dat je opnieuw wilt a
 | Je kunt niet inloggen | Probeer **Wachtwoord vergeten?**. Lukt dat niet, mail dan Martijn. |
 | Iets doet vreemd of lijkt kapot | Maak een schermafbeelding en stuur die naar Martijn. Stuur nooit je wachtwoord mee. |
 
-## Wat nog niet kan
+## 6. Wat nog niet kan
 
 - Er is nog geen echte betaling en geen winkelmand met echte bestellingen. Bezoekers kunnen kijken, hartjes geven en een voorbeeldbetaling doorlopen.
 - Het filter Alle/Beschikbaar/Verkocht en het direct openen van de camera vanuit de collectie zijn nog niet gebouwd.
 - Gemini kan het stuk niet voelen of ruiken. Controleer materiaal en echtheid daarom altijd zelf.
 
-## Wat Martijn nog moet doen
+## 7. Wat Martijn nog moet doen
 
 Dit staat in de projectdocumentatie als nog niet gecontroleerd op de live website. Vraag Martijn of het is gedaan voordat je belangrijke stukken invoert:
 
 - De laatste database-update en de nieuwe Gemini-functies uitrollen, zodat foto's "Alleen voor controle" en het "Klopt" bij materiaal en bont live werken.
 - Een eerste proefstuk invoeren en daarna controleren of het stuk in de winkel verschijnt.
 
-## Vragen of opmerkingen
+## 8. Vragen of opmerkingen
 
 Vraag het aan Martijn. Een vraag of idee over de indeling van de winkel is altijd welkom; verander niets aan de indeling zonder zijn akkoord.

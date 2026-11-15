@@ -32,12 +32,17 @@
     if (apply(signal) && pressed) { log.push({ signal: signal, at: Date.now() }); ownRaw = rawCache; }
   });
 
+  // Thumb up / thumb down: the earlier ⊕/⊖ looked like zooming (Martijn, 15 November 2026).
+  var THUMB = {
+    more: 'M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h3zm0 0 4-8a2.5 2.5 0 0 1 2.5 2.5V9h5a2 2 0 0 1 2 2.3l-1.2 8a2 2 0 0 1-2 1.7H7',
+    less: 'M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3zm0 0-4 8a2.5 2.5 0 0 1-2.5-2.5V15h-5a2 2 0 0 1-2-2.3l1.2-8a2 2 0 0 1 2-1.7H17'
+  };
   var group = document.createElement('div');
   group.className = 'taste-photo-acts';
   group.innerHTML = ['more', 'less'].map(function (type) {
     var label = type === 'more' ? 'Meer zoals dit' : 'Minder zoals dit';
     return '<button type="button" class="on-photo" data-taste="' + type + '" aria-label="' + api.esc(label) + '" aria-pressed="false">' +
-      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7 12h10' + (type === 'more' ? 'M12 7v10' : '') + '"/></svg></button>';
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="' + THUMB[type] + '"/></svg></button>';
   }).join('');
   document.getElementById('photo').appendChild(group);
   function syncPhoto() {
@@ -77,6 +82,21 @@
   shop.onCatalog(syncPhoto);
   syncPhoto();
 
+  // Readable labels instead of bare stored values: "Ja" becomes "Met bont", "200-350" becomes
+  // "€ 200–350", and other values get their kind (kleur, lengte, …) next to them.
+  var KIND = { material: 'materiaal', model: 'model', colour: 'kleur', length: 'lengte', fit: 'pasvorm', era: 'periode', detail: 'bijzonderheid' };
+  var FUR = { 'ja': 'Met bont', 'nee': 'Zonder bont', 'alleen kraag of rand': 'Alleen kraag of rand' };
+  function readable(key, label) {
+    var at = key.indexOf(':'), dimension = key.slice(0, at), value = key.slice(at + 1);
+    if (dimension === 'fur') return FUR[value] ? { text: FUR[value], kind: '' } : { text: label, kind: 'bont' };
+    if (dimension === 'price') {
+      var band = A.PRICE_BANDS.find(function (b) { return b[2] === value; });
+      if (!band) return { text: label, kind: 'prijs' };
+      var from = band[0] / 100, to = band[1] / 100;
+      return { text: from === 0 ? 'Tot € ' + to : to === Infinity ? 'Vanaf € ' + from : '€ ' + from + '–' + to, kind: '' };
+    }
+    return { text: label, kind: KIND[dimension] || '' };
+  }
   function preferences(profile) {
     // summarize() caps the AI payload at 12 per list. The editor must expose every saved
     // feature so each one can be forgotten, including while personalisation is off.
@@ -114,7 +134,9 @@
       function section(title, sign) {
         var list = entries.filter(function (entry) { return entry.weight * sign > 0; });
         return list.length ? '<section class="taste-section"><h2>' + esc(title) + '</h2><ul>' + list.map(function (entry) {
-          return '<li class="line"><span class="taste-label">' + esc(entry.label) + '</span><button type="button" class="ic" data-act="taste-forget" data-key="' + esc(entry.key) + '" aria-label="' + esc('Vergeet ' + entry.label) + '">' + api.CLOSE + '</button></li>';
+          var shown = readable(entry.key, entry.label);
+          return '<li class="line"><span class="taste-label">' + esc(shown.text) + '</span>' + (shown.kind ? '<span class="taste-kind muted">' + shown.kind + '</span>' : '') +
+            '<button type="button" class="ic" data-act="taste-forget" data-key="' + esc(entry.key) + '" aria-label="' + esc('Vergeet ' + shown.text) + '">' + api.CLOSE + '</button></li>';
         }).join('') + '</ul></section>' : '';
       }
       return '<div class="taste-window"><button type="button" class="taste-toggle line" role="switch" aria-checked="' + profile.enabled + '" data-act="taste-enable"><span>Persoonlijke volgorde</span><span class="taste-switch" aria-hidden="true"></span></button>' +

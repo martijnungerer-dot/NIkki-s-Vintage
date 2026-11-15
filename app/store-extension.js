@@ -165,8 +165,9 @@
       '<button id="catalog-reset" type="button" class="ic" data-act="list-reset" aria-label="Wis zoekopdracht, filters en sortering">'+CLOSE+'</button></div>'+
       '<div class="catalog-filters"><select data-field="material" aria-label="Materiaal"><option value="">Elk materiaal</option>'+
       materials.map(m=>'<option value="'+esc(m)+'"'+(m===state.material?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select>'+
-      '<select data-field="sort" aria-label="Sorteer stukken">'+[['order','Boetiek'],['price-up','Prijs laag–hoog'],['price-down','Prijs hoog–laag'],['name','Naam A–Z']]
-        .map(([value,label])=>'<option value="'+value+'"'+(state.sort===value?' selected':'')+'>'+label+'</option>').join('')+'</select></div></div>'+
+      // The heading inside the list and the first option say that this choice is about the order.
+      '<select data-field="sort" aria-label="Sorteer stukken"><optgroup label="Sorteren op">'+[['order','Onze volgorde'],['price-up','Prijs laag–hoog'],['price-down','Prijs hoog–laag'],['name','Naam A–Z']]
+        .map(([value,label])=>'<option value="'+value+'"'+(state.sort===value?' selected':'')+'>'+label+'</option>').join('')+'</optgroup></select></div></div>'+
       '<p id="catalog-count" class="catalog-count muted" role="status"></p><ul id="catalog-results" class="catalog-results"></ul>';
     var scroll=state.scroll;renderResults();state.scroll=scroll;
   }

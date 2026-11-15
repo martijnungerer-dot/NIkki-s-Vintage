@@ -88,6 +88,10 @@ shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn 
 // Fourth Shop destination, using the same checked build anchor as Mijn favorieten.
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>','<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>\n    <button type="button" role="menuitem" data-act="menu">Mijn smaak</button>');
 shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
+// Martijn, 15 november 2026: the title button shows an i-icon instead of only a small arrow, so
+// visitors find the information panel (maten, materiaal).
+shop=patchShop(shop,'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5A50" stroke-width="1.6" aria-hidden="true" style="flex:none"><path d="M6 15l6-6 6 6"/></svg>',
+  '<svg id="info-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E2420" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>');
 shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});
 for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js','manifest.webmanifest'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));

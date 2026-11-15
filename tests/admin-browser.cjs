@@ -202,15 +202,39 @@ async function realNewsreader(p){
       // "Volgend stuk" is secondary and asks before throwing away unsaved input.
       assert.equal(await intake.locator('#new-draft').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
       const frame=p.frames().find(x=>x.name()==='intake');
+      assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),false,'an opened piece without changes is not unsaved');
+      await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+      assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),true);
+      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Geen]').evaluate(e=>document.activeElement===e),true,'focus stays on the chip after the redraw');
       await frame.evaluate(()=>{window.__confirm=window.confirm;window.confirm=m=>{window.__asked=m;return false;};});
       await intake.locator('#new-draft').click();
       assert.match(await frame.evaluate(()=>window.__asked),/nog niet opgeslagen/);
       await frame.evaluate(()=>{window.confirm=window.__confirm;});assert.equal(await intake.locator('#step-review').isVisible(),true,'cancel keeps the input');
-      await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+      // Text typed in "+ nieuw" survives a tap on another chip.
+      await intake.locator('[data-add=bijzonderheden]').click();await intake.locator('#add-bijzonderheden').fill('Leren bies');
+      await intake.locator('[data-k=bijzonderheden][data-v=Vlek]').click();
+      assert.equal(await intake.locator('#add-bijzonderheden').inputValue(),'Leren bies');
+      await intake.locator('[data-k=bijzonderheden][data-v=Vlek]').click();await intake.locator('[data-add=bijzonderheden]').click();
+      if(await intake.locator('[data-k=bijzonderheden][data-v=Geen]').getAttribute('aria-pressed')!=='true')await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
       assert.doesNotMatch(await intake.locator('#publish').getAttribute('class'),/incomplete/);
       await intake.locator('#publish').click();
       await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
-      assert.deepEqual(f.state.saved.p_data.details,['Geen']);assert.deepEqual(f.state.errors,[]);
+      assert.deepEqual(f.state.saved.p_data.details,['Geen']);
+      // After saving, Nieuw stuk starts empty instead of showing the saved piece again.
+      await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
+      assert.equal(await intake.locator('#step-photos').isVisible(),true);
+      assert.equal(await intake.locator('#thumbs .thumb').count(),0);
+      assert.equal(await intake.locator('#publish').textContent(),'Opslaan en tonen in boetiek');
+      // A photo can be removed in Controleren too.
+      const png=c=>p.evaluate(colour=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=colour;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},c);
+      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
+      await intake.locator('#manual').click();assert.equal(await intake.locator('.ph').count(),2);
+      await intake.locator('[data-delrev="1"]').click();assert.equal(await intake.locator('.ph').count(),1);
+      assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),true,'a new piece with a photo is unsaved');
+      // The phone's back button returns to the previous screen of the app.
+      await p.goBack();assert.equal(await p.locator('#manage').isVisible(),true,'back from Nieuw stuk to Jouw collectie');
+      assert.equal(new URL(p.url()).hostname,'app.test','still on the site');
+      assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
   {

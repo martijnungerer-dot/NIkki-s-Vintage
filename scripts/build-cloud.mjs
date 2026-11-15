@@ -14,7 +14,7 @@ const patchIntake=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,
 const patchShop=(text,anchor,replacement,count=1)=>replaceExactly(text,anchor,replacement,{file:'cloud store (concept/ontdekken-optie-b.html)',count});
 let intake=intakeSource;
 intake=patchIntake(intake,"draftId ||= 'stuk-' + Date.now() + '-' + Math.random().toString(36).slice(2);","draftId ||= crypto.randomUUID();");
-intake=patchIntake(intake,'window.parent.NikkiApp.publish(product);','await window.parent.NikkiApp.publish(product); savedJustNow = true;');
+intake=patchIntake(intake,'window.parent.NikkiApp.publish(product);',"await window.parent.NikkiApp.publish(product, message => { $('review-err').textContent = message; }); markSaved();");
 intake=patchIntake(intake,'key:draftId, title:', 'furClass:sel.bont, key:draftId, title:');
 intake=replaceRegion(intake,'PHOTO_TRANSFER','    const images = await window.parent.NikkiApp.preparePhotos(photos, mainPhoto());','demo/intake-bridge.js');
 intake=patchIntake(intake,'Toevoegen aan proefwinkel','Opslaan en tonen in boetiek',2);
@@ -43,6 +43,14 @@ intake=patchIntake(intake,"    if ((t = e.target.closest('[data-main]'))) {",
 intake=patchIntake(intake,"    $('publish').disabled = !all;","    $('publish').disabled = false; $('publish').classList.toggle('incomplete', !all);");
 intake=patchIntake(intake,"  if (sending || !STEPS.every(s => s.done())) return;",
   "  if (sending) return;\n  const missing = STEPS.filter(s => !s.done());\n  if (missing.length) {\n    open = missing[0].id; adding = null; renderPath();\n    $('review-err').textContent = 'Nog niet af: ' + missing.map(s => s.title + ' (' + s.sum() + ')').join(', ') + '.';\n    const head = document.querySelector('[data-step=\"' + missing[0].id + '\"] .stephead');\n    if (head) { head.scrollIntoView({block:'center'}); head.focus({preventScroll:true}); }\n    return;\n  }");
+// Text typed in "+ nieuw" survives a tap on another chip (every tap rebuilds the checklist).
+intake=patchIntake(intake,"'\" placeholder=\"Typ en voeg toe\"><button type=\"button\" data-addok=\"'","'\" placeholder=\"Typ en voeg toe\" value=\"' + esc(addDraft[key] || '') + '\"><button type=\"button\" data-addok=\"'");
+intake=patchIntake(intake,"    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;","    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;\n    delete addDraft[key];");
+// A photo can also be removed in Controleren, not only in the first step.
+intake=patchIntake(intake,"'<button type=\"button\" class=\"okb\" data-ok=\"' + i + '\" aria-pressed=\"' + p.ok + '\">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +",
+  "'<button type=\"button\" class=\"okb\" data-ok=\"' + i + '\" aria-pressed=\"' + p.ok + '\">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +\n          '<button type=\"button\" class=\"okb\" data-delrev=\"' + i + '\" aria-label=\"Foto ' + (i + 1) + ' verwijderen\">Verwijderen</button>' +");
+intake=patchIntake(intake,"    if ((t = e.target.closest('[data-intern]'))) {",
+  "    if ((t = e.target.closest('[data-delrev]'))) { var di = Number(t.getAttribute('data-delrev')); if (!confirm('Foto ' + (di + 1) + ' verwijderen?')) return; URL.revokeObjectURL(photos[di].url); photos.splice(di, 1); renderThumbs(); renderPath(); return; }\n    if ((t = e.target.closest('[data-intern]'))) {");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 // The chosen design supplies the actual markup and CSS, not a second approximation.
 let shop=await read('concept/ontdekken-optie-b.html');

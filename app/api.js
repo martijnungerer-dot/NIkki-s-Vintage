@@ -118,12 +118,32 @@ export class Api {
   // Public photos go into the catalogue; photos "Alleen voor controle" (internal) only into the
   // staff-only table garment_private, so visitors can never see them. The latest Gemini proposal
   // is stored next to them for later comparison (never in the browser of a visitor).
-  async save(product, version, {ai = null} = {}) {
+  async save(product, version, {ai = null, onProgress = () => {}} = {}) {
+    // Upload up to three photos at a time (much faster on a phone than one by one), keeping order.
+    const stored = new Array(product.images.length); let next = 0, done = 0;
+    const total = product.images.length;
+    onProgress(total === 1 ? 'Foto opslaan…' : 'Foto’s opslaan: 0 van ' + total + '…');
+    const worker = async () => {
+      while(next < total) {
+        const index = next++;
+        stored[index] = await this.upload(product.key, product.images[index]);
+        done++; if(total > 1) onProgress('Foto’s opslaan: ' + done + ' van ' + total + '…');
+      }
+    };
+    await Promise.all(Array.from({length: Math.min(3, total)}, worker));
+    onProgress('Stuk opslaan…');
+    // The same photo chosen twice gets the same storage path (content hash). Keep it once, as a
+    // boutique photo if either copy was one, so a duplicate never blocks saving.
+    const byPath = new Map();
+    product.images.forEach((image, index) => {
+      const path = stored[index].path, seen = byPath.get(path);
+      if(!seen) byPath.set(path, {path, role:stored[index].role, main:!!image.main && !image.internal, internal:!!image.internal});
+      else { if(!image.internal) seen.internal = false; if(image.main && !image.internal) seen.main = true; }
+    });
     const images = [], internal = [];
-    for(const image of product.images) {
-      const stored = await this.upload(product.key, image);
-      if(image.internal) internal.push({path:stored.path, role:stored.role});
-      else images.push(stored);
+    for(const photo of byPath.values()) {
+      if(photo.internal) internal.push({path:photo.path, role:photo.role});
+      else images.push({path:photo.path, role:photo.role, main:photo.main});
     }
     // Explicit public allowlist: no session, private notes, cost or model output.
     const data = Object.fromEntries(['title','description','priceMinor','material','species','model','colour','length','fit','era','details','measurements','furClass'].map(k=>[k,product[k]]));
@@ -150,12 +170,12 @@ export class Api {
     return list.map(i=>({path:i.path, role:i.role, src:urls.get(i.path)}));
   }
   sold(id, version) {return this.request('/rest/v1/rpc/mark_garment_sold',{method:'POST',body:{p_id:id,p_version:version}});}
-  async analyse(files, signal) {
+  async analyse(files, signal, lists) {
     const images = await Promise.all(files.map(file=>new Promise((resolve,reject)=>{
       if(file.size>2*1024*1024) {reject(Error('Foto te groot voor analyse.'));return;}
       const reader = new FileReader(); reader.onerror=()=>reject(Error('Foto onleesbaar.'));
       reader.onload=()=>resolve({mimeType:file.type,data:reader.result.split(',')[1]}); reader.readAsDataURL(file);
     })));
-    return this.request('/functions/v1/analyse',{method:'POST',body:{images},signal});
+    return this.request('/functions/v1/analyse',{method:'POST',body:lists ? {images, lists} : {images},signal});
   }
 }

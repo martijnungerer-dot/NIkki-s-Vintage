@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — codereview Gemini verwerkt
+- Tweede Gemini-review op één tekstbestand met regelnummers (`GSF-code-voor-review.txt`); besluiten in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md).
+- Invoer: tekst in "+ nieuw" blijft staan, focus blijft op dezelfde knop, verwijderen in Controleren, dubbele foto's één keer bewaard, drie uploads tegelijk met teller, foto's tot 30 MB, na opslaan begint Nieuw stuk leeg, waarschuwing bij verlaten met niet-opgeslagen invoer, Terug-knop binnen de app. Boetiek: melding in de winkelmand bij een verkocht stuk.
+- Fotoanalyse: Nikki's keuzelijsten gaan als data mee naar Gemini, JSON in een markdown-omlijsting wordt gelezen, plafond 8192 tokens. Uitrollen: `npx.cmd supabase functions deploy analyse`.
+- `npm test` (69/69) en alle browsertests slagen lokaal. Live Supabase/Gemini niet getest.
+
 ### 15 november 2026 — review gebruiksvriendelijkheid verwerkt
 - Gemini-review nagekeken en gemeten; besluiten per bevinding in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md). Boetiek en beheer voldoen gemeten aan 44 px / 16 px / 4,5:1.
 - Invoerscherm: alle bediening minstens 44 px met 8 px ruimte op de fotokaarten, alle tekst minstens 16 px, statusregels niet meer afgekapt. De melding wat nog ontbreekt staat boven de opslagknop (donkerrood). "Volgend stuk" is secundair en vraagt bevestiging bij niet-opgeslagen invoer. Browsertest controleert de maten in het invoerscherm.

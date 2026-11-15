@@ -18,6 +18,9 @@
       // A published piece whose photos are temporarily unavailable stays selected but cannot be shown.
       var hidden = keys.length - lines.length;
       var hiddenNote = hidden ? '<p class="muted cart-note">' + (hidden === 1 ? '1 stuk in je winkelmand is' : hidden + ' stukken in je winkelmand zijn') + ' tijdelijk niet te zien.</p>' : '';
+      // Every piece is unique: say so when one in the basket has meanwhile been sold.
+      var gone = api.takeGoneFromCart ? api.takeGoneFromCart() : 0;
+      if (gone) hiddenNote = '<p class="muted cart-note" role="status">' + (gone === 1 ? 'Eén stuk uit je winkelmand is inmiddels verkocht en weggehaald.' : gone + ' stukken uit je winkelmand zijn inmiddels verkocht en weggehaald.') + '</p>' + hiddenNote;
       if (!lines.length) { step = 'cart'; return (hidden ? '' : '<p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Je winkelmand is leeg.</p>') + hiddenNote + NOTE; }
       var total = euro(lines.reduce(function (sum, it) { return sum + it.priceMinor; }, 0));
       var totalRow = '<div class="kv" style="border:0;font-size:20px"><span>Totaal</span><span id="cart-total">' + esc(total) + '</span></div>';

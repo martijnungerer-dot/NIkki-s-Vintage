@@ -3,7 +3,9 @@
 // A function declaration, so the prototype can use it before this code runs (hoisted).
 function maxPhotos() { return 8; }
 limits = {images:{maxCount:maxPhotos()}};
-sample = {json:(_prompt, options)=>window.parent.NikkiApp.analyse(options.images, options.signal)};
+// Nikki's chip lists (standard plus her own words) go along, so Gemini picks existing chips.
+function chipLists() { return Object.fromEntries(['model','kleur','lengte','pasvorm','bijzonderheden'].map(k=>[k,options(k)])); }
+sample = {json:(_prompt, o)=>window.parent.NikkiApp.analyse(o.images, o.signal, chipLists())};
 $('ai-off').textContent='Gemini bekijkt alle foto’s, ook die alleen voor controle. Het zijn voorstellen: controleer materiaal en kenmerken zelf.';
 $('ai-off').hidden=false;
 $('analyse').textContent='Voorstellen met Gemini';
@@ -27,28 +29,48 @@ internalStyle.textContent=[
 document.head.append(internalStyle);
 // The save message (what is missing, saving, saved) belongs next to the save button.
 $('publish').before($('review-err'));
-// True right after a successful save, false again after any change (set in the save patch).
-let savedJustNow=false;
-for(const id of ['path','cam','gallery','thumbs'])for(const type of ['input','change','click'])$(id).addEventListener(type,()=>{savedJustNow=false;},true);
+// Unsaved input = what is on screen differs from the last saved or opened state.
+function snapshot(){
+  return JSON.stringify({p:photos.map(x=>[x.url,x.rol,!!x.main,!!x.internal,!!x.ok]),sel:sel,m:m,t:text,sp:speciesChecked});
+}
+let baseline=snapshot();
+function markSaved(){baseline=snapshot();}
+// Typed but not yet added values of "+ nieuw", per field (kept when the checklist is redrawn).
+var addDraft={};
+$('path').addEventListener('input',e=>{if(e.target.id&&e.target.id.indexOf('add-')===0)addDraft[e.target.id.slice(4)]=e.target.value;});
+$('again').addEventListener('click',()=>{addDraft={};$('publish').textContent='Opslaan en tonen in boetiek';$('review-err').textContent='';markSaved();});
+function unsavedInput(){return snapshot()!==baseline||Object.values(addDraft).some(v=>v.trim());}
+// Every tap redraws the checklist; put the focus back on the same control afterwards, so a
+// keyboard or screen-reader user does not land at the top (review 15 November 2026, 1.1).
+$('path').addEventListener('click',e=>{
+  const control=e.target.closest('button,select,input');if(!control)return;
+  const attrs=['data-k','data-v','data-ok','data-main','data-allok','data-open','data-intern','data-add','data-next'].filter(a=>control.hasAttribute(a));
+  if(!attrs.length)return;
+  const selector=control.tagName.toLowerCase()+attrs.map(a=>'['+a+'="'+CSS.escape(control.getAttribute(a))+'"]').join('');
+  setTimeout(()=>{if(document.activeElement&&document.activeElement!==document.body&&document.activeElement.isConnected)return;const again=$('path').querySelector(selector);if(again)again.focus({preventScroll:true});});
+},true);
 // "Volgend stuk" starts over; ask first if there is input that has not been saved.
 document.getElementById('new-draft')?.addEventListener('click',event=>{
-  const unsaved=photos.length>0||!!text.titel.trim()||!!text.prijs.trim()||Object.values(sel).some(v=>Array.isArray(v)?v.length:!!v);
-  if(unsaved&&!savedJustNow&&!confirm('Wat je hebt ingevuld is nog niet opgeslagen. Toch een nieuw stuk beginnen?')){event.stopImmediatePropagation();}
+  if(unsavedInput()&&!confirm('Wat je hebt ingevuld is nog niet opgeslagen. Toch een nieuw stuk beginnen?')){event.stopImmediatePropagation();}
 },true);
 // A new piece forgets the Gemini proposal of the previous one.
 $('again').addEventListener('click',()=>window.parent.NikkiApp.forgetAnalysis?.());
 renderThumbs();
 $('review-intro').textContent='Controleer alle gegevens voordat je opslaat.';
 window.NikkiIntake = {
+  hasUnsavedInput:()=>unsavedInput(),
+  // After a successful save the next Nieuw stuk starts empty.
+  reset(){ $('again').click(); },
   async load(record) {
     const incoming = [];
     // Internal photos are fetched separately (staff only); saving without them would drop them.
     const internal = await window.parent.NikkiApp.internalPhotos(record.key);
-    for(const image of [...record.images, ...internal.map(i=>({...i, main:false, internal:true}))]) {
+    // All photos are fetched at the same time, in order.
+    incoming.push(...await Promise.all([...record.images, ...internal.map(i=>({...i, main:false, internal:true}))].map(async image=>{
       const response = await fetch(image.src); if(!response.ok) throw Error('Een foto kon niet worden geopend.');
       const blob = await response.blob();
-      incoming.push({file:new File([blob],'foto.jpg',{type:blob.type}),role:image.role,main:image.main,path:image.path,internal:!!image.internal});
-    }
+      return {file:new File([blob],'foto.jpg',{type:blob.type}),role:image.role,main:image.main,path:image.path,internal:!!image.internal};
+    })));
     $('again').click(); draftId=record.key;
     photos=incoming.map(i=>({file:i.file,cloudPath:i.path,url:URL.createObjectURL(i.file),rol:i.role,main:i.main,internal:i.internal,rolByUser:true,toelichting:'',ok:true,bruikbaar:true}));
     sel={bont:record.furClass,materiaal:record.material,bontsoort:record.species||'',model:record.model,kleur:record.colour,lengte:record.length,pasvorm:record.fit,periode:record.era,bijzonderheden:record.details.slice()};
@@ -56,5 +78,6 @@ window.NikkiIntake = {
     text={titel:record.title,beschrijving:record.description,prijs:String(record.priceMinor/100)};
     speciesChecked=true; renderThumbs(); startReview({},0,'Opgeslagen stuk. Controleer je wijzigingen.');
     $('publish').textContent='Wijziging opslaan';
+    markSaved();
   }
 };

@@ -12,4 +12,6 @@
   --admin-radius-photo: 8px;
   --admin-radius-control: 10px;
   --admin-gap: 8px;
+  --admin-grid-column: 12px;
+  --admin-grid-row: 20px;
 }

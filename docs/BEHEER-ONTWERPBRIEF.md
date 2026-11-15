@@ -194,3 +194,12 @@ Details zijn belangrijk bij vintage mode. Een detailfoto met een vaste rol krijg
 - Voorstellen van Gemini (Martijn, 15 november 2026): Gemini doet een voorstel voor alles wat het kan zien, ook materiaal, bont, bontsoort en periode; Nikki mag het veranderen. Een onderdeel dat Gemini invulde, wacht op één tik op Klopt (of een wijziging), zodat niets ongezien in de boetiek komt maar Nikki niet alles opnieuw hoeft aan te tikken. De bontsoort houdt het vinkje "zelf gecontroleerd". Woorden over materiaal, diersoort, periode of echtheid in titel of beschrijving blijven staan en worden genoemd om te bevestigen.
 - Bovenbalk van de beheerkant (Martijn, 14 november 2026, variant A): de naam op twee regels (Guaranteed / Secondhand Fur) met drie iconen erachter: Boetiek, Vernieuwen en Account. Uitloggen blijft op de collectiepagina. Een naam op één regel met drie of vier iconen past niet op 320 px.
 - Foto's: maximaal 8 per stuk. Per foto kan Nikki aanzetten dat hij **alleen voor controle** is (label, naden, binnenkant, gebreken). Die foto's ziet Gemini wel, bezoekers nooit, en ze kunnen geen hoofdfoto zijn. In het nieuwe invoerscherm blijft dat een aan/uit-knop met dezelfde tekst.
+
+### Jouw collectie gebouwd (15 november 2026)
+
+Gebouwd door Claude op verzoek van Martijn, met deze verschillen ten opzichte van de tekst hierboven:
+
+- De +-kaart toont het kleerhangericoon met een + en opent Nieuw stuk; de camera opent nog niet direct.
+- "Markeer verkocht" vraagt geen bevestiging meer. In plaats daarvan staat er vijf seconden "Ongedaan maken" voordat er iets wordt opgeslagen. Verkocht kan nooit terug naar te koop.
+- Bewerken is een tik op de kaart (geen potloodje). De filterknoppen Alle/Beschikbaar/Verkocht zijn nog niet gebouwd.
+- De selectors in de tests zijn bewust mee veranderd: `#items li.piece`, `.piece-title`, `.piece-status`, de knoppen "Bewerken: …", "Markeer verkocht: …" en "Ongedaan maken: …". `#new` is nu de +-kaart. Eigen test: `tests/admin-collection.cjs`.

@@ -1,5 +1,5 @@
 import {icon} from './icons.js';
-export function createCollection({api,$,state,show,say,shopStatus,action}) {
+export function createCollection({api,$,state,show,say,shopStatus,action,controls}) {
   function withPhotos(row,urls){
     const images=row.data.images.filter(i=>urls.has(i.path)).map(i=>({...i,src:urls.get(i.path)}));
     if(!images.length)return null;
@@ -17,8 +17,9 @@ export function createCollection({api,$,state,show,say,shopStatus,action}) {
   // fixed in app/index.html; the cards of the pieces are rebuilt here.
   const euro=minor=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:minor%100?2:0}).format(minor/100);
   const UNDO_MS=5000;
-  // Pieces marked as sold but not saved yet: id -> {timer, price}. Until the timer ends, Ongedaan maken cancels it.
+  // Capture the version at confirmation; undo only cancels a request that has not started.
   const pendingSold=new Map();
+  const errors=new Map();
   // Pieces whose sale price is being asked: id -> what is typed so far (survives a refresh of the grid).
   const asking=new Map();
   // What sold pieces went for (staff only): id -> cents.
@@ -32,26 +33,30 @@ export function createCollection({api,$,state,show,say,shopStatus,action}) {
   let thumbs=new Map();
   const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;};
   function card(row){
-    const pending=pendingSold.has(row.id), sold=row.status==='sold';
+    const entry=pendingSold.get(row.id), pending=!!entry, sold=row.status==='sold';
     const item=el('li','piece');item.dataset.id=row.id;item.dataset.status=sold?'sold':pending?'pending':'published';
     const open=el('button','piece-open');open.type='button';open.setAttribute('aria-label','Bewerken: '+row.data.title);
     const photo=el('span','piece-photo'), main=row.data.images.find(i=>i.main)||row.data.images[0], src=main&&thumbs.get(main.path);
     // A photo that cannot be shown leaves an empty tile; the card itself keeps working.
-    if(src){const img=el('img');img.alt='';img.loading='lazy';img.src=src;img.addEventListener('error',()=>img.remove());photo.append(img);}
+    if(src){const img=el('img');img.alt='';img.loading='lazy';img.width=400;img.height=500;img.src=src;img.addEventListener('error',()=>img.remove());photo.append(img);}
+    open.dataset.locked=String(pending);
     open.append(photo,el('span','piece-title',row.data.title),el('span','piece-price',euro(row.data.priceMinor)));
     open.addEventListener('click',()=>action(async()=>{
+      if(pendingSold.has(row.id))return;
       const unsaved=(()=>{try{return $('intake').contentWindow.NikkiIntake.hasUnsavedInput();}catch{return true;}})();
       if(unsaved&&!confirm('Dit opent het opgeslagen stuk. Je niet-opgeslagen invoer wordt vervangen. Doorgaan?'))return;
       await $('intake').contentWindow.NikkiIntake.load(await hydrate(row));state.editVersions.set(row.id,row.version);show('intake');say('Stuk geopend.');
     }));
-    const foot=el('div','piece-foot'), status=el('span','piece-status',sold?'Verkocht':pending?'Wordt verkocht voor '+euro(pendingSold.get(row.id).price)+'…':'Beschikbaar');
+    const foot=el('div','piece-foot'), status=el('span','piece-status',sold?'Verkocht':pending?'Wordt verkocht voor '+euro(entry.price)+'…':'In de boetiek');
     foot.append(status);
     if(sold&&sales.has(row.id))foot.append(el('span','piece-soldfor','voor '+euro(sales.get(row.id))));
     if(pending){
       status.setAttribute('role','status');
-      const undo=el('button','piece-undo','Ongedaan maken');undo.type='button';undo.setAttribute('aria-label','Ongedaan maken: '+row.data.title+' blijft beschikbaar');
-      undo.addEventListener('click',()=>{clearTimeout(pendingSold.get(row.id).timer);pendingSold.delete(row.id);redraw(row.id,'.piece-sold');});
-      foot.append(undo);
+      if(!entry.saving){
+        const undo=el('button','piece-undo','Ongedaan maken');undo.type='button';undo.setAttribute('aria-label','Ongedaan maken: '+row.data.title+' blijft beschikbaar');
+        undo.addEventListener('click',()=>{cancel(row.id);redraw(row.id,'.piece-sold');});
+        foot.append(undo);
+      }
     }else if(!sold&&asking.has(row.id)){
       // One question before anything happens: what did it sell for? The asking price is filled in.
       const form=el('form','piece-ask');form.noValidate=true;
@@ -64,56 +69,97 @@ export function createCollection({api,$,state,show,say,shopStatus,action}) {
       cancel.addEventListener('click',()=>{asking.delete(row.id);redraw(row.id,'.piece-sold');});
       form.addEventListener('submit',event=>{
         event.preventDefault();
+        if(state.busy||pendingSold.has(row.id)||row.status!=='published')return;
         const price=cents(input.value);
         if(price===null){error.textContent='Vul een bedrag in, bijvoorbeeld 120.';input.focus();return;}
         // Nothing is saved for five seconds, so a wrong tap can be undone. Sold itself can never be undone.
-        asking.delete(row.id);pendingSold.set(row.id,{price,timer:setTimeout(()=>commitSold(row.id),UNDO_MS)});redraw(row.id,'.piece-undo');
+        asking.delete(row.id);errors.delete(row.id);
+        const entry={price,version:row.version,saving:false};pendingSold.set(row.id,entry);
+        entry.timer=setTimeout(()=>commitSold(row.id,entry),UNDO_MS);redraw(row.id,'.piece-undo');
       });
       form.append(label,field,error,confirm,cancel);foot.append(form);
     }else if(!sold){
       const mark=el('button','piece-sold');mark.type='button';mark.title='Markeer verkocht';mark.setAttribute('aria-label','Markeer verkocht: '+row.data.title);mark.append(icon('tag'));
-      mark.addEventListener('click',()=>{asking.set(row.id,String(row.data.priceMinor/100).replace('.',','));redraw(row.id,'.piece-euro input');});
+      mark.addEventListener('click',()=>{if(state.busy||pendingSold.has(row.id))return;errors.delete(row.id);asking.set(row.id,String(row.data.priceMinor/100).replace('.',','));redraw(row.id,'.piece-euro input');});
       foot.append(mark);
     }
-    item.append(open,foot);return item;
+    item.append(open,foot);
+    if(errors.has(row.id)){const error=el('p','piece-error',errors.get(row.id));error.setAttribute('role','alert');item.append(error);}
+    return item;
   }
   function redraw(id,focus){
     const row=state.rows.find(r=>r.id===id), old=[...$('items').children].find(li=>li.dataset.id===id);
     if(!row||!old)return;
-    const next=card(row);old.replaceWith(next);if(focus)next.querySelector(focus)?.focus();
+    const next=card(row);old.replaceWith(next);controls();if(focus)next.querySelector(focus)?.focus({preventScroll:true});
   }
-  function commitSold(id){
-    if(!pendingSold.has(id))return;
+  function cancel(id){
+    const entry=pendingSold.get(id);if(!entry||entry.saving)return;
+    clearTimeout(entry.timer);pendingSold.delete(id);
+  }
+  function cancelWaiting(){
+    if(!pendingSold.size)return;
+    for(const id of pendingSold.keys())cancel(id);
+    render();
+  }
+  function updateShop(){
+    const published=state.rows.filter(r=>r.status==='published'),records=[];let missing=0;
+    for(const row of published){const record=withPhotos(row,thumbs);if(record)records.push(record);else missing++;}
+    state.skipped=missing;
+    $('shop').contentWindow.NikkiStore.replace(records.reverse(),published.map(row=>row.id));
+  }
+  async function commitSold(id,entry){
+    if(pendingSold.get(id)!==entry)return;
+    const row=state.rows.find(r=>r.id===id);
+    if(!state.staff||!api.session||document.hidden||document.body.dataset.screen!=='manage'||!row||row.status!=='published'||row.version!==entry.version){cancel(id);redraw(id);return;}
     // Another action (a refresh, opening a piece) is running: save as soon as it is done.
-    if(state.busy){pendingSold.get(id).timer=setTimeout(()=>commitSold(id),300);return;}
-    action(async()=>{
-      const row=state.rows.find(r=>r.id===id);
+    if(state.busy){entry.timer=setTimeout(()=>commitSold(id,entry),300);return;}
+    const hadFocus=document.activeElement?.closest('.piece')?.dataset.id===id;
+    await action(async()=>{
+      entry.saving=true;redraw(id);
       try{
-        if(row&&row.status==='published'){
-          const sold=await api.sold(row.id,row.version,pendingSold.get(id).price);if(state.editVersions.has(row.id)&&sold?.version)state.editVersions.set(row.id,sold.version);
-        }
-      }finally{pendingSold.delete(id);}
-      await refresh();say('Als verkocht opgeslagen.');
-    }).finally(()=>{if(!pendingSold.has(id))redraw(id);});
+        const saved=await api.sold(id,entry.version,entry.price);
+        row.status='sold';if(saved?.version)row.version=saved.version;
+        if(state.editVersions.has(id)&&saved?.version)state.editVersions.set(id,saved.version);
+      }catch(error){pendingSold.delete(id);errors.set(id,error.message);redraw(id);throw error;}
+      pendingSold.delete(id);sales.set(id,entry.price);updateShop();redraw(id);
+      // A confirmed sale stays sold even if the subsequent refresh is unavailable.
+      try{await refresh();say('Als verkocht opgeslagen.');}
+      catch{say('Verkocht opgeslagen. Vernieuw de collectie om de laatste gegevens te laden.','error');}
+    });
+    if(hadFocus&&document.body.dataset.screen==='manage'&&document.activeElement===document.body){
+      [...$('items').children].find(li=>li.dataset.id===id)?.querySelector('.piece-open')?.focus({preventScroll:true});
+    }
   }
   function render(){
+    const active=document.activeElement,id=active?.closest('.piece')?.dataset.id,cls=active?.className,selection=active?.selectionStart;
+    const scroll=$('manage').scrollTop;
     [...$('items').querySelectorAll('.piece')].forEach(li=>li.remove());
     $('empty').hidden=!state.staff||state.rows.length>0;
     if(state.staff)$('items').append(...state.rows.map(card));
+    controls();$('manage').scrollTop=scroll;
+    const replacement=[...$('items').children].find(li=>li.dataset.id===id);
+    const focus=replacement&&[...replacement.querySelectorAll('button,input')].find(e=>e.className===cls);
+    if(focus&&!focus.disabled){focus.focus({preventScroll:true});if(selection!=null)focus.setSelectionRange(selection,selection);}
   }
+  new MutationObserver(()=>{if(document.body.dataset.screen!=='manage')cancelWaiting();}).observe(document.body,{attributes:true,attributeFilter:['data-screen']});
+  window.addEventListener('pagehide',cancelWaiting);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelWaiting();});
   async function refresh(){
     shopStatus('Collectie laden…','loading');
     const next=await api.list();
     const published=next.filter(r=>r.status==='published');
     // One batch: every photo of the available pieces, plus the main photo of sold pieces for the staff grid.
-    const soldMain=next.filter(r=>r.status!=='published').map(r=>(r.data.images.find(i=>i.main)||r.data.images[0])?.path).filter(Boolean);
-    const urls=await api.imageUrls([...published.flatMap(r=>r.data.images.map(i=>i.path)),...soldMain]);
-    const publicRecords=[];let missing=0;
-    for(const row of published){const record=withPhotos(row,urls);if(record)publicRecords.push(record);else missing++;}
+    const soldMain=state.staff?next.filter(r=>r.status==='sold').map(r=>(r.data.images.find(i=>i.main)||r.data.images[0])?.path).filter(Boolean):[];
+    const urls=await api.imageUrls([...new Set([...published.flatMap(r=>r.data.images.map(i=>i.path)),...soldMain])]);
     // Sale prices are an extra for the staff grid; if they cannot be read the collection still loads.
     if(state.staff){try{sales=new Map((await api.sales()).map(row=>[row.id,row.sold_price_minor]));}catch{}}
-    state.rows=next;state.skipped=missing;state.lastRefresh=Date.now();thumbs=urls;
-    $('shop').contentWindow.NikkiStore.replace(publicRecords.reverse(),published.map(row=>row.id));
+    state.rows=next;state.lastRefresh=Date.now();thumbs=urls;
+    for(const [id,entry] of pendingSold){
+      const row=next.find(r=>r.id===id);
+      if(!row||row.status!=='published'||row.version!==entry.version)cancel(id);
+    }
+    for(const id of asking.keys())if(!next.some(r=>r.id===id&&r.status==='published'))asking.delete(id);
+    updateShop();
     shopStatus('');
     render();
   }

@@ -62,7 +62,7 @@ ul { list-style: none; padding: 0; }
 .piece-title { font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
 .piece-price { font-size: var(--admin-text-min); }
 .piece-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 8px; min-height: var(--admin-target-min); }
-.piece-status { font-size: var(--admin-text-min); color: var(--muted); }
+.piece-status { font-size: var(--admin-text-min); color: var(--muted); overflow-wrap: anywhere; }
 .piece[data-status=sold] .piece-status { padding: 2px 10px; border-radius: 999px; background: var(--chip-on); color: var(--fg); }
 .piece[data-status=sold] .piece-photo img { opacity: .55; }
 .piece-sold { flex: none; width: var(--admin-target-min); height: var(--admin-target-min); padding: 10px; border: 0; }
@@ -81,9 +81,11 @@ ul { list-style: none; padding: 0; }
 .piece-undo { width: 100%; margin-top: 4px; padding: 9px 8px; border-color: var(--chip-line); border-radius: var(--admin-radius-control); background: var(--chip); }
 .new-tile { display: grid; place-items: center; background: var(--chip); }
 .new-mark { position: relative; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--bg); }
-.new-mark svg { display: block; width: 30px; height: 30px; }
+.new-mark svg { display: block; width: 24px; height: 24px; }
 .new-plus { position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--fg); color: var(--bg); font-size: 20px; line-height: 1; }
 #new .piece-price { color: var(--muted); }
+#new { height: 100%; }
+.piece-error { overflow-wrap: anywhere; }
 
 /* Room so the temporary review pencil (app/admin/review.js) never covers the last row. */
 #manage[data-auth="staff"] #items { padding-bottom: 72px; }

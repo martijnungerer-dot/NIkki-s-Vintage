@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — Jouw collectie als fotoraster
+- Jouw collectie (beheer) is een raster van twee kolommen. Linksboven staat de +-kaart met het kleerhangericoon; die opent Nieuw stuk (de losse cameraknop naast Uitloggen is weg). Per kaart: hoofdfoto, titel, prijs en status onder de foto. Een tik op de kaart opent het stuk om te bewerken. Ook verkochte stukken tonen hun hoofdfoto (één batch getekende links, alleen voor beheerders); een foto die ontbreekt geeft een leeg vak en breekt de lijst niet.
+- "Markeer verkocht" is het labeltje op de kaart. Daarna staat er vijf seconden "Ongedaan maken"; pas daarna wordt het opgeslagen (dit vervangt het bevestigingsvenster). Een verkocht stuk heeft geen knop meer en kan niet terug naar te koop. Mislukt het opslaan, dan staat het stuk weer op Beschikbaar met een foutmelding.
+- Niet gebouwd: de filterknoppen Alle/Beschikbaar/Verkocht en het direct openen van de camera uit de ontwerpbrief; die stonden niet in deze opdracht.
+- Nieuwe test `tests/admin-collection.cjs` (390 en 320 px: raster, +-kaart, 16 px/44 px/Newsreader/geen geel, vijf seconden ongedaan maken, verversen tijdens het wachten, verkocht blijft verkocht, mislukte opslag, lege collectie). `npm test` (78/78) en alle browsertests slagen lokaal. Geen wijziging aan data, server of rechten. Schermafbeeldingen in `docs/screenshots/beheer-fotoraster/`.
+
 ### 15 november 2026 — vijf aanpassingen aan de boetiek
 - Op verzoek van Martijn ("doe allemaal"), zo dicht mogelijk bij optie B: (1) de titelknop onder de foto heeft een i-icoon in plaats van het pijltje; (2) de iconen in de foto en de bolletjes staan op een ronde, donkere achtergrond (wit daarop is minstens 3:1, ook op een witte jas) en meer/minder zoals dit zijn duimpjes; (3) de sorteerkeuze in Collectie begint met "Onze volgorde" onder het kopje "Sorteren op" (prijs laag–hoog zat er al in); (4) de ingang voor beheer is de laatste regel "Beheer" in het menu, het poppetje rechtsboven is weg; (5) Mijn smaak toont "Met bont", "Zonder bont", "€ 200–350", "Vanaf € 600" en bij andere waarden het soort kenmerk (kleur, lengte, materiaal).
 - Open keuze voor Martijn: variant A (duimpjes, Beheer in het menu; gebouwd) of variant B (plus/min, slotje rechtsboven). Schermafbeeldingen voor en na op 390 en 320 px naast optie B in `docs/screenshots/boetiek-vijf-punten/`. AGENTS.md is nog niet aangepast; dat volgt na de keuze.

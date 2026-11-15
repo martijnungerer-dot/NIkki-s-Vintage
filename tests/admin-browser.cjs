@@ -84,7 +84,7 @@ async function realNewsreader(p){
       assert.equal(await f.page.locator('#password').getAttribute('type'),'password');
       assert.equal(await f.page.locator('#login-error').textContent(),'');
       f.state.failList=false;await f.page.locator('#reload').click();
-      await f.page.locator('#items li').waitFor();assert.deepEqual(f.state.errors,[]);
+      await f.page.locator('#items li.piece').waitFor();assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
   {
@@ -164,7 +164,7 @@ async function realNewsreader(p){
       assert.equal(await p.locator('#login').isVisible(),false);
       assert.equal(await p.locator('#password').inputValue(),'');
       assert.equal(await p.evaluate(()=>JSON.stringify(sessionStorage)).then(s=>s.includes('recovery-token')),true,'stored as a normal login after saving');
-      await p.locator('#items li').waitFor();assert.deepEqual(f.state.errors,[]);
+      await p.locator('#items li.piece').waitFor();assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
   for(const [name,options] of [['expired',{hash:'#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired'}],
@@ -181,7 +181,7 @@ async function realNewsreader(p){
     // Editing on a phone: a tap on save with an unfinished step opens that step and names it,
     // instead of a grey button without a reason.
     const f=await fixture(390),p=f.page;try {
-      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.getByRole('button',{name:'Bewerken'}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
       const intake=p.frameLocator('#intake');
       assert.equal(await intake.locator('#publish').isDisabled(),false,'save stays tappable');
@@ -241,7 +241,7 @@ async function realNewsreader(p){
   {
     // A refresh returns to the screen you were working on; a shared link still opens the boutique.
     const f=await fixture(390),p=f.page;try {
-      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       assert.equal(await p.locator('#manage').isVisible(),true,'back on Jouw collectie after refresh');
       assert.equal(await p.locator('#login').isVisible(),false,'still logged in');
@@ -261,7 +261,7 @@ async function realNewsreader(p){
     // Concepten: a half-entered piece with photos survives a refresh, and is gone after saving.
     const f=await fixture(390,blocked?{noIndexedDb:true}:{}),p=f.page;try {
       const intake=p.frameLocator('#intake'),frame=()=>p.frames().find(x=>x.name()==='intake');
-      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.locator('#new').click();
       const png=c=>p.evaluate(colour=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=colour;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},c);
       await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
@@ -301,7 +301,7 @@ async function realNewsreader(p){
     // Gemini's "bijzonderheden" are suggestions only; its warnings stay; logout removes the draft.
     const f=await fixture(390),p=f.page;try {
       const intake=p.frameLocator('#intake'),frame=()=>p.frames().find(x=>x.name()==='intake');
-      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.locator('#new').click();
       const png=await p.evaluate(()=>{const k=document.createElement('canvas');k.width=20;k.height=20;k.getContext('2d').fillRect(0,0,20,20);return k.toDataURL().split(',')[1];});
       await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);

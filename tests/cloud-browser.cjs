@@ -165,10 +165,10 @@ const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/
 await p.getByRole('button',{name:'Markeer verkocht'}).click();
 await soldRequest;
 assert.equal(await shop().locator('#track .slide').count(),1);
-assert.equal(await p.locator('#items li > span').innerText(),title+' — Beschikbaar');
+assert.equal(await p.locator('#items .piece .piece-title').innerText(),title);assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Wordt verkocht…','not shown as sold before the server confirmed');
 releaseSoldResponse();
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
-assert.equal(await p.locator('#items li > span').innerText(),title+' — Verkocht');
+assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Verkocht');assert.equal(await p.getByRole('button',{name:'Markeer verkocht'}).count(),0,'sold cannot be marked again or undone');
 assert.equal(await shop().locator('#track .slide').count(),0);
 await p.getByRole('button',{name:/^Bewerken/}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
 // Once opened, changing text must not decode a saved image or read it as a data URL again.

@@ -19,15 +19,15 @@ function show(screen,{fromHistory=false}={}){
   if(!fromHistory&&history.state?.screen!==screen)history.pushState({...history.state,screen},'');
 }
 addEventListener('popstate',event=>{if(event.state?.screen)show(event.state.screen,{fromHistory:true});});
-const unsavedIntake=()=>{try{return !!$('intake').contentWindow.NikkiIntake?.hasUnsavedInput();}catch{return false;}};
+const unsavedIntake=()=>{try{return !!$('intake').contentWindow.NikkiIntake?.needsLeaveWarning();}catch{return false;}};
 // Closing, refreshing or leaving the site with an unsaved piece asks first (the browser shows its own text).
 addEventListener('beforeunload',event=>{if(unsavedIntake()){event.preventDefault();event.returnValue='';}});
-// After a refresh, return to the screen you were on (this tab only). An unsaved piece in the
-// intake is not kept, so a refresh there returns to Jouw collectie instead of an empty form.
+// After a refresh, return to the screen you were on (this tab only). From Nieuw stuk you return
+// there only if a saved draft (concept) was put back; otherwise to Jouw collectie.
 const SCREEN_KEY='gsf-screen';
 function lastScreen(){
   let saved=null;try{saved=sessionStorage.getItem(SCREEN_KEY);}catch{}
-  return saved==='manage'||saved==='intake'?'manage':null;
+  return saved==='manage'||saved==='intake'?saved:null;
 }
 const returnTo=location.hash?null:lastScreen();
 const admin=createAdmin({api,$,show});
@@ -36,6 +36,11 @@ function mount(frame,source){return new Promise(resolve=>{frame.addEventListener
 let lastAnalysis=null;
 window.NikkiApp={
   forgetAnalysis(){lastAnalysis=null;},
+  // Used by drafts (concepten) to keep the Gemini proposal and the edit version across a refresh.
+  currentAnalysis:()=>lastAnalysis,
+  restoreAnalysis(value){lastAnalysis=value;},
+  editVersion:key=>admin.state.editVersions.get(key),
+  restoreEditVersion(key,version){if(Number.isInteger(version))admin.state.editVersions.set(key,version);},
   internalPhotos:id=>api.internalPhotos(id),
   openAccount:()=>show('manage'),
   prepareImage,
@@ -60,5 +65,10 @@ window.NikkiApp={
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
 await admin.start();
 // A shared piece or a reset link in the address decides the screen itself.
-if(returnTo&&document.body.dataset.screen==='shop')show(returnTo);
+if(returnTo&&document.body.dataset.screen==='shop'){
+  // Back to Nieuw stuk only when an unsaved piece was put back; otherwise to Jouw collectie.
+  let to='manage';
+  if(returnTo==='intake'&&admin.state.staff){try{if(await $('intake').contentWindow.NikkiIntake.draftRestored)to='intake';}catch{}}
+  show(to);
+}
 startReview({api,admin});

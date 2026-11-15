@@ -34,7 +34,7 @@ function snapshot(){
   return JSON.stringify({p:photos.map(x=>[x.url,x.rol,!!x.main,!!x.internal,!!x.ok]),sel:sel,m:m,t:text,sp:speciesChecked});
 }
 let baseline=snapshot();
-function markSaved(){baseline=snapshot();}
+function markSaved(){baseline=snapshot();clearDraft();}
 // Typed but not yet added values of "+ nieuw", per field (kept when the checklist is redrawn).
 var addDraft={};
 $('path').addEventListener('input',e=>{if(e.target.id&&e.target.id.indexOf('add-')===0)addDraft[e.target.id.slice(4)]=e.target.value;});
@@ -57,8 +57,63 @@ document.getElementById('new-draft')?.addEventListener('click',event=>{
 $('again').addEventListener('click',()=>window.parent.NikkiApp.forgetAnalysis?.());
 renderThumbs();
 $('review-intro').textContent='Controleer alle gegevens voordat je opslaat.';
+// ---------- Concepten bewaren (alleen op dit toestel) ----------
+// A half-entered piece, photos included, is kept in IndexedDB every two seconds and when the app
+// goes to the background, and comes back after a refresh or reopening. It is removed after saving,
+// after starting over, and when a saved piece is opened. Only Nikki's own input; nothing private.
+const DRAFT_DB='gsf-intake', DRAFT_STORE='drafts', DRAFT_KEY='current';
+const emptyState=snapshot();
+let lastDraft=null, draftsOff=false;
+function draftDb(){
+  return new Promise((resolve,reject)=>{
+    let request;try{request=indexedDB.open(DRAFT_DB,1);}catch(error){reject(error);return;}
+    request.onupgradeneeded=()=>request.result.createObjectStore(DRAFT_STORE);
+    request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+  });
+}
+async function draftDo(mode,work){
+  const db=await draftDb();
+  try{return await new Promise((resolve,reject)=>{const tx=db.transaction(DRAFT_STORE,mode),request=work(tx.objectStore(DRAFT_STORE));tx.oncomplete=()=>resolve(request&&request.result);tx.onerror=tx.onabort=()=>reject(tx.error);});}
+  finally{db.close();}
+}
+async function saveDraft(){
+  if(draftsOff)return;
+  const state=snapshot();
+  if(!unsavedInput()||state===emptyState){if(lastDraft!==null)await clearDraft();return;}
+  if(state+JSON.stringify(addDraft)===lastDraft)return;
+  const value={v:1,at:Date.now(),draftId:draftId||null,edit:draftId?(window.parent.NikkiApp.editVersion?.(draftId)??null):null,step:$('step-review').hidden?1:3,
+    photos:photos.map(p=>({file:p.file,cloudPath:p.cloudPath||null,rol:p.rol||'',main:!!p.main,internal:!!p.internal,ok:!!p.ok,rolByUser:!!p.rolByUser,toelichting:p.toelichting||'',bruikbaar:p.bruikbaar!==false})),
+    sel:sel,m:m,text:text,sug:sug,speciesChecked:speciesChecked,addDraft:addDraft,ai:window.parent.NikkiApp.currentAnalysis?.()??null};
+  try{await draftDo('readwrite',store=>store.put(value,DRAFT_KEY));lastDraft=state+JSON.stringify(addDraft);}catch{draftsOff=true;}
+}
+function clearDraft(){lastDraft=null;return draftDo('readwrite',store=>store.delete(DRAFT_KEY)).catch(()=>{});}
+async function restoreDraft(){
+  let d;try{d=await draftDo('readonly',store=>store.get(DRAFT_KEY));}catch{draftsOff=true;return false;}
+  if(!d||d.v!==1||!Array.isArray(d.photos))return false;
+  // Something else was opened in the meantime (for example Bewerken): keep that, keep the draft.
+  if(snapshot()!==emptyState)return false;
+  photos=d.photos.filter(p=>p.file instanceof Blob).map(p=>({...p,url:URL.createObjectURL(p.file)}));
+  sel=d.sel&&typeof d.sel==='object'?d.sel:{};if(!Array.isArray(sel.bijzonderheden))sel.bijzonderheden=[];
+  m={chest:'',shoulder:'',sleeve:'',length:'',...(d.m||{})};text={titel:'',beschrijving:'',prijs:'',...(d.text||{})};
+  sug=d.sug||{};speciesChecked=!!d.speciesChecked;addDraft=d.addDraft||{};draftId=d.draftId||null;
+  if(d.draftId&&d.edit!=null)window.parent.NikkiApp.restoreEditVersion?.(d.draftId,d.edit);
+  if(d.ai)window.parent.NikkiApp.restoreAnalysis?.(d.ai);
+  lastDraft=snapshot()+JSON.stringify(addDraft);
+  renderThumbs();
+  const message='Je niet-opgeslagen stuk van '+new Date(d.at).toLocaleString('nl-NL',{weekday:'long',hour:'2-digit',minute:'2-digit'})+' is teruggezet.';
+  if(d.step===3&&photos.length){startReview({},0,message);if(draftId)$('publish').textContent='Wijziging opslaan';}
+  else{step(1);$('photo-count').textContent=message+' '+$('photo-count').textContent;}
+  return true;
+}
+const draftRestored=restoreDraft();
+setInterval(saveDraft,2000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveDraft();});
+addEventListener('pagehide',()=>{saveDraft();});
 window.NikkiIntake = {
   hasUnsavedInput:()=>unsavedInput(),
+  // Warn before leaving only if the latest input is not stored on the device yet.
+  needsLeaveWarning:()=>unsavedInput()&&(draftsOff||snapshot()+JSON.stringify(addDraft)!==lastDraft),
+  draftRestored,
   // After a successful save the next Nieuw stuk starts empty.
   reset(){ $('again').click(); },
   async load(record) {

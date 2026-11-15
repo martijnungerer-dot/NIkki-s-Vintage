@@ -14,6 +14,7 @@ async function fixture(width = 390, options = {}) {
   const context = await browser.newContext({viewport:{width,height:844}});
   const page = await context.newPage();
   if(options.clock)await page.clock.install();
+  if(options.noIndexedDb)await context.addInitScript(()=>{Object.defineProperty(window,'indexedDB',{configurable:true,get(){throw Error('blocked');}});});
   const state = {rows:[structuredClone(garment)],requests:[],errors:[],...options};
   page.on('pageerror', e=>state.errors.push(e.message));
   page.on('dialog', d=>d.accept());
@@ -33,7 +34,7 @@ async function fixture(width = 390, options = {}) {
     const headers = {'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'};
     const json = (data,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(data)});
     if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
-    state.requests.push({path:url.pathname,body:req.postDataJSON()});
+    let body=null;try{body=req.postDataJSON();}catch{}state.requests.push({path:url.pathname,body});
     if(url.pathname==='/auth/v1/token'){
       if(state.loginHold)await state.loginHold;
       if(state.failLogin)return json({error:'Invalid login credentials'},401);
@@ -47,6 +48,7 @@ async function fixture(width = 390, options = {}) {
       return json({id:'user'});
     }
     if(url.pathname==='/rest/v1/garment_private')return json([]);
+    if(url.pathname.startsWith('/storage/v1/object/garment-photos/')&&req.method()==='POST')return json({Key:url.pathname});
     if(url.pathname==='/rest/v1/rpc/save_garment_with_private'){const b=req.postDataJSON();state.saved=b;return json({...state.rows[0],data:b.p_data,version:state.rows[0].version+1});}
     if(url.pathname==='/rest/v1/rpc/require_staff'&&state.denyStaff)return json({},403);
     if(url.pathname==='/rest/v1/garments'&&state.failList)return json({},503);

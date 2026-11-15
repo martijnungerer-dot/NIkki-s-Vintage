@@ -19,16 +19,20 @@ test('actual PostgreSQL migration: RLS, photos, conflicts, sold preservation, al
       alter default privileges in schema public grant all on tables to anon,authenticated,service_role;`);
     const migrations=new URL('../supabase/migrations/',import.meta.url);
     for(const file of (await readdir(migrations)).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile(new URL(file,migrations),'utf8'));
-    for(const fn of ['require_staff()','save_garment(uuid,jsonb,integer)','mark_garment_sold(uuid,integer)']) {
+    // The older save_garment is closed for everyone; only save_garment_with_private (its owner) calls it.
+    for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'public.save_garment(uuid,jsonb,integer)','EXECUTE') as allowed",[role])).rows[0].allowed,false);
+    for(const fn of ['require_staff()','save_garment_with_private(uuid,jsonb,integer,jsonb,jsonb)','mark_garment_sold(uuid,integer)']) {
       assert.equal((await db.query("select has_function_privilege('anon',$1,'EXECUTE') as allowed",['public.'+fn])).rows[0].allowed,false);
       assert.equal((await db.query("select has_function_privilege('authenticated',$1,'EXECUTE') as allowed",['public.'+fn])).rows[0].allowed,true);
     }
     await db.query('insert into auth.users values($1),($2)',[staff,outsider]);await db.query('insert into public.staff values($1)',[staff]);
     async function as(role,user,fn){await db.exec('set role '+role);await db.query("select set_config('request.jwt.claim.sub',$1,false)",[user||'']);try{return await fn();}finally{await db.exec('reset role');}}
-    const save=(data=product,version=0)=>db.query('select public.save_garment($1,$2,$3) as item',[id,data,version]);
+    const save=(data=product,version=0)=>db.query("select public.save_garment_with_private($1,$2,$3,'[]'::jsonb,null) as item",[id,data,version]);
+    const direct=()=>db.query('select public.save_garment($1,$2,$3) as item',[id,product,0]);
     await as('anon',null,async()=>{assert.equal((await db.query('select * from public.staff')).rows.length,0);await assert.rejects(save,/permission denied/);await assert.rejects(()=>db.query('select * from public.analysis_usage'),/permission denied/);});
-    await as('authenticated',outsider,async()=>{await assert.rejects(save,/STAFF_REQUIRED/);await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',photo]));});
+    await as('authenticated',outsider,async()=>{await assert.rejects(save,/STAFF_REQUIRED/);await assert.rejects(direct,/permission denied/);await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',photo]));});
     await as('authenticated',staff,async()=>{
+      await assert.rejects(direct,/permission denied/,'staff cannot call the old function directly either');
       await assert.rejects(save,/PHOTO_NOT_UPLOADED/);
       await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',photo]);
       assert.equal((await save()).rows[0].item.version,1);

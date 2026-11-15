@@ -12,7 +12,7 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ### 15 november 2026 — review door zes Fable-agents verwerkt
 - Zes agents (beveiliging, invoer, boetiek, Gemini, bediening op 390/320 px, tests/bouw) reviewden main `7cfadf3`; geen kritieke of ernstige beveiligingsproblemen. Besluiten per bevinding in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md).
-- Belangrijkst: Gemini vinkt geen bijzonderheden meer aan en kan geen materiaal-, diersoort-, periode- of echtheidsclaims in titel/beschrijving zetten; concept wordt gewist bij uitloggen en alleen na inloggen teruggezet; uploadfouten, late Gemini-antwoorden en versieconflicten na verkoop afgehandeld; duidelijke melding bij een verkeerd wachtwoord; livecontrole kijkt naar de nieuwe migratie.
+- Belangrijkst: op verzoek van Martijn stelt Gemini ook materiaal, bont, bontsoort en periode voor; elk onderdeel dat Gemini invulde wacht op één tik op Klopt, en claimwoorden in titel/beschrijving blijven staan maar moeten bevestigd worden; concept wordt gewist bij uitloggen en alleen na inloggen teruggezet; uploadfouten, late Gemini-antwoorden en versieconflicten na verkoop afgehandeld; duidelijke melding bij een verkeerd wachtwoord; livecontrole kijkt naar de nieuwe migratie.
 - `npm test` (78/78) en alle browsertests slagen lokaal. Uitrollen na merge: `npx.cmd supabase functions deploy analyse` en `npx.cmd supabase functions deploy personalise`. Live niet getest.
 
 ### 15 november 2026 — concepten bewaren

@@ -306,9 +306,20 @@ async function realNewsreader(p){
       const png=await p.evaluate(()=>{const k=document.createElement('canvas');k.width=20;k.height=20;k.getContext('2d').fillRect(0,0,20,20);return k.toDataURL().split(',')[1];});
       await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
       await intake.locator('#analyse').click();await intake.locator('#step-review').waitFor({state:'visible'});
-      assert.match(await intake.locator('[data-step=bijz] .stepsum').innerText(),/kies of tik/,'not ticked by Gemini');
+      // Gemini fills in, also material and fur; each filled step needs one tap on Klopt.
+      for(const step of ['wat','bijz','tekst'])assert.match(await intake.locator(`[data-step=${step}] .stepsum`).innerText(),/voorstel · controleer/,step+' waits for Klopt');
+      await intake.locator('[data-open=wat]').click();
+      assert.equal(await intake.locator('[data-k=materiaal][data-v=Leer]').getAttribute('aria-pressed'),'true','material proposed and filled in');
+      await intake.locator('[data-step=wat] .stephead').scrollIntoViewIfNeeded();await p.screenshot({path:'test-results/admin/gemini-klopt-390.png'});
+      await intake.locator('[data-aiok=wat]').click();
+      assert.doesNotMatch(await intake.locator('[data-step=wat] .stepsum').innerText(),/voorstel · controleer/);
       await intake.locator('[data-open=bijz]').click();
-      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').getAttribute('aria-pressed'),'false','shown, not selected');
+      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').getAttribute('aria-pressed'),'true','filled in, Nikki confirms');
+      await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').click();
+      assert.doesNotMatch(await intake.locator('[data-step=bijz] .stepsum').innerText(),/voorstel · controleer/,'changing a chip also counts as checked');
+      await intake.locator('[data-open=tekst]').click();
+      assert.match(await intake.locator('[data-step=tekst] .aiok').innerText(),/Gemini noemt in de titel: leren/);
+      assert.equal(await intake.locator('#t-titel').inputValue(),'Korte leren jas','title kept');
       assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/);
       await intake.locator('#back-photos').click();await intake.locator('#manual').click();
       assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/,'warning still there after going back');

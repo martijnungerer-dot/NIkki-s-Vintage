@@ -55,8 +55,8 @@ Zes agents reviewden elk één gebied: beveiliging en privacy, invoer en verlies
 
 | Gebied | Bevinding | Oplossing |
 | --- | --- | --- |
-| Gemini | Bijzonderheden van Gemini werden aangevinkt en konden ongezien gepubliceerd worden | Alleen nog als voorstel (groene stip); Nikki tikt zelf aan |
-| Gemini | Titel en beschrijving konden materiaal, diersoort, periode of echtheid noemen | Server laat die leeg met een waarschuwing (`CLAIM`); prompt verbiedt het expliciet; ingebakken JSON-voorbeeld weg |
+| Gemini | Voorstellen van Gemini (zoals bijzonderheden) konden ongezien gepubliceerd worden | Besluit Martijn (15 november 2026): Gemini vult alles in wat het kan, ook materiaal, bont, bontsoort en periode; een onderdeel dat Gemini invulde wacht op één tik op **Klopt** (of een wijziging). De bontsoort houdt daarnaast het vinkje "zelf gecontroleerd" |
+| Gemini | Titel en beschrijving konden materiaal, diersoort, periode of echtheid noemen | De tekst blijft staan; de server noemt de woorden (`controleer`), en Titel en prijs wacht op Klopt of een aanpassing. Ingebakken JSON-voorbeeld weg |
 | Gemini | Schema zonder grenzen | `maxItems` op lijsten; kortere teksten; personalise: alleen bestaande `c1..cN` |
 | Gemini | Drukte bij Google leek een fout | Eigen melding `GEMINI_BUSY` ("wacht een minuut") |
 | Gemini | Geblokkeerde prompt zonder reden in de log | `blockReason` gelogd |

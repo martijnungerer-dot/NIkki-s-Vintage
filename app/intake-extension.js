@@ -4,7 +4,7 @@
 function maxPhotos() { return 8; }
 limits = {images:{maxCount:maxPhotos()}};
 // Nikki's chip lists (standard plus her own words) go along, so Gemini picks existing chips.
-function chipLists() { return Object.fromEntries(['model','kleur','lengte','pasvorm','bijzonderheden'].map(k=>[k,BASE[k].concat(learned[k]||[])])); }
+function chipLists() { return Object.fromEntries(['materiaal','model','kleur','lengte','pasvorm','periode','bontsoort','bijzonderheden'].map(k=>[k,BASE[k].concat(learned[k]||[])])); }
 sample = {json:(_prompt, o)=>window.parent.NikkiApp.analyse(o.images, o.signal, chipLists())};
 $('ai-off').textContent='Gemini bekijkt alle foto’s, ook die alleen voor controle. Het zijn voorstellen: controleer materiaal en kenmerken zelf.';
 $('ai-off').hidden=false;
@@ -25,7 +25,9 @@ internalStyle.textContent=[
   '.btn.ghost{background:transparent;color:var(--fg)}',
   // The message about what is missing sits right above the save button, in view.
   '.bar #review-err{margin:0 0 8px;color:#9B3A2F}.bar #review-err:empty{display:none}',
-  '.thumb .x{width:44px;height:44px;top:0;right:0}.linkbtn{min-height:44px}'
+  '.thumb .x{width:44px;height:44px;top:0;right:0}.linkbtn{min-height:44px}',
+  '.aiok{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.aiok p{margin:0;flex:1}',
+  '.aiok-check{flex:none;width:44px;height:44px;border-radius:22px;border:1px solid var(--fg);background:transparent;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer}.aiok-check svg{width:24px;height:24px}.aiok-check:active{background:var(--fg);color:var(--bg)}'
 ].join('');
 document.head.append(internalStyle);
 // The save message (what is missing, saving, saved) belongs next to the save button.
@@ -33,10 +35,12 @@ $('publish').before($('review-err'));
 // Unsaved input = what is on screen differs from the last saved or opened state.
 function snapshot(){
   const filled=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>Array.isArray(v)?v.length:v!==''&&v!=null&&v!==false).sort());
-  return JSON.stringify({p:photos.map(x=>[x.url,x.rol,!!x.main,!!x.internal,!!x.ok]),sel:filled(sel),m:filled(m),t:filled(text),sp:speciesChecked});
+  return JSON.stringify({p:photos.map(x=>[x.url,x.rol,!!x.main,!!x.internal,!!x.ok]),sel:filled(sel),m:filled(m),t:filled(text),sp:speciesChecked,ai:aiPending?[...aiPending].sort():[]});
 }
 // Review 15 November 2026: generation counter for Gemini answers and the last Gemini warnings.
 var analysisGen=0, lastWarnings=[], refusedPhotos=[];
+// Steps Gemini filled in that Nikki has not confirmed yet, and the words in title/description to check.
+var aiPending=new Set(), claimCheck={};
 // Only photos the app can process are taken in; the others are named right away.
 function usablePhoto(file){
   const ok=['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=30*1024*1024;
@@ -53,8 +57,40 @@ function markSaved(){baseline=snapshot();clearDraft();}
 // Typed but not yet added values of "+ nieuw", per field (kept when the checklist is redrawn).
 var addDraft={};
 $('path').addEventListener('input',e=>{if(e.target.id&&e.target.id.indexOf('add-')===0)addDraft[e.target.id.slice(4)]=e.target.value;});
-$('again').addEventListener('click',()=>{document.querySelector('.name').textContent='Nieuw stuk';addDraft={};lastWarnings=[];analysisGen++;if(ctl)ctl.abort();$('publish').textContent='Opslaan en tonen in boetiek';$('review-err').textContent='';markSaved();});
+$('again').addEventListener('click',()=>{document.querySelector('.name').textContent='Nieuw stuk';aiPending.clear();claimCheck={};addDraft={};lastWarnings=[];analysisGen++;if(ctl)ctl.abort();$('publish').textContent='Opslaan en tonen in boetiek';$('review-err').textContent='';markSaved();});
 function unsavedInput(){return snapshot()!==baseline||Object.values(addDraft).some(v=>v.trim());}
+// ---------- Voorstellen van Gemini: één tik "Klopt" per onderdeel (Martijn, 15 november 2026) ----------
+// Gemini fills in what it can, also material, fur, species and period. A step it filled stays open
+// ("voorstel · tik Klopt") until Nikki taps Klopt or changes something in it. Fur species also keeps
+// its own "zelf gecontroleerd" tick. Title and description stay, but named claim words must be confirmed.
+const AI_STEPS={wat:['bont','materiaal','model','kleur','lengte','pasvorm','periode'],bijz:['bijzonderheden']};
+const STEP_OF=Object.fromEntries(Object.entries(AI_STEPS).flatMap(([id,keys])=>keys.map(k=>[k,id])));
+const originalStartReview=startReview;
+startReview=function(d,seen,msg){
+  const before=JSON.parse(JSON.stringify(sel));
+  originalStartReview(d,seen,msg);
+  for(const [id,keys] of Object.entries(AI_STEPS))if(keys.some(k=>JSON.stringify(sel[k]??null)!==JSON.stringify(before[k]??null)))aiPending.add(id);
+  if(d&&d.controleer&&typeof d.controleer==='object'&&Object.keys(d.controleer).length){claimCheck=d.controleer;aiPending.add('tekst');}
+  renderPath();
+};
+for(const s of STEPS){
+  const done=s.done,sum=s.sum;
+  s.done=function(){return done()&&!aiPending.has(s.id);};
+  s.sum=function(){return aiPending.has(s.id)?'voorstel · controleer':sum();};
+}
+const originalBody=body;
+body=function(id){
+  if(!aiPending.has(id))return originalBody(id);
+  const words=id==='tekst'?Object.entries(claimCheck).map(([k,w])=>'in de '+k+': '+(Array.isArray(w)?w.join(', '):'')).join('; '):'';
+  const lead=id==='tekst'?'Gemini noemt '+words+'. Klopt dat? Pas aan, of tik op het vinkje.':'Ingevuld door Gemini. Pas aan wat niet klopt, of tik op het vinkje.';
+  return '<div class="aiok"><p class="muted">'+esc(lead)+'</p><button type="button" class="aiok-check" data-aiok="'+id+'" aria-label="Klopt, gecontroleerd" title="Klopt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>'+originalBody(id);
+};
+$('path').addEventListener('click',e=>{
+  const ok=e.target.closest('[data-aiok]');
+  if(ok){e.stopImmediatePropagation();const id=ok.getAttribute('data-aiok');aiPending.delete(id);renderPath();const head=document.querySelector('[data-step="'+id+'"] .stephead');if(head)head.focus();return;}
+  const chip=e.target.closest('[data-k]');if(chip&&STEP_OF[chip.getAttribute('data-k')])aiPending.delete(STEP_OF[chip.getAttribute('data-k')]);
+},true);
+$('path').addEventListener('input',e=>{if(e.target.getAttribute&&/^t-(titel|beschrijving)$/.test(e.target.id||''))aiPending.delete('tekst');},true);
 // Every tap redraws the checklist; put the focus back on the same control afterwards, so a
 // keyboard or screen-reader user does not land at the top (review 15 November 2026, 1.1).
 $('path').addEventListener('click',e=>{
@@ -103,7 +139,7 @@ async function saveDraft(){
     if(photoSet!==lastPhotoSet){await draftDo('readwrite',store=>store.put(photos.map(p=>p.file),DRAFT_PHOTOS));lastPhotoSet=photoSet;}
     const value={v:2,at:Date.now(),draftId:draftId||null,edit:draftId?(window.parent.NikkiApp.editVersion?.(draftId)??null):null,step:$('step-review').hidden?1:3,
       photos:photos.map(p=>({cloudPath:p.cloudPath||null,rol:p.rol||'',main:!!p.main,internal:!!p.internal,ok:!!p.ok,rolByUser:!!p.rolByUser,toelichting:p.toelichting||'',bruikbaar:p.bruikbaar!==false})),
-      sel:sel,m:m,text:text,sug:sug,speciesChecked:speciesChecked,addDraft:addDraft,warnings:lastWarnings,ai:window.parent.NikkiApp.currentAnalysis?.()??null};
+      sel:sel,m:m,text:text,sug:sug,speciesChecked:speciesChecked,addDraft:addDraft,warnings:lastWarnings,aiPending:[...aiPending],claimCheck:claimCheck,ai:window.parent.NikkiApp.currentAnalysis?.()??null};
     await draftDo('readwrite',store=>store.put(value,DRAFT_KEY));lastDraft=state;
   }catch{draftsOff=true;}
   finally{draftSaving=false;}
@@ -121,6 +157,7 @@ async function restoreDraft(){
   m={chest:'',shoulder:'',sleeve:'',length:'',...(d.m||{})};text={titel:'',beschrijving:'',prijs:'',...(d.text||{})};
   sug=d.sug||{};speciesChecked=!!d.speciesChecked;addDraft=d.addDraft||{};draftId=d.draftId||null;
   lastWarnings=Array.isArray(d.warnings)?d.warnings:[];
+  aiPending=new Set(Array.isArray(d.aiPending)?d.aiPending.filter(id=>['wat','bijz','tekst'].includes(id)):[]);claimCheck=d.claimCheck&&typeof d.claimCheck==='object'?d.claimCheck:{};
   if(d.draftId&&d.edit!=null)window.parent.NikkiApp.restoreEditVersion?.(d.draftId,d.edit);
   if(d.ai)window.parent.NikkiApp.restoreAnalysis?.(d.ai);
   lastPhotoSet=photos.map(p=>p.url).join('|');lastDraft=draftState();

@@ -52,10 +52,7 @@ intake=patchIntake(intake,"'<button type=\"button\" class=\"okb\" data-ok=\"' + 
 intake=patchIntake(intake,"    if ((t = e.target.closest('[data-intern]'))) {",
   "    if ((t = e.target.closest('[data-delrev]'))) { var di = Number(t.getAttribute('data-delrev')); if (!confirm('Foto ' + (di + 1) + ' verwijderen?')) return; URL.revokeObjectURL(photos[di].url); photos.splice(di, 1); renderThumbs(); renderPath(); return; }\n    if ((t = e.target.closest('[data-intern]'))) {");
 // Review 15 November 2026 (Fable):
-// - Gemini's "bijzonderheden" are only shown as suggestions (green dot); Nikki taps them herself, so no
-//   claim reaches the boutique unseen. Other fields stay prefilled; that step needs Nikki anyway.
-intake=patchIntake(intake,"        if (k === 'bijzonderheden') { if (!sel[k].length && Array.isArray(o.waarde)) sel[k] = o.waarde.slice(); }",
-  "        if (k === 'bijzonderheden') { /* suggestion only: Nikki taps what applies */ }");
+// - Gemini's proposals are filled in; a step it filled needs one tap on "Klopt" (app/intake-extension.js).
 // - A photo role is escaped where it is put into HTML.
 intake=patchIntake(intake,"(p.rol ? ', ' + p.rol : '')","(p.rol ? ', ' + esc(p.rol) : '')");
 // - A late Gemini answer for an earlier piece is ignored (generation counter, raised on Volgend stuk / Bewerken).

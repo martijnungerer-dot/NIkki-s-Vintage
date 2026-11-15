@@ -109,6 +109,9 @@ async function layout(frame,width) {
    // Approved name change (Martijn, 14 November 2026): give the reference the same full brand name and its one-line sizing.
    await ref.evaluate(()=>{document.querySelector('.brand').textContent='Guaranteed Secondhand Fur';});
    await ref.addStyleTag({content:'.brand{font-size:max(16px,min(22px,5.4vw));white-space:nowrap}'});
+   // Approved on 15 November 2026: the title button carries a 22px i-icon instead of the 18px arrow,
+   // and the staff entrance moved from the top bar to the Shop menu (the bar keeps its height).
+   await ref.evaluate(()=>{const icon=document.querySelector('.chip.title svg');icon.setAttribute('width','22');icon.setAttribute('height','22');});
    const refGeometry=await layout(ref,width);
    for(const [selector,expected] of Object.entries(refGeometry))for(const [key,value] of Object.entries(expected)) {
     if(selector==='.ph' && key==='radius')continue; // approved removal of the presentation frame
@@ -118,6 +121,18 @@ async function layout(frame,width) {
    // Ensure the outer management toolbar does not take space away from the copied screen.
    assert.equal(await page.locator('.app-header').isVisible(),false);
    assert.equal(await page.locator('#shop').evaluate(el=>el.getBoundingClientRect().height),844);
+   // 15 November 2026: i-icon on the title button; no person icon (staff entrance is in the menu);
+   // every icon in the photo and the dots sit on a background that gives white at least 3:1, even on a white photo.
+   assert.equal(await shop.locator('.chip.title #info-icon circle').count(),1);
+   assert.equal(await shop.getByRole('button',{name:'Mijn account'}).count(),0);
+   const contrasts=await shop.evaluate(()=>{
+    const lum=c=>{const f=v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4;};return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2]);};
+    const onWhite=bg=>{const m=bg.match(/[\d.]+/g).map(Number),a=m[3]??1;return m.slice(0,3).map(v=>v*a+255*(1-a));};
+    const list=[...document.querySelectorAll('#photo .on-photo')].map(b=>getComputedStyle(b,'::before').backgroundColor).concat(getComputedStyle(document.getElementById('dots')).backgroundColor);
+    return list.map(bg=>1.05/(lum(onWhite(bg))+.05));
+   });
+   assert.equal(contrasts.length,7,'four icons, two taste buttons and the dots');
+   for(const ratio of contrasts)assert.ok(ratio>=3,width+'px icon background gives white at least 3:1 on a white photo: '+ratio);
    if([390,320].includes(width)) {
     await page.screenshot({path:path.join(output,'app-'+width+'.png'),fullPage:true});
     await shop.locator('#ph').screenshot({path:path.join(output,'app-phone-'+width+'.png')});

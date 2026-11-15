@@ -96,7 +96,7 @@ try{
  await app.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');
  const appFab=app.getByRole('button',{name:/Opmerking maken/});
  await app.waitForTimeout(1200);assert.ok(await appFab.isHidden(),'visitors never see the review button');
- await app.frames().find(f=>f.name()==='shop').getByRole('button',{name:'Mijn account'}).click();
+ await app.frames().find(f=>f.name()==='shop').locator('.shop').click();await app.frames().find(f=>f.name()==='shop').getByRole('menuitem',{name:'Beheer'}).click();
  await app.locator('#email').fill('nikki@example.test');await app.locator('#password').fill('test-password');
  await app.locator('#login').evaluate(f=>f.requestSubmit());
  await appFab.waitFor({state:'visible',timeout:4000});

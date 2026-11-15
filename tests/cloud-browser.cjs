@@ -64,7 +64,7 @@ const shop=()=>p.frames().find(f=>f.name()==='shop');const intake=()=>p.frames()
 assert.equal(await shop().locator('#track .slide').count(),0);
 assert.equal(await shop().locator('#ph').getAttribute('data-catalog-empty'),'true');
 assert.equal(await shop().locator('[data-act="prev-photo"]').isVisible(),false);
-await shop().getByRole('button',{name:'Mijn account'}).click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login [type=submit]').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
+await shop().locator('.shop').click();await shop().getByRole('menuitem',{name:'Beheer'}).click();await p.locator('#email').fill('nikki@example.test');await p.locator('#password').fill('test-password');await p.locator('#login [type=submit]').click();await p.locator('#new').waitFor({state:'visible'});await p.locator('#new').click();
 const png=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;c.getContext('2d').fillRect(0,0,20,20);return c.toDataURL().split(',')[1];});
 // Exercise the real browser encoder with a JPEG containing synthetic EXIF metadata.
 const jpeg=Buffer.from(await p.evaluate(()=>{const c=document.createElement('canvas');c.width=20;c.height=20;return c.toDataURL('image/jpeg').split(',')[1];}),'base64');
@@ -160,7 +160,7 @@ await p.reload();await p.waitForFunction(()=>document.getElementById('status').t
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),1);
 // The visitor has this unique piece in the basket when it is sold.
 await v.frames().find(f=>f.name()==='shop').locator('#price').click();
-await shop().getByRole('button',{name:'Mijn account'}).click();
+await shop().locator('.shop').click();await shop().getByRole('menuitem',{name:'Beheer'}).click();
 const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold',{timeout:10000});
 await p.getByRole('button',{name:'Markeer verkocht'}).click();
 await soldRequest;

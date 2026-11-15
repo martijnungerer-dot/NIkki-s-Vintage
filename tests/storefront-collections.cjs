@@ -52,6 +52,9 @@ module.exports=async function({page,shop,width,output,records,refresh,unavailabl
  assert.equal(await rows().first().getAttribute('data-item-key'),b.id);
  await reset();await shop.getByRole('combobox',{name:'Materiaal',exact:true}).selectOption('Wol');
  assert.equal(await rows().count(),1);assert.equal(await rows().first().getAttribute('data-item-key'),b.id);
+ // The sort choice says it is about the order, and includes price low to high.
+ assert.deepEqual(await shop.getByRole('combobox',{name:'Sorteer stukken'}).locator('option').allTextContents(),['Onze volgorde','Prijs laag–hoog','Prijs hoog–laag','Naam A–Z']);
+ assert.equal(await shop.getByRole('combobox',{name:'Sorteer stukken'}).locator('optgroup').getAttribute('label'),'Sorteren op');
  await reset();await shop.getByRole('combobox',{name:'Sorteer stukken'}).selectOption('price-down');
  assert.deepEqual(await rows().evaluateAll(els=>els.map(el=>el.dataset.itemKey)),[e.id,d.id,c.id,b.id,a.id]);
  await shop.getByRole('combobox',{name:'Sorteer stukken'}).selectOption('name');

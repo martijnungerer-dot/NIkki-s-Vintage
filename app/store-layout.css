@@ -76,7 +76,9 @@ button:disabled { cursor: default; }
 /* Mijn smaak (app/store-screens/taste.js): option B colours, rows and touch targets. */
 .taste-photo-acts { position: absolute; left: 4px; bottom: 2px; display: flex; color: rgba(255,255,255,.9); }
 .taste-photo-acts .on-photo { position: static; width: 44px; height: 44px; }
-.taste-photo-acts [aria-pressed="true"] { border-radius: 10px; background: rgba(46,36,32,.45); }
+/* Pressed: the round background turns light with a dark icon. */
+.taste-photo-acts [aria-pressed="true"] { color: var(--fg); }
+.taste-photo-acts [aria-pressed="true"]::before { background: rgba(250,246,240,.94); }
 [data-catalog-empty="true"] .taste-photo-acts { visibility: hidden; }
 .taste-window { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-size: 18px; }
 .taste-toggle { width: 100%; min-height: 44px; justify-content: space-between; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; font-size: 18px; }
@@ -89,8 +91,27 @@ button:disabled { cursor: default; }
 .taste-section h2 { font-size: 22px; font-weight: 400; margin: 24px 0 0; }
 .taste-section ul { list-style: none; margin: 0; padding: 0; }
 .taste-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.taste-kind { flex: none; font-size: 16px; }
 .taste-section .ic { min-width: 44px; min-height: 44px; }
 .taste-clear { width: 100%; min-height: 48px; margin-top: 24px; }
 
 /* Full brand name on one line (Martijn, 14 November 2026): 22px like option B, smaller on narrow phones, never under 16px. */
 .brand { font-size: max(16px, min(22px, 5.4vw)); white-space: nowrap; }
+
+/* Icons in the photo (Martijn, 15 November 2026): a subtle round background behind each icon and
+   behind the dots, so they stay visible on light coats too (WCAG 1.4.11: white on this background
+   is at least 3:1, even on a white photo). The touch target stays 44px; the circle is 36px. */
+.on-photo::before { content: ''; grid-area: 1 / 1; width: 36px; height: 36px; border-radius: 50%; background: rgba(46,36,32,.55); }
+.on-photo svg { grid-area: 1 / 1; position: relative; filter: none; }
+.dots { left: 50%; right: auto; bottom: 16px; transform: translateX(-50%); padding: 5px 8px; border-radius: 8px; background: rgba(46,36,32,.55); }
+.dots:empty { display: none; }
+.dots i { box-shadow: none; }
+/* Very narrow screens: the dots move above the icons, so many photos never run into them. */
+@container (max-width: 280px) { .dots { bottom: 50px; } }
+
+/* The entrance for Nikki and the staff is the last, quiet line of the Shop menu (Martijn,
+   15 November 2026); the top bar keeps its height without the person icon. */
+.top { min-height: 54px; }
+.menu .menu-staff { color: var(--muted); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
+/* "Onze volgorde" fits in the sort choice on a 320px phone. */
+.catalog-filters select { padding-right: 2px; text-overflow: ellipsis; }

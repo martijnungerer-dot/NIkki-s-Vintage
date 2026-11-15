@@ -20,7 +20,7 @@ module.exports = async function ({context, width, output, personalise}) {
  const refreshes = () => shop.evaluate(() => window.tasteRefreshes);
  const calls = personalise.calls.length;
  await shop.locator('.shop').click();
- assert.deepEqual(await shop.getByRole('menuitem').allTextContents(), ['Collectie','Mijn favorieten','Winkelmand','Mijn smaak']);
+ assert.deepEqual(await shop.getByRole('menuitem').allTextContents(), ['Collectie','Mijn favorieten','Winkelmand','Mijn smaak','Beheer']);
  await shop.getByRole('menuitem', {name:'Mijn smaak',exact:true}).click();
  assert.ok(await shop.locator('.taste-empty').isVisible());
  assert.equal(await shop.locator('#cart input, #cart select').count(), 0, 'no budget or choice fields');
@@ -169,6 +169,19 @@ module.exports = async function ({context, width, output, personalise}) {
  await shop.locator('.shop').click();await shop.getByRole('menuitem',{name:'Collectie',exact:true}).click();
  await shop.getByRole('searchbox').fill('jas');await shop.getByRole('combobox',{name:'Materiaal',exact:true}).selectOption('Wol');
  assert.deepEqual(await read(),beforeSearch,'search and filters never learn');
+ await close();
+ // Readable labels instead of bare stored values ("Ja", "200-350"); other values name their kind.
+ await shop.evaluate(()=>{
+  const P=window.NikkiTaste.profile,p=P.empty(Date.now()),t=Date.now();
+  [['fur:ja','Ja',3],['fur:nee','Nee',2.5],['fur:alleen kraag of rand','Alleen kraag of rand',2],['price:200-350','200-350',1.5],['price:tot-100','tot-100',1.2],['price:600-plus','600-plus',1],['colour:zwart','Zwart',-1]]
+   .forEach(([key,label,w])=>{p.features[key]={w,t,label};});
+  P.save(localStorage,p);
+ });
+ await open();
+ assert.deepEqual(await shop.locator('.taste-label').allTextContents(),['Met bont','Zonder bont','Alleen kraag of rand','€ 200–350','Tot € 100','Vanaf € 600','Zwart']);
+ assert.deepEqual(await shop.locator('.taste-kind').allTextContents(),['kleur']);
+ assert.equal(await shop.locator('[data-act=taste-forget]').first().getAttribute('aria-label'),'Vergeet Met bont');
+ assert.ok(await shop.locator('.taste-kind').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));
  await close();
  // Stored labels and attribute keys are untrusted, including when personalisation is disabled.
  const attack='<img src=x onerror=alert(1)> " &';

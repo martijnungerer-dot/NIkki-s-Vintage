@@ -92,6 +92,8 @@ const output=path.resolve(process.env.NIKKI_SCREENSHOTS||path.join(root,'work/in
    await page.getByRole('button',{name:'Weet ik nog niet',exact:true}).click();await page.getByRole('button',{name:'Weet ik nog niet',exact:true}).click();
    assert.match(await question(),/Lange jas van nerts met sjaalkraag/);
    await page.getByRole('button',{name:'Goed zo'}).click();
+   // The price: a proposal from earlier sales is only a suggestion; Nikki's own amount wins.
+   assert.equal(await page.getByRole('button',{name:'Voorstel: € 420'}).count(),1);assert.equal(await page.locator('.chip[aria-pressed=true]').count(),0,'the proposed price is not preselected');
    await page.locator('#free').fill('450');await page.locator('.send').click();
    // Overview before saving; skipped measurements are not shown, and the compliments are not in it.
    const card=await page.locator('.card').innerText();

@@ -225,7 +225,9 @@ svg { display: block; }
     { id: 'shoulder', label: 'Schouderbreedte', kind: 'cm', ask: function () { return 'De schouders, van naad tot naad?'; } },
     { id: 'sleeve', label: 'Mouwlengte', kind: 'cm', ask: function () { return 'En de mouw, van schoudernaad tot manchet?'; }, warm: function () { return 'Dat was het meten.'; } },
     { id: 'titel', need: true, label: 'Titel', kind: 'text', ask: function () { return 'Als titel stel ik voor: “' + title() + '”. Goed zo?'; }, options: function () { return [[title(), 'Goed zo']]; }, placeholder: 'Of typ je eigen titel' },
-    { id: 'prijs', need: true, label: 'Prijs', kind: 'euro', ask: function () { return 'Wat moet hij kosten?'; } }
+    { id: 'prijs', need: true, label: 'Prijs', kind: 'euro', ask: function () { return 'Wat moet hij kosten?'; },
+      // Nagespeeld: in de echte versie komt dit uit Nikki's eigen eerdere verkopen (alleen voor beheerders).
+      hint: 'Voorbeeld: drie vergelijkbare stukken gingen bij jou weg voor € 380 tot € 450. Jij beslist.', options: function () { return [[420, 'Voorstel: € 420']]; } }
   ];
   var active = function () { return STEPS.filter(function (s) { return !s.when || s.when(); }); };
   var done = function (s) { return A[s.id] !== undefined; };

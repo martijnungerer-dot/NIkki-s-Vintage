@@ -46,6 +46,18 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 - Terug naar foto's en opnieuw verwerken bewaart maten, prijs en gemaakte keuzes; alleen *Volgend stuk* begint leeg.
 - Leren: eigen keuzes en aanpassingen op voorstellen worden in deze browser onthouden. In de echte versie worden ze trainingsdata voor betere voorstellen (server-side).
 
+## Nieuw stuk als gesprek (mock, november 2026)
+
+[invoer-gesprek.html](invoer-gesprek.html) laat zien hoe invoeren voelt als de AI het gesprek leidt. Eén zelfstandig bestand in de stijl van optie B. De AI is nagespeeld: hij "ziet" altijd dezelfde jas en de reacties zijn vaste zinnen. Er wordt niets opgeslagen.
+
+- **Eén vraag per keer.** Eerst de foto's, dan vragen zoals "Wat voor bont is dit?". Antwoorden met een knop, door te typen of te dicteren, of door te praten.
+- **Praten:** het vakje met de golfjes staat op elke vraag op dezelfde plek. Rust is lage streepjes, een lopende golf betekent dat de AI de vraag voorleest, dansende streepjes dat hij luistert. Het begint pas na een tik. Het gebruikt de voorleesstem en spraakherkenning van de browser; waar die ontbreken, zegt de mock dat en blijft typen werken.
+- **Nooit vastlopen:** elke vraag heeft "Weet ik nog niet", ook de maten. Aan het eind staat wat de boetiek nog nodig heeft, en het stuk kan als concept bewaard worden.
+- **Regels:** de bontsoort wordt nooit voorgesteld en komt alleen van Nikki. Wat de AI wel zag, legt hij voor als "klopt dat?". Maten in cm, tot 300. De complimenten ("O, mooi spul.") zijn voor Nikki en komen niet in de titel of het overzicht.
+- **Controle:** `node tests/invoer-gesprek.cjs` op 390 en 320 px. Zie de [schermafbeeldingen](../docs/screenshots/invoer-gesprek/README.md).
+
+Dit is een voorstel voor het nieuwe invoerscherm uit docs/BEHEER-PLAN.md. De echte versie vraagt een aanpassing van de serverfunctie `analyse` (vragen en reacties meegeven) en is nog niet gebouwd.
+
 ## Stijlen kiezen (voor Nikki)
 
 Linksonder in het skelet staat een stijlknop. Daarmee wisselt Nikki tussen vijf stijlen; de indeling blijft gelijk, alleen kleuren, letters en knopvormen veranderen.

@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — mock: Nieuw stuk als gesprek
+- PR #52, #53 en #54 staan op `main` (`84b8a55`); de migratie `20261115120000_close_save_garment.sql` moet Martijn nog uitrollen.
+- Nieuw: `concept/invoer-gesprek.html`, een mock van invoeren als gesprek met een nagespeelde AI. Eén vraag per keer, knoppen of typen, en praten via het vakje met de golfjes (voorlezen en luisteren met de stem van de browser, pas na een tik). Elke vraag is over te slaan; ontbreekt er iets dat de boetiek nodig heeft, dan eindigt het als concept.
+- Alleen een mock: er is niets aan de app, de server of Gemini veranderd. Test `tests/invoer-gesprek.cjs` slaagt op 390 en 320 px (spraak nagebootst). Echte spraakherkenning op Nikki's telefoon is niet getest.
+
 ### 15 november 2026 — Jouw collectie als fotoraster
 - Jouw collectie (beheer) is een raster van twee kolommen. Linksboven staat de +-kaart met het kleerhangericoon; die opent Nieuw stuk (de losse cameraknop naast Uitloggen is weg). Per kaart: hoofdfoto, titel, prijs en status onder de foto. Een tik op de kaart opent het stuk om te bewerken. Ook verkochte stukken tonen hun hoofdfoto (één batch getekende links, alleen voor beheerders); een foto die ontbreekt geeft een leeg vak en breekt de lijst niet.
 - "Markeer verkocht" is het labeltje op de kaart. Daarna staat er vijf seconden "Ongedaan maken"; pas daarna wordt het opgeslagen (dit vervangt het bevestigingsvenster). Een verkocht stuk heeft geen knop meer en kan niet terug naar te koop. Mislukt het opslaan, dan staat het stuk weer op Beschikbaar met een foutmelding.

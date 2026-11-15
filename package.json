@@ -4,7 +4,7 @@
   "scripts": {
     "build": "node scripts/build-cloud.mjs",
     "serve": "node scripts/serve-cloud.mjs",
-    "test": "node --test tests/cloud-server.test.mjs tests/cloud-database.test.mjs tests/cloud-api.test.mjs tests/build-anchors.test.mjs tests/photo-transfer.test.mjs tests/taste.test.mjs tests/personalise-server.test.mjs tests/check-live.test.mjs tests/review-notes.test.mjs tests/recovery-link.test.mjs tests/internal-photos.test.mjs tests/garment-sales.test.mjs tests/intake-steps.test.mjs",
+    "test": "node --test tests/cloud-server.test.mjs tests/cloud-database.test.mjs tests/cloud-api.test.mjs tests/build-anchors.test.mjs tests/photo-transfer.test.mjs tests/taste.test.mjs tests/personalise-server.test.mjs tests/check-live.test.mjs tests/review-notes.test.mjs tests/recovery-link.test.mjs tests/internal-photos.test.mjs tests/garment-sales.test.mjs tests/intake-steps.test.mjs tests/begrijp-server.test.mjs",
     "test:browser": "node tests/cloud-browser.cjs && node tests/storefront-layout.cjs && node tests/storefront-share.cjs && node tests/admin-browser.cjs && node tests/admin-collection.cjs && node tests/review-kit.cjs",
     "check": "node scripts/check-project.mjs",
     "check:live": "node scripts/check-live.mjs"

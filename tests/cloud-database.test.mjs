@@ -62,6 +62,17 @@ test('actual PostgreSQL migration: RLS, photos, conflicts, sold preservation, al
       await assert.rejects(()=>db.query('select public.consume_analysis($1)',[outsider]),/RATE_LIMIT/);
     });
     assert.equal((await db.query("select calls from public.analysis_usage where scope='global'")).rows[0].calls,100);
+    // Free sentences (begrijp): own limit, only for the server and staff, and the photo limit is untouched.
+    for(const role of ['anon','authenticated'])await as(role,role==='anon'?null:staff,async()=>{await assert.rejects(()=>db.query('select public.consume_understanding($1)',[staff]),/permission denied/);});
+    await as('service_role',null,async()=>{
+      await assert.rejects(()=>db.query('select public.consume_understanding($1)',['44444444-4444-4444-8444-444444444444']),/STAFF_REQUIRED/);
+      await db.query('select public.consume_understanding($1)',[staff]);
+    });
+    await db.exec("update public.analysis_usage set calls=300 where scope='begrijp:"+staff+"'");
+    await as('service_role',null,async()=>{await assert.rejects(()=>db.query('select public.consume_understanding($1)',[staff]),/RATE_LIMIT/);await db.query('select public.consume_understanding($1)',[outsider]);});
+    await db.exec("update public.analysis_usage set calls=600 where scope='begrijp:global'");
+    await as('service_role',null,async()=>{await assert.rejects(()=>db.query('select public.consume_understanding($1)',[outsider]),/RATE_LIMIT/);});
+    assert.equal((await db.query("select calls from public.analysis_usage where scope='global'")).rows[0].calls,100,'the photo analysis limit is separate');
     // Taste ranking: visitors cannot call the limiter or read its table; the server can, within limits.
     const client='a'.repeat(32);
     for(const role of ['anon','authenticated'])await as(role,role==='anon'?null:staff,async()=>{

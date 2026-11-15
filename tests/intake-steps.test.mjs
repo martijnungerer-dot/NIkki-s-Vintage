@@ -69,3 +69,53 @@ test('proposals keep only short plain values; the title is composed from what Ni
   // Own words are offered next time, after the standard choices.
   assert.deepEqual(step(make({},{}, {kleur:['Petrol']}).steps,'kleur').options().slice(-1),['Petrol']);
 });
+
+test('reactions vary per piece but stay the same for the same piece and answer, and refer to earlier answers',()=>{
+  const lines=new Set();
+  for(let seed=1;seed<40;seed++){const m=make({bont:'Nee',materiaal:'Suède'},{}, {});m.state.seed=seed;lines.add(step(m.steps,'kleur').warm('Cognac'));}
+  assert.ok(lines.size>1,'different pieces get different lines');
+  for(const line of lines)assert.match(line,/cognac/i);
+  assert.ok([...lines].some(l=>/suède/i.test(l)),'the colour reaction can mention the material Nikki gave');
+  const m=make({bont:'Nee'});m.state.seed=7;
+  assert.equal(step(m.steps,'kleur').warm('Zwart'),step(m.steps,'kleur').warm('Zwart'),'no flicker on re-render');
+  assert.equal(I.skipLine(7,'kleur'),I.skipLine(7,'kleur'));
+  // A reaction never ends up in the product.
+  const p=I.product({bont:'Nee',titel:'Jas',prijs:100,materiaal:'Suède'},'k',[]);assert.ok(!JSON.stringify(p).match(/mooi|genoteerd/i));
+});
+
+test('Gemini says why and how sure, and opens the conversation without claims',()=>{
+  const G=I.proposals({bontsoort:{waarde:'Nerts',zekerheid:'laag',waarom:'korte, glanzende haren'},kleur:{waarde:'Zwart',zekerheid:'hoog',waarom:'diep zwart'},opening:'Wat een mooie lange jas met die kraag.'});
+  const m=make({bont:'Ja'},G);
+  assert.equal(I.guessLine(step(m.steps,'bontsoort'),G),'Gemini twijfelt, misschien nerts. Korte, glanzende haren. Tik het aan als het klopt.');
+  assert.match(I.guessLine(step(m.steps,'kleur'),G),/^Gemini denkt: Zwart\. Diep zwart\./);
+  assert.equal(m.state.A.bontsoort,undefined,'still not chosen');
+  assert.equal(I.opening(G,1),'Wat een mooie lange jas met die kraag.');
+  assert.ok(I.opening({},1).length>0);
+});
+
+test('the price proposal compares own sales by species or material, prefers the same length, and never fills in',()=>{
+  const sale=(furClass,species,material,length,euro)=>({key:'k'+euro,furClass,species,material,length,priceMinor:euro*100});
+  const sales=[sale('Ja','Nerts','Bont','Lang',300),sale('Ja','Nerts','Bont','Lang',380),sale('Ja','Nerts','Bont','Lang',240),sale('Ja','Nerts','Bont','Kort',90),sale('Ja','Vos','Bont','Lang',900),sale('Nee',null,'Suède','Kort',120)];
+  const p=I.priceProposal({bont:'Ja',bontsoort:'Nerts',lengte:'Lang'},sales);
+  assert.deepEqual([p.count,p.low,p.high,p.proposal],[3,24000,38000,300]);
+  assert.equal(p.say,'Van je eigen verkopen: 3 lange stukken van nerts gingen voor € 240 tot € 380.');
+  assert.equal(I.priceProposal({bont:'Ja',bontsoort:'Nerts',lengte:'Kort'},sales).count,4,'too few of the same length: all mink');
+  assert.equal(I.priceProposal({bont:'Nee',materiaal:'Suède'},sales).say,'Van je eigen verkopen: één stuk van suède ging voor € 120.');
+  assert.equal(I.priceProposal({bont:'Nee',materiaal:'Leer'},sales),null);
+  assert.equal(I.priceProposal({bont:'Ja',bontsoort:SKIP},sales),null,'no species, no comparison');
+  const m=make({bont:'Ja',bontsoort:'Nerts',lengte:'Lang'});m.state.sales=sales;
+  const prijs=step(m.steps,'prijs');
+  assert.deepEqual(prijs.options(),[['300','Rond € 300']]);assert.match(prijs.ask(),/^Van je eigen verkopen: .* Wat moet deze kosten\?$/);
+  assert.equal(m.state.A.prijs,undefined);
+  m.state.sales=[];assert.deepEqual(step(m.steps,'prijs').options(),[]);assert.equal(step(m.steps,'prijs').ask(),'Wat moet hij kosten?');
+});
+
+test('a free sentence becomes answers only within the lists, and species only with fur',()=>{
+  const r=I.interpret({velden:{bont:'Alleen kraag of rand',materiaal:'shearling',bontsoort:'vos',lengte:'heel lang',periode:'Jaren 70',kleur:'<b>bruin</b>',bijzonderheden:['Vlek','x'.repeat(80)],prijs:'1000'},reactie:'Een lammy met vossenkraag, mooi.'},{});
+  assert.deepEqual(r.values,[['bont','Alleen kraag of rand'],['materiaal','Shearling'],['bontsoort','Vos'],['periode','Jaren 70'],['bijzonderheden',['Vlek']]],'lengte is not an own list; markup and long words are dropped; price never');
+  assert.equal(r.reply,'Een lammy met vossenkraag, mooi.');
+  assert.equal(I.heardText(r.values),'bont alleen aan kraag of rand, materiaal shearling, bontsoort vos, periode jaren 70, bijzonderheden vlek');
+  assert.deepEqual(I.interpret({velden:{bontsoort:'Nerts',materiaal:'Bont'}},{bont:'Nee'}).values,[],'no species without fur, Bont is not a material');
+  assert.deepEqual(I.interpret({velden:{bontsoort:'Nerts'}},{bont:'Ja'}).values,[['bontsoort','Nerts']]);
+  assert.deepEqual(I.interpret(null,{}).values,[]);
+});

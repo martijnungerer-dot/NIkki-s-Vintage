@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {fixture}=require('./admin-fixture.cjs');
-const {answer,change,type}=require('./intake-helper.cjs');
+const {answer,change,type,stepId}=require('./intake-helper.cjs');
 async function fill(p){
   await p.locator('#email').fill('nikki@example.test');
   await p.locator('#password').fill('test-password');
@@ -333,5 +333,43 @@ async function realNewsreader(p){
       assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, Nieuw stuk as a conversation (16px/44px, missing answers end as a concept, own words, Gemini proposals marked but never chosen), refresh keeps the screen, drafts survive a refresh, busy renewal guard and missing configuration.');
+  {
+    // A free sentence: Gemini picks out what Nikki said, she confirms once; the price proposal comes from own sales.
+    const soldId='22222222-2222-4222-8222-222222222222';
+    const f=await fixture(390,{understand:b=>/lammy/.test(b.text)?{velden:{bont:'Alleen kraag of rand',materiaal:'Shearling',bontsoort:'Vos'},reactie:'Een lammy met een vossenkraag, mooi.'}:/bruin/.test(b.text)?{velden:{kleur:'Donkerbruin'},reactie:'Donkerbruin, mooi.'}:{velden:{},reactie:''},
+      sales:[{id:soldId,sold_price_minor:24900,sold_at:'2026-11-01T12:00:00Z'}]}),p=f.page;
+    const sold={...structuredClone(f.state.rows[0]),id:soldId,display_id:2,status:'sold'};
+    sold.data={...sold.data,title:'Lammy',material:'Shearling',furClass:'Alleen kraag of rand',species:'Vos',priceMinor:30000};
+    f.state.rows.push(sold);
+    try {
+      const intake=p.frameLocator('#intake');
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').first().waitFor();
+      await p.locator('#new').click();
+      const png=await p.evaluate(()=>{const k=document.createElement('canvas');k.width=20;k.height=20;k.getContext('2d').fillRect(0,0,20,20);return k.toDataURL().split(',')[1];});
+      await intake.locator('#files').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
+      await intake.getByRole('button',{name:'Zelf invullen'}).click();await intake.locator('#question').waitFor();
+      await type(intake,'Het is een lammy met een vossenkraag');
+      await intake.locator('#question').filter({hasText:'Klopt dat?'}).waitFor();
+      assert.match(await intake.locator('#question').innerText(),/Een lammy met een vossenkraag, mooi\.\s+Ik noteer: bont alleen aan kraag of rand, materiaal shearling, bontsoort vos\. Klopt dat\?/);
+      assert.equal(await intake.locator('#talk [data-edit=bontsoort]').count(),0,'nothing filled in before Klopt');
+      const sent=f.state.requests.find(r=>r.path==='/functions/v1/begrijp').body;
+      assert.equal(sent.step,'bont');assert.deepEqual(Object.keys(sent).sort(),['known','lists','step','text']);
+      await p.waitForTimeout(3000);await p.screenshot({path:'test-results/admin/vrije-zin-390.png'});await p.setViewportSize({width:320,height:844});await p.waitForTimeout(500);await p.screenshot({path:'test-results/admin/vrije-zin-320.png'});await p.setViewportSize({width:390,height:844});
+      await intake.getByRole('button',{name:'Klopt',exact:true}).click();
+      assert.equal(await intake.locator('#talk [data-edit=bontsoort]').innerText(),'Vos');assert.equal(await intake.locator('#talk [data-edit=materiaal]').innerText(),'Shearling');
+      assert.match(await intake.locator('#question .warm').innerText(),/Een lammy met een vossenkraag, mooi\./);
+      assert.equal(await stepId(intake),'model','fur, species and material are not asked again');
+      await answer(intake,{model:'Pilotenjack'},{stopAt:'kleur'});
+      // Only the answer to this question: it counts at once, without asking Klopt.
+      await type(intake,'zo een warm donker bruin');await intake.locator('#talk [data-edit=kleur]').waitFor();
+      assert.equal(await intake.locator('#talk [data-edit=kleur]').innerText(),'Donkerbruin');
+      await answer(intake,{lengte:'Heuplang',pasvorm:'Recht',periode:'Jaren 70',bijzonderheden:[],chest:'54',length:'72',titel:'Heuplange lammy met vossenkraag',beschrijving:''},{stopAt:'prijs'});
+      assert.match(await intake.locator('#question').innerText(),/Van je eigen verkopen: één stuk van shearling ging voor € 249\. Wat moet deze kosten\?/);
+      const chip=intake.getByRole('button',{name:'Rond € 250'});assert.equal(await chip.getAttribute('aria-pressed'),'false','a proposal, never chosen');
+      await p.waitForTimeout(3000);await p.screenshot({path:'test-results/admin/prijsvoorstel-390.png'});await p.setViewportSize({width:320,height:844});await p.waitForTimeout(500);await p.screenshot({path:'test-results/admin/prijsvoorstel-320.png'});await p.setViewportSize({width:390,height:844});
+      await chip.click();assert.match(await intake.locator('#summary').innerText(),/€ 250/);
+      assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, Nieuw stuk as a conversation (16px/44px, missing answers end as a concept, own words, Gemini proposals marked but never chosen, free sentences confirmed before they count, price proposal from own sales), refresh keeps the screen, drafts survive a refresh, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

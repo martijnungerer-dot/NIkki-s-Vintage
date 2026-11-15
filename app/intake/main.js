@@ -10,19 +10,32 @@
 
   // ---------- staat ----------
   // S is alles wat bij dit ene stuk hoort (en in het concept bewaard wordt).
-  function fresh() { return { A: {}, G: {}, photos: [], warnings: [], phase: 'photos', analysed: '', draftId: null, edit: false }; }
+  // seed: bepaalt welke zinnen het scherm bij dit stuk kiest (steps.js); heardDetails: bijzonderheden die
+  // Nikki al noemde voordat die vraag kwam, zodat ze daar alvast aanstaan.
+  function fresh() { return { A: {}, G: {}, photos: [], warnings: [], phase: 'photos', analysed: '', draftId: null, edit: false, seed: Math.floor(Math.random() * 1e9), heardDetails: [] }; }
   var S = fresh();
   // Eigen keuzewoorden van Nikki, per lijst, in deze browser (zelfde plek als het vorige invoerscherm).
   var learned = (function () { try { var v = JSON.parse(localStorage.getItem('gsf-learned')); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
-  var steps = I.build({ get A() { return S.A; }, get G() { return S.G; }, get learned() { return learned; } });
+  // Verkochte stukken voor het prijsvoorstel (alleen beheer, alleen op dit toestel); het stuk zelf telt niet mee.
+  var sales = [], salesAt = 0;
+  var steps = I.build({ get A() { return S.A; }, get G() { return S.G; }, get learned() { return learned; }, get seed() { return S.seed; },
+    get sales() { return sales.filter(function (x) { return x.key !== S.draftId; }); } });
   var editing = null, multi = null, error = '', note = '', view = 0, saved = false;
   var thinking = false, ctl = null, gen = 0, saving = false, status = '', saveError = '';
   var heroKey = '', thumbKey = '', askedKey = '';
   var voice = { on: false, state: 'idle', note: '', said: '', rec: null, hearing: false, timer: null };
+  // Een vrije zin die Gemini aan het begrijpen is ({busy}) of begreep ({values, reply}), en de reactie
+  // die na "Klopt" één keer boven de volgende vraag staat.
+  var heard = null, heardCtl = null, heardGen = 0, reply = '';
 
   var active = function () { return I.active(steps); };
   var done = function (s) { return S.A[s.id] !== undefined; };
   var missing = function () { return I.missing(steps, S.A, S.photos); };
+  function loadSales() {
+    if (!app().priceHistory || Date.now() - salesAt < 5 * 60 * 1000) return;
+    salesAt = Date.now();
+    app().priceHistory().then(function (list) { sales = Array.isArray(list) ? list : []; var step = current(); if (step && step.id === 'prijs' && !heard) render(); }).catch(function () { salesAt = 0; });
+  }
   var photoSet = function () { return S.photos.map(function (p) { return p.url; }).join('|'); };
   function mainPhoto() {
     var open = S.photos.filter(function (p) { return !p.internal; });
@@ -102,17 +115,27 @@
     try { localStorage.setItem('gsf-learned', JSON.stringify(learned)); } catch (e) {}
   }
   function give(step, value) {
-    error = '';
+    error = ''; dropHeard(); reply = '';
     S.A[step.id] = value; if (step.set) step.set(value);
     (Array.isArray(value) ? value : [value]).forEach(function (v) { learn(step.id, v); });
     editing = null; multi = null; saved = false; saveError = ''; render();
   }
   // Typen, dicteren en praten komen hier samen: een woord dat al een keuze is, telt als die keuze.
-  function freeAnswer(step, raw) {
+  function freeAnswer(step, raw, ownOnly) {
     var text = String(raw).trim(), low = text.toLowerCase().replace(/[.!?]+$/, '');
+    // Wacht het scherm op "Klopt dat?" na een vrije zin, dan telt ja of nee als dat antwoord.
+    if (heard && heard.values) {
+      if (/^(ja|klopt|goed|precies|prima|yes)\b/.test(low)) return acceptHeard();
+      if (/^(nee|niet|fout)\b/.test(low)) return rejectHeard();
+      dropHeard();
+    }
     if (step.kind === 'long') return give(step, text.slice(0, 4000));
     if (/^(weet ik (nog )?niet|geen idee|sla over|overslaan|later)$/.test(low)) return give(step, SKIP);
     if (step.kind === 'multi' && /^(klaar|dat is alles|niets|nee)$/.test(low)) return give(step, multi.slice());
+    // Een hele zin ("het is een lammy met een vossenkraag") gaat eerst naar Gemini, vóór de snelle
+    // herkenning van losse woorden hieronder; die is de terugval als Gemini niets herkent of niet bereikbaar is.
+    var canUnderstand = !ownOnly && app().understand && I.HEARD.indexOf(step.id === 'zie' ? 'model' : step.id) >= 0;
+    if (canUnderstand && text.split(/\s+/).length >= 3) return understand(step, text);
     if (step.say) { var said = Object.keys(step.say).filter(function (k) { return step.say[k].test(low); })[0]; if (said) return give(step, said); }
     if (step.id === 'titel' && /^(ja|goed|prima|klopt)/.test(low)) return give(step, step.proposal());
     if (step.kind === 'cm' || step.kind === 'euro') {
@@ -126,12 +149,58 @@
     var options = (step.options ? step.options() : []).map(function (o) { return Array.isArray(o) ? o[0] : o; });
     var match = options.filter(function (o) { return o.toLowerCase() === low; })[0] ||
       options.filter(function (o) { return (' ' + low + ' ').indexOf(' ' + o.toLowerCase() + ' ') >= 0; }).sort(function (a, b) { return b.length - a.length; })[0];
+    // Een kort antwoord dat geen knop is, bij een lijst zonder eigen woorden: Gemini probeert het te begrijpen.
+    if (canUnderstand && !match && !step.own) return understand(step, text);
     // Alleen lijsten met eigen woorden nemen een nieuw woord aan; elders moet het een bestaande keuze zijn.
     if (!match && !step.own && step.kind !== 'text') { error = 'Kies een van de knoppen, of tik op Weet ik nog niet.'; return render(); }
     var value = (match || text.charAt(0).toUpperCase() + text.slice(1)).slice(0, step.kind === 'text' ? 200 : 60);
     if (step.kind === 'multi') { if (multi.indexOf(value) < 0 && multi.length < 30) multi.push(value); return render(); }
     give(step, value);
   }
+
+  // ---------- vrije zinnen begrijpen (supabase/functions/begrijp) ----------
+  function knownAnswers() {
+    var out = {};
+    I.HEARD.forEach(function (k) { var v = S.A[k]; if (k === 'bijzonderheden' ? Array.isArray(v) && v.length : I.known(v) && typeof v === 'string') out[k] = v; });
+    return out;
+  }
+  function dropHeard() { heardGen++; if (heardCtl) heardCtl.abort(); heardCtl = null; heard = null; }
+  function understand(step, text) {
+    dropHeard(); error = '';
+    var my = heardGen; heardCtl = new AbortController();
+    heard = { busy: true, step: step.id }; render();
+    Promise.resolve().then(function () { return app().understand({ step: step.id, text: text.slice(0, 400), lists: lists(), known: knownAnswers() }, heardCtl.signal); })
+      .then(function (result) {
+        if (my !== heardGen) return;
+        var r = I.interpret(result, S.A, learned);
+        heard = null; heardCtl = null;
+        if (!r.values.length) { freeAnswer(step, text, true); var f = $('free'); if (f) f.focus(); return; }
+        heard = { values: r.values, reply: r.reply, step: step.id };
+        // Alleen het antwoord op deze vraag (en geen bontsoort): dat geldt meteen, Nikki ziet het in de rij
+        // boven de vraag en kan het aantikken. Meer dan dat, of een bontsoort: eerst "Klopt dat?".
+        if (r.values.length === 1 && r.values[0][0] === step.id && step.id !== 'bontsoort') return acceptHeard();
+        render();
+      })
+      .catch(function () { if (my !== heardGen) return; heard = null; heardCtl = null; freeAnswer(step, text, true); var f = $('free'); if (f) f.focus(); });
+  }
+  // Pas na "Klopt" komt wat Gemini hoorde in de antwoorden, in de vaste volgorde (bont eerst).
+  function acceptHeard() {
+    var got = heard, now = current(); if (!got || !got.values) return;
+    dropHeard(); error = ''; reply = got.reply || '';
+    got.values.forEach(function (kv) {
+      var key = kv[0], value = kv[1];
+      if (key === 'bijzonderheden') {
+        if (now && now.id === 'bijzonderheden') { multi = multi || []; value.forEach(function (v) { if (multi.indexOf(v) < 0 && multi.length < 30) multi.push(v); learn(key, v); }); }
+        else value.forEach(function (v) { if (S.heardDetails.indexOf(v) < 0) S.heardDetails.push(v); learn(key, v); });
+        return;
+      }
+      var target = steps.filter(function (x) { return x.id === key; })[0];
+      S.A[key] = value; if (target && target.set) target.set(value); learn(key, value);
+    });
+    if (!(now && now.id === 'bijzonderheden')) { editing = null; multi = null; }
+    saved = false; saveError = ''; render();
+  }
+  function rejectHeard() { dropHeard(); error = 'Zeg het anders, of kies een knop.'; render(); }
 
   // ---------- tekenen ----------
   function words(text, from) {
@@ -205,16 +274,22 @@
       answered.forEach(function (s) {
         if (step && s.id === step.id) return;
         trail += '<button type="button" class="me" data-edit="' + s.id + '" aria-label="' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(shown(s)) + '</span></button>';
-        warm = S.A[s.id] === SKIP ? 'Geen punt, dat kan later.' : s.warm ? s.warm(S.A[s.id]) : '';
+        warm = S.A[s.id] === SKIP ? I.skipLine(S.seed, s.id) : s.warm ? s.warm(S.A[s.id]) : '';
       });
+      // Na een begrepen vrije zin reageert Gemini zelf; bij de eerste vraag opent het scherm het gesprek.
+      if (reply) warm = reply;
+      else if (!answered.length && !S.edit) warm = I.opening(S.G, S.seed);
       if (step) {
         h += '<div class="trail" id="trail">' + trail + '</div>';
         var said = warm && !editing ? warm : '', ask = step.ask();
+        if (heard && heard.values) { said = heard.reply; ask = 'Ik noteer: ' + I.heardText(heard.values) + '. Klopt dat?'; }
         fresh = askedKey !== step.id + ask; askedKey = step.id + ask;
         h += '<p class="ai now' + (fresh ? ' fresh' : '') + '" id="question" data-step="' + step.id + '">' + (said ? '<span class="warm">' + words(said, 0) + '</span>' : '') + words(ask, said ? said.split(' ').length + 2 : 0) + '</p>';
         var guess = step.guess && step.guess(), label = guess && step.options().filter(function (o) { return Array.isArray(o) && o[0] === guess; })[0];
-        var hint = [guess ? 'Gemini denkt: ' + (label ? label[1] : guess) + '. Tik het aan als het klopt.' : '', step.hint ? step.hint() : ''].filter(Boolean).join(' ');
+        var hint = heard ? '' : [I.guessLine(step, S.G, label ? label[1] : ''), step.hint ? step.hint() : ''].filter(Boolean).join(' ');
         if (hint) h += '<p class="ai" id="hint" style="color:var(--muted);font-size:16px">' + esc(hint) + '</p>';
+        if (heard && heard.busy) h += '<div class="dots" role="img" aria-label="Gemini luistert naar je antwoord"><i></i><i></i><i></i></div>';
+        if (step.id === 'prijs') loadSales();
       } else {
         askedKey = '';
         var open = missing();
@@ -249,8 +324,14 @@
       h += '<div class="chips">' + (open
         ? '<button type="button" class="chip main" data-concept>Bewaar als concept</button>'
         : '<button type="button" class="chip main" id="save" data-save' + (saving ? ' disabled' : '') + '>' + (S.edit ? 'Wijziging opslaan' : 'Opslaan en tonen in boetiek') + '</button>') + '</div>';
+    } else if (heard && heard.busy) {
+      h = '<div class="chips"><button type="button" class="chip quiet" data-heard-stop>Laat maar, ik kies zelf</button></div>';
+    } else if (heard && heard.values) {
+      h = '<div class="chips' + (fresh ? ' fresh' : '') + '" role="group" aria-labelledby="question"><button type="button" class="chip main" data-heard-yes>Klopt</button><button type="button" class="chip" data-heard-no>Niet helemaal</button></div>' +
+        '<div class="free"><button type="button" class="voice" id="voice" data-voice="' + voice.state + '" aria-label="' + VOICE_LABEL[voice.state] + '">' + VOICE_ICON + '</button>' +
+        '<input id="free" autocomplete="off" type="text" aria-label="Typ of dicteer je antwoord" placeholder="Of zeg het anders"><button type="submit" class="send" aria-label="Antwoord geven">' + SEND + '</button></div>';
     } else {
-      if (step.kind === 'multi' && !multi) multi = (Array.isArray(S.A[step.id]) ? S.A[step.id] : step.start()).slice();
+      if (step.kind === 'multi' && !multi) multi = (Array.isArray(S.A[step.id]) ? S.A[step.id] : step.start().concat(S.heardDetails.filter(function (v) { return step.start().indexOf(v) < 0; }))).slice();
       var options = step.options ? step.options().map(function (o) { return Array.isArray(o) ? o : [o, o]; }) : [], guess = step.guess && step.guess();
       if (step.kind === 'multi') multi.forEach(function (v) { if (!options.some(function (o) { return o[0] === v; })) options.push([v, v]); });
       // Een voorstel van Gemini is gemarkeerd, maar nooit vooraf gekozen: Nikki tikt het zelf aan.
@@ -368,7 +449,7 @@
     try {
       if (photoSet() !== lastPhotoSet) { await I.store.put(I.store.PHOTOS, S.photos.map(function (p) { return p.file; })); lastPhotoSet = photoSet(); }
       await I.store.put(I.store.KEY, { v: 3, at: Date.now(), draftId: S.draftId, edit: S.edit, version: S.draftId && app().editVersion ? app().editVersion(S.draftId) : null,
-        phase: S.phase, analysed: S.analysed === photoSet(), A: S.A, G: S.G, warnings: S.warnings, ai: app().currentAnalysis ? app().currentAnalysis() : null,
+        phase: S.phase, analysed: S.analysed === photoSet(), A: S.A, G: S.G, warnings: S.warnings, seed: S.seed, heardDetails: S.heardDetails, ai: app().currentAnalysis ? app().currentAnalysis() : null,
         photos: S.photos.map(function (p) { return { cloudPath: p.cloudPath || null, rol: p.rol || '', rolByUser: !!p.rolByUser, main: !!p.main, internal: !!p.internal, toelichting: p.toelichting || '', bruikbaar: p.bruikbaar !== false }; }) });
       lastDraft = state;
     } catch (e) { draftsOff = true; }
@@ -385,6 +466,8 @@
     S = fresh();
     S.photos = d.photos.map(function (p, i) { return Object.assign({}, p, { file: files[i] }); }).filter(function (p) { return p.file instanceof Blob; }).map(function (p) { return Object.assign(p, { url: URL.createObjectURL(p.file) }); });
     S.A = d.A; S.G = d.G && typeof d.G === 'object' ? d.G : {}; S.warnings = Array.isArray(d.warnings) ? d.warnings : [];
+    if (Number.isInteger(d.seed)) S.seed = d.seed;
+    S.heardDetails = Array.isArray(d.heardDetails) ? d.heardDetails.filter(function (v) { return typeof v === 'string'; }).slice(0, 30) : [];
     S.draftId = d.draftId || null; S.edit = !!d.edit; S.phase = d.phase === 'talk' && S.photos.length ? 'talk' : 'photos'; S.analysed = d.analysed ? photoSet() : '';
     if (S.draftId && d.version != null && app().restoreEditVersion) app().restoreEditVersion(S.draftId, d.version);
     if (d.ai && app().restoreAnalysis) app().restoreAnalysis(d.ai);
@@ -396,6 +479,7 @@
   function startOver() {
     gen++; if (ctl) ctl.abort(); thinking = false; stopVoice();
     S.photos.forEach(function (p) { try { URL.revokeObjectURL(p.url); } catch (e) {} });
+    dropHeard(); reply = '';
     S = fresh(); editing = null; multi = null; error = ''; note = ''; view = 0; saved = false; status = ''; saveError = ''; askedKey = '';
     if (app().forgetAnalysis) app().forgetAnalysis();
     markSaved(); render();
@@ -447,10 +531,14 @@
       });
     }
     if (!step) return;
+    if (b.hasAttribute('data-heard-yes')) return acceptHeard();
+    if (b.hasAttribute('data-heard-no')) return rejectHeard();
+    if (b.hasAttribute('data-heard-stop')) { dropHeard(); return render(); }
     if (b.hasAttribute('data-skip')) return give(step, SKIP);
     if (b.hasAttribute('data-ready')) return give(step, multi.slice());
     if (b.hasAttribute('data-value')) {
       var v = b.getAttribute('data-value');
+      if (step.kind === 'euro') return give(step, Number(v));
       if (step.kind !== 'multi') return give(step, v);
       var at = multi.indexOf(v); if (at >= 0) multi.splice(at, 1); else multi.push(v);
       b.setAttribute('aria-pressed', String(at < 0));
@@ -459,12 +547,14 @@
   $('talk').addEventListener('click', function (e) {
     if (saving) return;
     var b = e.target.closest('[data-edit],[data-photos]'); if (!b) return;
-    multi = null; error = ''; note = '';
+    multi = null; error = ''; note = ''; dropHeard(); reply = '';
     if (b.hasAttribute('data-photos')) { stopVoice(); S.phase = 'photos'; editing = null; }
     else editing = b.getAttribute('data-edit');
     render();
   });
   $('back').addEventListener('click', function () {
+    reply = '';
+    if (heard) { dropHeard(); error = ''; return render(); }
     if (editing) { editing = null; multi = null; error = ''; return render(); }
     var answered = active().filter(done), last = answered[answered.length - 1];
     multi = null; error = '';

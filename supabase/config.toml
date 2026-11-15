@@ -9,3 +9,8 @@ verify_jwt = false
 # Public taste ranking without login (docs/SMAAKPROFIEL.md). The handler checks origin, body size
 # and a daily limit per anonymous client before any paid call; visitors only have a publishable key.
 verify_jwt = false
+
+[functions.begrijp]
+# Free sentences in Nieuw stuk (staff only). The handler checks login, staff and a daily limit
+# (consume_understanding) before any paid call, like analyse.
+verify_jwt = false

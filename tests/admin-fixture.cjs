@@ -63,6 +63,8 @@ async function fixture(width = 390, options = {}) {
     if(url.pathname==='/rest/v1/garments'||url.pathname==='/rest/v1/rpc/public_catalog')return json(state.rows);
     if(url.pathname==='/storage/v1/object/sign/garment-photos')return json(req.postDataJSON().paths.filter(p=>!p.includes('missing')).map(p=>({path:p,signedURL:'/object/sign/garment-photos/'+p})));
     if(url.pathname.startsWith('/storage/v1/object/sign/garment-photos/'))return route.fulfill({headers,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500"><rect width="400" height="500" fill="#e8dfd2"/><path d="M155 65 105 100 45 285 90 305 120 220 110 460 290 460 280 220 310 305 355 285 295 100 245 65 220 110 180 110Z" fill="#624739"/><path d="m155 65 45 85 45-85M200 150v310" fill="none" stroke="#392a23" stroke-width="6"/><g fill="#b0977b"><circle cx="215" cy="210" r="5"/><circle cx="215" cy="270" r="5"/><circle cx="215" cy="330" r="5"/></g></svg>'});
+    // Free sentences in Nieuw stuk: a fixed answer per test, otherwise "nothing recognised".
+    if(url.pathname==='/functions/v1/begrijp')return state.understand?json(state.understand(body)):json({velden:{},reactie:''});
     if(url.pathname==='/functions/v1/personalise')return json({source:'fallback',ranking:[]});
     return json({error:'fixture route unavailable'},500);
   });

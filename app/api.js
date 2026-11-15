@@ -202,4 +202,11 @@ export class Api {
     const both = signal && AbortSignal.any ? AbortSignal.any([signal, limit]) : signal || limit;
     return this.request('/functions/v1/analyse',{method:'POST',body:lists ? {images, lists} : {images},signal:both});
   }
+  // A free sentence from Nikki in Nieuw stuk, turned into answers by function begrijp (staff only).
+  // Short time limit: if it does not answer quickly, the intake carries on with its own matching.
+  understand({step, text, lists, known}, signal) {
+    const limit = AbortSignal.timeout(20000);
+    const both = signal && AbortSignal.any ? AbortSignal.any([signal, limit]) : signal || limit;
+    return this.request('/functions/v1/begrijp',{method:'POST',body:{step, text:String(text).slice(0,400), lists, known},signal:both});
+  }
 }

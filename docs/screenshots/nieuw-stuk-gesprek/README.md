@@ -13,3 +13,11 @@ Chromium op 390 × 844 en 320 × 844 px, in de echte app met nagebootste dienste
 ![Nieuw, deel 2](nieuw-320-b.png)
 
 Beweging (woord voor woord, de lichtbaan, de golfjes) is op een stilstaand beeld niet te zien.
+
+## Natuurlijker gesprek (vervolg op PR #58)
+Een vrije zin die Gemini begreep, met eerst "Klopt dat?", en het prijsvoorstel uit eigen verkopen (een knop, niet vooraf gekozen).
+
+![Vrije zin, 390 px](vrije-zin-390.png)
+![Vrije zin, 320 px](vrije-zin-320.png)
+![Prijsvoorstel, 390 px](prijsvoorstel-390.png)
+![Prijsvoorstel, 320 px](prijsvoorstel-320.png)

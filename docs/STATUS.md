@@ -10,6 +10,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — Nieuw stuk praat natuurlijker (bovenop PR #58)
+- Aanleiding: Martijn liet PR #58 door Fable bekijken; vaste zinnen ("O, mooi spul.") en het ontbrekende prijsvoorstel waren de open punten. Martijn koos "mix": Gemini waar het de ervaring echt beter maakt, verder direct op het toestel.
+- Reacties: per gelegenheid een paar zinnen, vast per stuk (geen verspringen bij hertekenen), met verwijzing naar eerdere antwoorden ("Cognac en suède, mooie combinatie."). Ook vragen variëren licht. Reacties komen nooit in titel of beschrijving.
+- Fotoanalyse (`analyse`): Gemini geeft een openingszin over het stuk (valt weg bij woorden over materiaal, diersoort, periode of echtheid) en zijn reden en zekerheid worden getoond ("Gemini denkt: … Korte, glanzende haren." of "Gemini twijfelt, misschien …"). Nog steeds niets vooraf gekozen.
+- Vrije zinnen: nieuwe functie `supabase/functions/begrijp` (alleen beheer, login en staff vóór de betaalde aanroep, eigen daglimiet via migratie `20261115160000_understand_usage.sql`). Een hele zin ("het is een lammy met een vossenkraag") wordt omgezet naar antwoorden binnen de keuzelijsten; een bontsoort alleen bij bont; geen prijs. Meer dan het antwoord op de huidige vraag, of een bontsoort, wordt eerst gevraagd: "Ik noteer: … Klopt dat?". Gemini niet bereikbaar of niets herkend: het scherm valt terug op de herkenning van losse woorden van PR #58.
+- Prijsvoorstel: uit eigen verkopen (`garment_sales`, alleen beheer, alleen op het toestel). Vergelijkbaar = zelfde bontsoort bij een bontjas, anders zelfde materiaal; bij minstens drie met dezelfde lengte alleen die. Vraag "Van je eigen verkopen: 3 stukken van nerts gingen voor € 240 tot € 380. Wat moet deze kosten?" en een knop "Rond € 300" (mediaan, afgerond op € 5), nooit vooraf gekozen.
+- Tests: `tests/begrijp-server.test.mjs` (nieuw), uitbreidingen in `tests/intake-steps.test.mjs`, `tests/cloud-server.test.mjs`, `tests/cloud-database.test.mjs` en een browserroute in `tests/admin-browser.cjs` (vrije zin met Klopt, direct antwoord, prijsknop). `npm test` (96/96), alle browsertests en `npm run check` slagen lokaal. Live Gemini/Supabase niet getest. Uitrollen na merge: `db push --remote`, `functions deploy analyse` en `functions deploy begrijp` (docs/LIVEGANG.md).
+
 ### 15 november 2026 — Nieuw stuk is een gesprek (in de app)
 - PR #56 (mock versie 2) en #57 (verkoopprijs) staan op `main` (`3f29113`). Martijn meldde dat de migraties zijn uitgerold; dat is vanuit de cloudsessie niet na te gaan.
 - Op verzoek van Martijn ("in één keer") is het invoerscherm vervangen door het gesprek uit de mock, als eigen bron onder `app/intake/` (besluit van 12 november). De build gebruikt het oude prototype met tekstpatches niet meer; `app/intake-extension.js` is weg.

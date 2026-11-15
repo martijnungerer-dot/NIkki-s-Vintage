@@ -222,8 +222,8 @@
     if (OPENER[k]) ph.querySelector(OPENER[k]).setAttribute('aria-expanded', 'true');
   }
 
-  Array.from($('menu').children).forEach(b=>{b.dataset.act='destination';b.dataset.screen=b.textContent;});
-  ph.querySelector('[aria-label="Mijn account"]').addEventListener('click',()=>window.parent.NikkiApp.openAccount());
+  // Every menu line opens a shop screen, except the last one: the entrance for Nikki and the staff.
+  Array.from($('menu').children).forEach(b=>{if(b.dataset.act==='staff')return;b.dataset.act='destination';b.dataset.screen=b.textContent;});
   ph.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
     var a = b.getAttribute('data-act');
@@ -232,6 +232,7 @@
     else if (a === 'like') { var it=ITEMS[S.item]; S.liked[it.displayId] = !S.liked[it.displayId]; save('gsf-liked',S.liked); render(false, true); emit(S.liked[it.displayId]?'like':'unlike',it); }
     else if (a === 'info' || a === 'menu') open(a);
     else if (a === 'destination') { destination=b.dataset.screen; open('cart'); }
+    else if (a === 'staff') { closeAll(); window.parent.NikkiApp.openAccount(); }
     else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
     else if (a === 'list-like' || a === 'list-cart') {
       var item=ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;

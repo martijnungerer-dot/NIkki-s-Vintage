@@ -102,5 +102,6 @@ Zes agents reviewden elk één gebied: beveiliging en privacy, invoer en verlies
 - Beveiligingsheader (CSP): de app gebruikt veel inline scripts in `srcdoc`-frames; vraagt een eigen, geteste wijziging.
 - Per-bezoekerlimiet personalise op `x-forwarded-for`: eerst live nagaan welke header Supabase doorgeeft.
 - Quota personalise na de catalogus: de catalogus zou dan zonder limiet opvraagbaar zijn.
-- Mijn smaak-labels ("Ja", "200-350"), meer/minder-knoppen verbergen als persoonlijke volgorde uit staat, menu met pijltjestoetsen, modale vensters, foto-aankondigingen: raken het goedgekeurde winkelontwerp; voorleggen aan Martijn.
+- Mijn smaak-labels ("Ja", "200-350"): gedaan op 15 november 2026 (akkoord Martijn), samen met het i-icoon, de ronde achtergronden in de foto, het sorteerlabel en de ingang voor beheer in het menu.
+- Meer/minder-knoppen verbergen als persoonlijke volgorde uit staat, menu met pijltjestoetsen, modale vensters, foto-aankondigingen: raken het goedgekeurde winkelontwerp; voorleggen aan Martijn.
 - Focus na elke actie, livemeldingen voor beheerders, invoerscherm in huisstijl: komt mee met het nieuwe invoerscherm.

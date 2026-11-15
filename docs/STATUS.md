@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — vijf aanpassingen aan de boetiek
+- Op verzoek van Martijn ("doe allemaal"), zo dicht mogelijk bij optie B: (1) de titelknop onder de foto heeft een i-icoon in plaats van het pijltje; (2) de iconen in de foto en de bolletjes staan op een ronde, donkere achtergrond (wit daarop is minstens 3:1, ook op een witte jas) en meer/minder zoals dit zijn duimpjes; (3) de sorteerkeuze in Collectie begint met "Onze volgorde" onder het kopje "Sorteren op" (prijs laag–hoog zat er al in); (4) de ingang voor beheer is de laatste regel "Beheer" in het menu, het poppetje rechtsboven is weg; (5) Mijn smaak toont "Met bont", "Zonder bont", "€ 200–350", "Vanaf € 600" en bij andere waarden het soort kenmerk (kleur, lengte, materiaal).
+- Open keuze voor Martijn: variant A (duimpjes, Beheer in het menu; gebouwd) of variant B (plus/min, slotje rechtsboven). Schermafbeeldingen voor en na op 390 en 320 px naast optie B in `docs/screenshots/boetiek-vijf-punten/`. AGENTS.md is nog niet aangepast; dat volgt na de keuze.
+- Tests: i-icoon, contrast van de achtergronden, geen poppetje, menuregel Beheer, sorteeropties en smaaklabels. `npm test` (78/78) en alle browsertests slagen lokaal. Geen wijziging aan data of server.
+
 ### 15 november 2026 — oude opslagfunctie afgesloten
 - Nieuwe migratie `20261115120000_close_save_garment.sql`: beheerders (rol `authenticated`) mogen `save_garment` niet meer rechtstreeks aanroepen. `save_garment_with_private` roept hem intern nog aan, dus opslaan loopt altijd langs de controle van de foto's alleen voor controle.
 - De website heeft geen terugval meer naar de oude functie. Ontbreekt de nieuwe functie of de tabel `garment_private` (404), dan volgt een duidelijke fout en wordt er niets opgeslagen; bewerken stopt in plaats van interne foto's stil weg te laten.

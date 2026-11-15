@@ -87,6 +87,10 @@ shop=patchShop(shop,'<span class="brand">Nikki’s Boetiek</span>','<span class=
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn items</button>','<button type="button" role="menuitem" data-act="menu">Mijn favorieten</button>');
 // Fourth Shop destination, using the same checked build anchor as Mijn favorieten.
 shop=patchShop(shop,'<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>','<button type="button" role="menuitem" data-act="cart-open">Winkelmand</button>\n    <button type="button" role="menuitem" data-act="menu">Mijn smaak</button>');
+// Martijn, 15 november 2026: visitors took the person icon for a customer account. The entrance
+// for Nikki and the staff moves to the Shop menu as a quiet last line, "Beheer".
+shop=patchShop(shop,'\n    <button type="button" class="ic" aria-label="Mijn account"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>','');
+shop=patchShop(shop,'<button type="button" role="menuitem" data-act="menu">Mijn smaak</button>','<button type="button" role="menuitem" data-act="menu">Mijn smaak</button>\n    <button type="button" role="menuitem" data-act="staff" class="menu-staff">Beheer</button>');
 shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldgegevens; foto\'s zijn vervangen door tekeningen.</p>','<p class="note" id="catalog-status" role="status">Collectie laden…</p>');
 // Martijn, 15 november 2026: the title button shows an i-icon instead of only a small arrow, so
 // visitors find the information panel (maten, materiaal).

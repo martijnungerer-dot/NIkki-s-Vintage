@@ -107,4 +107,11 @@ button:disabled { cursor: default; }
 .dots:empty { display: none; }
 .dots i { box-shadow: none; }
 /* Very narrow screens: the dots move above the icons, so many photos never run into them. */
-@container (max-width: 300px) { .dots { bottom: 50px; } }
+@container (max-width: 280px) { .dots { bottom: 50px; } }
+
+/* The entrance for Nikki and the staff is the last, quiet line of the Shop menu (Martijn,
+   15 November 2026); the top bar keeps its height without the person icon. */
+.top { min-height: 54px; }
+.menu .menu-staff { color: var(--muted); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
+/* "Onze volgorde" fits in the sort choice on a 320px phone. */
+.catalog-filters select { padding-right: 2px; text-overflow: ellipsis; }

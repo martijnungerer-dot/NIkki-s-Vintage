@@ -7,6 +7,9 @@ export function updateControls({api,$,state}) {
   $('manage-actions').hidden=!state.staff;
   $('new').hidden=!state.staff;$('logout').hidden=!api.session;
   for(const id of ['new','reload','logout'])$(id).disabled=state.busy||!api.configured();
+  document.querySelectorAll('#items .piece button, #items .piece input').forEach(el=>{
+    el.disabled=el.dataset.locked==='true'||(state.busy&&!el.classList.contains('piece-undo'));
+  });
 }
 
 export function setupHeader({$,show,reload,logout}) {

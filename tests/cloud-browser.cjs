@@ -46,7 +46,8 @@ async function context(){
    privateRows.set(b.p_id,{internal:b.p_internal,ai:b.p_ai??before?.ai??null});const old=db.get(b.p_id);assert.equal(b.p_version,old?.version||0);
    const row={id:b.p_id,display_id:old?.display_id||db.size+1,data:b.p_data,version:(old?.version||0)+1,status:old?.status||'published'};db.set(row.id,row);return json(row);
   }
-  if(u.pathname==='/rest/v1/rpc/mark_garment_sold'){
+  if(u.pathname==='/rest/v1/garment_sales')return json([]);
+  if(u.pathname==='/rest/v1/rpc/mark_garment_sold_with_price'){
    await soldResponse;
    const b=req.postDataJSON();const row=db.get(b.p_id);row.status='sold';row.version++;return json(row);
   }
@@ -161,11 +162,11 @@ const visitor=await context(),v=await visitor.newPage();await v.goto('https://ap
 // The visitor has this unique piece in the basket when it is sold.
 await v.frames().find(f=>f.name()==='shop').locator('#price').click();
 await shop().locator('.shop').click();await shop().getByRole('menuitem',{name:'Beheer'}).click();
-const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold',{timeout:10000});
-await p.getByRole('button',{name:'Markeer verkocht'}).click();
+const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold_with_price',{timeout:10000});
+await p.getByRole('button',{name:'Markeer verkocht'}).click();await p.getByRole('button',{name:'Verkocht',exact:true}).click();
 await soldRequest;
 assert.equal(await shop().locator('#track .slide').count(),1);
-assert.equal(await p.locator('#items .piece .piece-title').innerText(),title);assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Wordt verkocht…','not shown as sold before the server confirmed');
+assert.equal(await p.locator('#items .piece .piece-title').innerText(),title);assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Wordt verkocht voor '+await p.locator('#items .piece .piece-price').innerText()+'…','not shown as sold before the server confirmed');
 releaseSoldResponse();
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
 assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Verkocht');assert.equal(await p.getByRole('button',{name:'Markeer verkocht'}).count(),0,'sold cannot be marked again or undone');

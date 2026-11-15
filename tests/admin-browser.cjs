@@ -256,5 +256,45 @@ async function realNewsreader(p){
       assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, refresh keeps the screen, busy renewal guard and missing configuration.');
+  for(const blocked of [false,true]){
+    // Concepten: a half-entered piece with photos survives a refresh, and is gone after saving.
+    const f=await fixture(390,blocked?{noIndexedDb:true}:{}),p=f.page;try {
+      const intake=p.frameLocator('#intake'),frame=()=>p.frames().find(x=>x.name()==='intake');
+      await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li').waitFor();
+      await p.locator('#new').click();
+      const png=c=>p.evaluate(colour=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=colour;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},c);
+      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
+      await intake.locator('#manual').click();
+      await intake.locator('[data-open=tekst]').click();await intake.locator('#t-titel').fill('Half ingevulde cape');
+      if(blocked){
+        assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),true,'without storage, leaving still warns');
+        assert.deepEqual(f.state.errors,[]);continue;
+      }
+      await p.waitForTimeout(2600);
+      assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),false,'stored on the device, so no warning needed');
+      await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      await p.waitForFunction(()=>!document.getElementById('intake').hidden);
+      assert.equal(await intake.locator('.ph').count(),2,'photos are back');
+      assert.match(await intake.locator('#warnings').innerText(),/niet-opgeslagen stuk .* is teruggezet/);
+      await intake.locator('[data-open=tekst]').click();assert.equal(await intake.locator('#t-titel').inputValue(),'Half ingevulde cape');
+      await p.screenshot({path:'test-results/admin/concept-teruggezet-390.png'});
+      // Finish and save: the draft is removed, a refresh goes to Jouw collectie and Nieuw stuk is empty.
+      await intake.locator('[data-allok]').click().catch(()=>{});
+      await intake.locator('[data-open=fotos]').click();if(await intake.locator('[data-allok]').getAttribute('aria-pressed')!=='true')await intake.locator('[data-allok]').click();
+      await intake.locator('[data-main="0"]').click();
+      await intake.locator('[data-open=wat]').click();
+      for(const [k,v] of [['bont','Nee'],['materiaal','Wol'],['model','Cape'],['kleur','Zwart'],['lengte','Kort']])await intake.locator(`[data-k="${k}"][data-v="${v}"]`).click();
+      await intake.locator('[data-open=maten]').click();await intake.locator('#m-chest').fill('50');await intake.locator('#m-length').fill('80');
+      await intake.locator('[data-open=bijz]').click();await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+      await intake.locator('[data-open=tekst]').click();await intake.locator('#t-prijs').fill('90');
+      await intake.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
+      await p.waitForTimeout(300);
+      assert.equal(await frame().evaluate(()=>new Promise(r=>{const q=indexedDB.open('gsf-intake',1);q.onsuccess=()=>{const g=q.result.transaction('drafts').objectStore('drafts').get('current');g.onsuccess=()=>r(g.result===undefined);};})),true,'draft removed after saving');
+      await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
+      await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      assert.equal(await p.locator('#manage').isVisible(),true,'no draft: back to Jouw collectie');
+      assert.deepEqual(f.state.errors,[]);
+    } finally {await f.browser.close();}
+  }
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, refresh keeps the screen, drafts survive a refresh, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

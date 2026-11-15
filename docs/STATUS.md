@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — concepten bewaren
+- Een half ingevoerd stuk, foto's inbegrepen, wordt elke twee seconden en bij het naar de achtergrond gaan bewaard in IndexedDB op het toestel zelf (database `gsf-intake`). Na verversen of heropenen staat het terug, met een melding; zat je in Nieuw stuk, dan kom je daar terug. Ook het Gemini-voorstel en de versie van een bewerkt stuk gaan mee.
+- Gewist na opslaan, bij bewust opnieuw beginnen en bij het openen van een opgeslagen stuk. De waarschuwing bij verlaten verschijnt alleen nog als de laatste invoer niet bewaard kon worden (bijvoorbeeld geblokkeerde opslag).
+- Bewaard op het toestel, niet op de server; uitloggen wist het concept niet, zodat werk niet verloren gaat. Alleen Nikki's eigen invoer, geen privévelden.
+- Browsertest: invullen, verversen, terugzetten, afmaken, opslaan, concept gewist; en een toestel zonder IndexedDB. `npm test` (69/69) en alle browsertests slagen.
+
 ### 15 november 2026 — codereview Gemini verwerkt
 - Tweede Gemini-review op één tekstbestand met regelnummers (`GSF-code-voor-review.txt`); besluiten in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md).
 - Invoer: tekst in "+ nieuw" blijft staan, focus blijft op dezelfde knop, verwijderen in Controleren, dubbele foto's één keer bewaard, drie uploads tegelijk met teller, foto's tot 30 MB, na opslaan begint Nieuw stuk leeg, waarschuwing bij verlaten met niet-opgeslagen invoer, Terug-knop binnen de app. Boetiek: melding in de winkelmand bij een verkocht stuk.

@@ -6,8 +6,8 @@ Dit is een korte handleiding voor het beheer van Nikki's Boetiek, geschreven op 
 
 De boetiek is een website. Je zet hem als pictogram op je beginscherm, zodat hij opent als een gewone app, schermvullend en zonder adresbalk. Het pictogram heet "Guaranteed". Je doet dit één keer.
 
-**Android (Chrome)**
-1. Open dezelfde link in Chrome.
+
+1. Open https://nikki-s-vintage.martijnungerer.workers.dev in **Chrome**.
 2. Tik rechtsboven op het menu (drie puntjes).
 3. Kies **App installeren** of **Toevoegen aan startscherm**.
 4. Bevestig met **Installeren** of **Toevoegen**.

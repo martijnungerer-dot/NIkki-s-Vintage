@@ -124,4 +124,9 @@ Bij elke AI-PR meld je apart dat live Gemini niet getest is zolang een account o
 | Fase 0, stap 1 | Skills gemerged in PR #31 |
 | Fase 0, stap 2 | Gemerged in PR #37 op 13 november 2026 (`b636a36`). [Bewijs en overdracht](screenshots/beheer-fase-0/README.md). |
 | Fase 1 | Bovenbalk/inloggen in PR #36, via merge op fase 0; overige onderdelen volgen volgens [de PR-reeks](BEHEER-PR-REEKS.md). |
-| Fase 2–5 | Gepland in de PR-reeks; vaststelling open ontwerpen en aparte backendakkoorden blijven vereist |
+| Fase 1, collectie | Fotoraster met +-kaart en "verkocht" met ongedaan maken: PR #54 (15 november 2026); verkoopprijs bijhouden: PR #57 |
+| Fase 2, concepten | Eén concept op het toestel: PR #50; overgenomen in het nieuwe invoerscherm |
+| Fase 3, invoerscherm | Gebouwd op 15 november 2026 als gesprek onder `app/intake/` (`steps.js`, `drafts.js`, `main.js`, `style.css`, `intake.html`), naar de goedgekeurde mock `concept/invoer-gesprek.html`. Dit wijkt af van "één bestand per stap" en van de checklist: het is één vraag per keer, in één keer vervangen op verzoek van Martijn |
+| Fase 4, interne foto's | PR #44 e.v.; detailrollen, fotocoach en begeleid meten nog open |
+| Vervolg op het gesprek | Open, elk een eigen PR: prijsvoorstel uit `garment_sales`; warme reacties en vraagtekst uit `analyse`; vrije antwoorden door Gemini; spraak testen op Nikki's telefoon; later een live gesprek |
+| Fase 5 | Open; wacht op een verkoopplatform |

@@ -57,7 +57,7 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 - **Regels:** de bontsoort wordt nooit voorgesteld en komt alleen van Nikki. Wat de AI wel zag, legt hij voor als "klopt dat?". Maten in cm, tot 300. De complimenten ("O, mooi spul.") zijn voor Nikki en komen niet in de titel of het overzicht.
 - **Controle:** `node tests/invoer-gesprek.cjs` op 390 en 320 px. Zie de [schermafbeeldingen](../docs/screenshots/invoer-gesprek/README.md).
 
-Dit is een voorstel voor het nieuwe invoerscherm uit docs/BEHEER-PLAN.md. De echte versie vraagt een aanpassing van de serverfunctie `analyse` (vragen en reacties meegeven) en is nog niet gebouwd.
+Sinds 15 november 2026 is dit het echte scherm Nieuw stuk in de app (`app/intake/`), met de bestaande fotoanalyse. Deze mock blijft als ontwerpbron bestaan. Nog niet gebouwd: reacties en vraagtekst uit de serverfunctie `analyse`, en het prijsvoorstel uit eigen verkopen (in de mock een voorbeeld).
 
 ## Stijlen kiezen (voor Nikki)
 

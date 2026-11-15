@@ -1,0 +1,135 @@
+/* Nieuw stuk als gesprek. Kleuren, letters en maten van optie B (zie app/admin/tokens.css). */
+:root {
+  color-scheme: light;
+  --page: #FAF6F0; --bg: #FAF6F0; --fg: #2E2420; --muted: #6B5A50; --line: #E3DAD0;
+  --chip: #F3ECE3; --chip-line: #D9CFC4; --chip-on: #E4D6C5; --band: #F1E9DF; --photo-bg: #E9E1D6;
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--page); color: var(--fg); font: 18px/1.45 var(--serif); display: flex; justify-content: center; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+svg { display: block; }
+
+.app { width: min(480px, 100%); height: 100%; background: var(--bg); display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.top { flex: none; display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 4px; border-bottom: 1px solid var(--line); }
+.ic { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; display: grid; place-items: center; }
+.ic:disabled { opacity: .3; cursor: default; }
+.top h1 { flex: 1; min-width: 0; margin: 0; font-size: 22px; font-weight: 400; }
+.steps { flex: none; padding-right: 8px; font-size: 16px; color: var(--muted); white-space: nowrap; }
+
+/* Het podium vult de ruimte die overblijft. Er staat nooit tekst op een foto. */
+.stage { flex: 1 1 0; min-height: 150px; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 4px; }
+.hero { position: relative; flex: 1; min-height: 0; border-radius: 14px; overflow: hidden; background: var(--photo-bg); }
+.hero img { width: 100%; height: 100%; object-fit: contain; object-position: center; animation: beeld 360ms ease-out both; }
+@keyframes beeld { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+/* De AI "kijkt": een zachte lichtbaan trekt over de foto. */
+.scan { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 35%, rgba(250,246,240,.55) 50%, transparent 65%); background-size: 250% 100%; animation: kijk 900ms ease-in-out infinite; }
+@keyframes kijk { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+.hero .camera { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--chip); font-size: 20px; text-align: center; cursor: pointer; }
+.camera .lens { width: 84px; height: 84px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; animation: adem 2600ms ease-in-out infinite; }
+@keyframes adem { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.camera:focus-within { outline: 2px solid var(--fg); outline-offset: -4px; }
+.thumbs { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 2px; }
+.thumbs button { flex: none; width: 46px; height: 56px; padding: 0; border: 0; border-radius: 8px; overflow: hidden; background: var(--photo-bg); opacity: .6; animation: val 380ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 70ms); }
+.thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--fg); outline-offset: 1px; }
+.thumbs img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+@keyframes val { from { opacity: 0; transform: translateY(-14px); } to { transform: none; } }
+[data-mode="overview"] .stage { display: none; }
+
+.talk { position: relative; flex: 0 1 auto; min-height: 0; max-height: 46%; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+[data-mode="overview"] .talk { flex: 1; max-height: none; padding-top: 16px; gap: 12px; }
+.note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--band); color: var(--muted); font-size: 16px; }
+.ai { margin: 0; max-width: 34ch; }
+.ai.now { font-size: 24px; line-height: 1.25; max-width: 24ch; }
+/* De vraag komt woord voor woord; schermlezers krijgen de hele zin. */
+.ai.fresh .w { opacity: 0; animation: woord 260ms ease-out forwards; animation-delay: calc(var(--i) * 45ms); }
+@keyframes woord { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.trail { flex: none; display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px; scrollbar-width: none; }
+.trail::-webkit-scrollbar { display: none; }
+.done-mark { width: 56px; height: 56px; border-radius: 50%; background: var(--chip-on); display: grid; place-items: center; }
+.done-mark path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: vink 420ms 120ms ease-out forwards; }
+@keyframes vink { to { stroke-dashoffset: 0; } }
+.ai .warm { display: block; color: var(--muted); font-size: 18px; padding-bottom: 4px; }
+.me { flex: none; max-width: 70vw; min-height: 44px; padding: 6px 12px; border: 0; border-radius: 22px; background: var(--chip-on); font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.me span { overflow: hidden; text-overflow: ellipsis; }
+.me svg { flex: none; }
+.dots { display: flex; gap: 6px; padding: 8px 0; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: wacht 900ms ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: 150ms; } .dots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes wacht { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* Overzicht: zo komt het in de boetiek. */
+.card { border: 1px solid var(--line); border-radius: 14px; background: #FFFFFF; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.card-head { display: flex; gap: 12px; align-items: flex-start; }
+.card-head img { flex: none; width: 84px; height: 105px; object-fit: cover; object-position: center top; border-radius: 8px; background: var(--photo-bg); }
+.card-title { font-size: 22px; line-height: 1.2; overflow-wrap: anywhere; }
+.kv { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 6px 0; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; }
+.kv span:first-child { color: var(--muted); flex: none; }
+.kv span:last-child { text-align: right; overflow-wrap: anywhere; }
+
+/* Antwoorden: grote knoppen, daaronder typen of dicteren. */
+.answer { flex: none; padding: 12px 16px 16px; border-top: 1px solid var(--line); background: var(--band); display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; max-height: 28vh; overflow-y: auto; }
+.chip { min-height: 44px; padding: 8px 14px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); text-align: left; transition: transform 120ms ease-out, background 160ms ease-out; }
+.chip:active { transform: scale(.96); }
+.chips.fresh .chip { animation: woord 260ms ease-out both; animation-delay: calc(120ms + var(--i) * 28ms); }
+.chip[aria-pressed="true"] { background: var(--chip-on); border-color: var(--fg); }
+.chip.main { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.chip.quiet { background: transparent; color: var(--muted); }
+.free { display: flex; gap: 8px; }
+.free input { flex: 1; min-width: 0; min-height: 48px; padding: 8px 12px; border: 1px solid var(--chip-line); border-radius: 10px; background: #FFFFFF; font-size: 18px; }
+.free .unit { align-self: center; color: var(--muted); }
+.send { flex: none; width: 48px; height: 48px; border: 0; border-radius: 10px; background: var(--fg); color: var(--bg); display: grid; place-items: center; }
+.free input:only-child { flex: 1; }
+/* Praten: een vakje met golfjes, op elke vraag op dezelfde plek. Rust = lage streepjes,
+   de AI praat = een lopende golf, de AI luistert = dansende streepjes. */
+.voice { flex: none; width: 56px; height: 48px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); display: grid; place-items: center; color: var(--muted); }
+.voice svg { grid-area: 1 / 1; }
+.voice .wave { display: none; }
+.voice[data-voice="speaking"], .voice[data-voice="listening"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.voice[data-voice="speaking"] .bars { display: none; }
+.voice[data-voice="speaking"] .wave { display: block; }
+.voice .bars rect { transform-box: fill-box; transform-origin: center; transform: scaleY(.3); }
+.voice .bars rect { transition: transform 110ms ease-out; }
+.voice .wave { transform: scaleY(var(--amp, 1)); transition: transform 140ms ease-out; }
+.voice[data-voice="speaking"] .wave path { animation: praat 900ms linear infinite; }
+@keyframes praat { from { transform: translateX(0); } to { transform: translateX(-16px); } }
+.voice-note { margin: 0; font-size: 16px; color: var(--muted); }
+.err { margin: 0; font-size: 16px; color: #9B3A2F; }
+.pick { position: relative; overflow: hidden; }
+.pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i { animation: none; opacity: .6; }
+  .voice .wave path, .hero img, .scan, .camera .lens, .thumbs button, .chips.fresh .chip, .done-mark path { animation: none !important; }
+  .ai.fresh .w { animation: none; opacity: 1; }
+  .done-mark path { stroke-dashoffset: 0; }
+  .scan { display: none; }
+  .voice[data-voice="listening"] .bars rect { transform: scaleY(.8); }
+}
+
+/* ---- Alleen in de echte app ---- */
+.top h1 { font-size: 20px; }
+.steps { padding-right: 0; }
+/* Foto's beheren: hoofdfoto, alleen voor controle, plek en verwijderen voor de gekozen foto. */
+.thumbs button.intern { outline: 2px dashed var(--muted); outline-offset: -2px; }
+.thumbs .add { position: relative; flex: none; width: 46px; height: 56px; border: 1px dashed var(--chip-line); border-radius: 8px; background: var(--chip); display: grid; place-items: center; overflow: hidden; cursor: pointer; }
+.thumbs .add input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.thumbs .add:focus-within { outline: 2px solid var(--fg); outline-offset: 1px; }
+.photo-tools { flex: none; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.photo-tools .chip { font-size: 16px; }
+.photo-tools select { min-height: 44px; padding: 8px 10px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); color: var(--fg); font: inherit; font-size: 16px; }
+.photo-tools .del { margin-left: auto; }
+.photo-note { margin: 0; font-size: 16px; color: var(--muted); }
+[data-mode="photos"] .stage { flex: 1 1 0; }
+[data-mode="photos"] .talk { max-height: 34%; }
+.guess { border-style: dashed; border-color: var(--fg); }
+.long { width: 100%; min-height: 132px; padding: 10px 12px; border: 1px solid var(--chip-line); border-radius: 10px; background: #FFFFFF; color: var(--fg); font: inherit; font-size: 18px; line-height: 1.4; resize: vertical; }
+.warn { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--band); font-size: 16px; }
+.status { margin: 0; font-size: 16px; }
+.answer[aria-busy="true"] .chip { opacity: .5; }

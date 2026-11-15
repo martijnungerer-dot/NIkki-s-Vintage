@@ -55,6 +55,15 @@ window.NikkiApp={
     const token=++analysisToken;
     try{const result=await api.analyse(files,signal,lists);if(token===analysisToken)lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
   },
+  // A free sentence in Nieuw stuk (function begrijp). Only for staff; the intake falls back to its own matching on any error.
+  understand(input,signal){if(!admin.state.staff)return Promise.reject(Error('Log eerst in.'));return api.understand(input,signal);},
+  // Price proposal in Nieuw stuk: what sold pieces went for, with the features needed to compare them.
+  // Staff only (garment_sales is staff-only); never sent anywhere, only used on this device.
+  async priceHistory(){
+    if(!admin.state.staff)return [];
+    const sales=new Map((await api.sales()).map(row=>[row.id,row.sold_price_minor]));
+    return admin.state.rows.filter(row=>row.status==='sold'&&sales.has(row.id)).map(row=>({key:row.id,furClass:row.data.furClass,species:row.data.species,material:row.data.material,length:row.data.length,priceMinor:sales.get(row.id)}));
+  },
   // Taste ranking (docs/SMAAKPROFIEL.md): only the compact profile summary leaves the browser.
   personalise:profile=>api.request('/functions/v1/personalise',{method:'POST',auth:false,body:{profile},signal:AbortSignal.timeout(50000)}),
   async publish(product,onProgress){

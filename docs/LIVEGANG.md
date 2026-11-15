@@ -16,6 +16,7 @@ Rangschikken is een eenvoudige taak met kleine aanvragen, dus een goedkoop en sn
 
 - **Advies voor de smaakfunctie:** een Flash-Lite-model van de nieuwste generatie, zoals Gemini 3.5 Flash-Lite. Zet de exacte naam uit AI Studio in `PERSONALISE_MODEL`.
 - **Fotoanalyse bij het invoeren** (`analyse`) mag een sterker model gebruiken via `GEMINI_MODEL`. Zonder `PERSONALISE_MODEL` gebruiken beide functies `GEMINI_MODEL`. Met `ANALYSE_MODEL` kies je een apart model alleen voor de fotoanalyse, bijvoorbeeld een Flash-Lite-model als het sterkere model te traag is.
+- **Vrije zinnen in Nieuw stuk** (`begrijp`): korte tekst, dus een snel model is genoeg. Met `BEGRIJP_MODEL` kies je er een, bijvoorbeeld hetzelfde Flash-Lite-model als `PERSONALISE_MODEL`; zonder `BEGRIJP_MODEL` gebruikt de functie `GEMINI_MODEL`. Een aanvraag is een paar honderd tokens: met Flash-Lite een fractie van een cent. Daglimiet: 300 per beheerder en 600 in totaal.
 - **Gezien op 14 november 2026:** `gemini-3.8-flash` was op de gratis tier te traag voor de smaakfunctie (`TIMEOUT` na 40 seconden); `gemini-3.5-flash-lite` als `PERSONALISE_MODEL` werkt.
 - Gebruik geen model waarvan AI Studio meldt dat het wordt uitgefaseerd.
 
@@ -36,6 +37,7 @@ Zet onder **Edge Functions → Secrets**:
 | `GEMINI_MODEL` | Het model voor fotoanalyse |
 | `PERSONALISE_MODEL` | Optioneel: het goedkopere model voor de smaakfunctie |
 | `ANALYSE_MODEL` | Optioneel: een apart model alleen voor de fotoanalyse |
+| `BEGRIJP_MODEL` | Optioneel: een snel model voor vrije zinnen in Nieuw stuk |
 | `ALLOWED_ORIGINS` | `https://nikki-s-vintage.martijnungerer.workers.dev`, eventueel gevolgd door `,http://localhost:4173` voor lokaal testen |
 
 `SUPABASE_URL` en de serversleutel levert Supabase zelf.
@@ -49,11 +51,13 @@ npx supabase login
 npx supabase link --project-ref naxjrskfdedwvoeltigs
 npx supabase db push --remote
 npx supabase functions deploy personalise
+npx supabase functions deploy analyse
+npx supabase functions deploy begrijp
 ```
 
 Zonder `--remote` richt de huidige Supabase-CLI zich op een lokale database en stopt met `ECONNREFUSED 127.0.0.1:54322`. In Windows PowerShell gebruik je `npx.cmd` en `npm.cmd` in plaats van `npx` en `npm`, omdat de scripts daarachter standaard geblokkeerd zijn.
 
-`db push` voegt de tabel voor de daglimiet toe (`personalise_usage`). Bestaande stukken en rechten veranderen niet.
+`db push` voegt de tabel voor de daglimiet toe (`personalise_usage`) en de daglimiet voor vrije zinnen (`consume_understanding`). Bestaande stukken en rechten veranderen niet. `analyse` opnieuw uitrollen is nodig voor de openingszin van Gemini; `begrijp` is nieuw. Zonder `begrijp` werkt Nieuw stuk gewoon, maar dan begrijpt het alleen losse woorden.
 
 ## 5. Controleren
 
@@ -74,6 +78,7 @@ Het script gebruikt alleen de publieke gegevens uit `app/config.js` en kost éé
 | Geeft geen volgorde, of mist serversleutel | `npx supabase db push --remote`; kijk de logs na onder Edge Functions → personalise. |
 | Werkt, maar zonder Gemini (terugval) | Open Supabase → Edge Functions → personalise → Logs en zoek de regel `personalise fallback: …`. `NO_KEY`: secret `GEMINI_API_KEY` ontbreekt. `BAD_MODEL_NAME`: de modelnaam moet beginnen met `gemini-`. `HTTP_400`/`HTTP_403`: sleutel of project geweigerd. `HTTP_404 NOT_FOUND`: model bestaat niet voor deze sleutel. `HTTP_429`: limiet van Google bereikt. `EMPTY MAX_TOKENS` of `NOT_JSON`: het model gaf geen bruikbaar antwoord. `TIMEOUT`: Gemini antwoordde niet binnen 40 seconden; kies eventueel een sneller model met `PERSONALISE_MODEL`. |
 | Fotoanalyse mislukt of duurt te lang | Open Supabase → Edge Functions → analyse → Logs en zoek `analyse failed: …`. Dezelfde codes als hierboven; bij `TIMEOUT` (90 seconden) kies je met `ANALYSE_MODEL` een sneller model. |
+| Vrije zinnen worden niet begrepen | Nieuw stuk valt dan stil terug op losse woorden. Open Supabase → Edge Functions → begrijp → Logs en zoek `begrijp failed: …` (dezelfde codes). Geen logregels: rol `begrijp` uit en voer `db push --remote` uit. |
 | Daglimiet bereikt | Wacht tot de volgende dag (UTC). |
 
 ## 6. Proef op je telefoon (na merge van "Mijn smaak")

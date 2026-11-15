@@ -118,3 +118,8 @@ test('a model without the thinking setting is remembered; a blocked prompt logs 
   const b=setup({gemini:()=>Response.json({promptFeedback:{blockReason:'SAFETY'}})});
   assert.equal((await b.request()).status,502);assert.match(b.logs[0],/EMPTY SAFETY/);
 });
+
+test('an opening line to Nikki is kept only without claims about material, species, period or authenticity',()=>{
+  assert.equal(normalizeResult({titel:'Jas',opening:'Wat een mooie lange jas met die grote kraag.',fotos:[]},1).opening,'Wat een mooie lange jas met die grote kraag.');
+  for(const opening of ['Mooie nertsjas!','Echte jaren 70, prachtig.','Prachtig leer.'])assert.equal(normalizeResult({titel:'Jas',opening,fotos:[]},1).opening,undefined);
+});

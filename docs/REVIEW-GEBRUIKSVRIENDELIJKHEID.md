@@ -98,7 +98,7 @@ Zes agents reviewden elk één gebied: beveiliging en privacy, invoer en verlies
 
 ### Bewust niet nu
 
-- Oude `save_garment` afsluiten: pas nadat de nieuwe migratie live staat (anders werkt opslaan niet meer).
+- Oude `save_garment` afsluiten: gedaan op 15 november 2026 (migratie `20261115120000_close_save_garment.sql`), nadat de migratie met `save_garment_with_private` live stond.
 - Beveiligingsheader (CSP): de app gebruikt veel inline scripts in `srcdoc`-frames; vraagt een eigen, geteste wijziging.
 - Per-bezoekerlimiet personalise op `x-forwarded-for`: eerst live nagaan welke header Supabase doorgeeft.
 - Quota personalise na de catalogus: de catalogus zou dan zonder limiet opvraagbaar zijn.

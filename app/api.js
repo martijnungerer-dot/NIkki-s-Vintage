@@ -157,21 +157,17 @@ export class Api {
     // Explicit public allowlist: no session, private notes, cost or model output.
     const data = Object.fromEntries(['title','description','priceMinor','material','species','model','colour','length','fit','era','details','measurements','furClass'].map(k=>[k,product[k]]));
     data.images = images;
-    try {
-      return await this.request('/rest/v1/rpc/save_garment_with_private', {method:'POST',body:{p_id:product.key,p_data:data,p_version:version,p_internal:internal,p_ai:ai}});
-    } catch(e) {
-      // Until the database migration is applied the new function does not exist (PostgREST 404).
-      // Without internal photos the old save is equivalent; with them, stop instead of publishing them.
-      if(e.status !== 404) throw e;
-      if(internal.length) throw Object.assign(Error('Foto’s alleen voor controle kunnen nog niet worden bewaard: de database is nog niet bijgewerkt. Zet bij die foto’s Alleen voor controle uit, of verwijder ze.'), {status:404});
-      return this.request('/rest/v1/rpc/save_garment', {method:'POST',body:{p_id:product.key,p_data:data,p_version:version}});
-    }
+    // The only save route: the older save_garment is closed for direct calls (see the migration
+    // close_save_garment), so there is no fallback that could skip the internal photos.
+    try { return await this.request('/rest/v1/rpc/save_garment_with_private', {method:'POST',body:{p_id:product.key,p_data:data,p_version:version,p_internal:internal,p_ai:ai}}); }
+    catch(e) { if(e.status === 404) e.message = 'Dit stuk is niet opgeslagen: de database is niet bijgewerkt. Je invoer blijft staan; vraag Martijn om hulp.'; throw e; }
   }
   // Internal photos of one piece, with short-lived signed links. Staff only (RLS).
   async internalPhotos(id) {
+    // No fallback to "no photos": a failed read must stop the edit, otherwise saving would drop them.
     let rows;
     try { rows = await this.request('/rest/v1/garment_private?select=internal_images&id=eq.' + encodeURIComponent(id)); }
-    catch(e) { if(e.status === 404) return []; throw e; }
+    catch(e) { if(e.status === 404) e.message = 'De foto’s alleen voor controle konden niet worden geladen: de database is niet bijgewerkt. Dit stuk kan nu niet worden bewerkt.'; throw e; }
     const list = Array.isArray(rows?.[0]?.internal_images) ? rows[0].internal_images : [];
     if(!list.length) return [];
     const urls = await this.imageUrls(list.map(i=>i.path));

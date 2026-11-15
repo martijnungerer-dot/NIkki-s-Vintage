@@ -81,12 +81,10 @@ test('saving splits photos: internal ones only reach the staff-only function, ne
   assert.deepEqual(body.p_ai,{titel:'Jas'});
   assert.doesNotMatch(JSON.stringify(body.p_data),/bbbb|titel/);
 
-  // Before the migration: without internal photos fall back to the old save; with them, stop.
-  const old=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>Response.json({id,version:1})});old.a.keep(session);
-  await old.a.save({...product,images:[product.images[0]]},0);
-  assert.deepEqual(old.calls.map(c=>c.path),['/rest/v1/rpc/save_garment_with_private','/rest/v1/rpc/save_garment']);
-  const blocked=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>assert.fail('must not publish')});blocked.a.keep(session);
-  await assert.rejects(blocked.a.save(product,0),/database is nog niet bijgewerkt/);
+  // No fallback to the closed save_garment: a missing function is a clear error and nothing else is called.
+  const old=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>assert.fail('the old function must not be called')});old.a.keep(session);
+  await assert.rejects(old.a.save({...product,images:[product.images[0]]},0),e=>e.status===404&&/database is niet bijgewerkt/.test(e.message));
+  assert.deepEqual(old.calls.map(c=>c.path),['/rest/v1/rpc/save_garment_with_private']);
 });
 
 test('internal photos are loaded with signed links, and a missing one stops editing',async()=>{
@@ -98,7 +96,7 @@ test('internal photos are loaded with signed links, and a missing one stops edit
   const {a:b}=api({...routes,'/storage/v1/object/sign/garment-photos':()=>Response.json([])});b.keep(session);
   await assert.rejects(b.internalPhotos(id),/Niet alle foto/);
   const {a:c}=api({'/rest/v1/garment_private':()=>Response.json({code:'42P01'},{status:404})});c.keep(session);
-  assert.deepEqual(await c.internalPhotos(id),[],'before the migration there are none');
+  await assert.rejects(c.internalPhotos(id),e=>e.status===404&&/database is niet bijgewerkt/.test(e.message),'never silently "no photos": saving would then drop them');
 });
 
 test('photos upload three at a time with progress, keep their order, and a duplicate photo is kept once',async()=>{

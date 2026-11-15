@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — oude opslagfunctie afgesloten
+- Nieuwe migratie `20261115120000_close_save_garment.sql`: beheerders (rol `authenticated`) mogen `save_garment` niet meer rechtstreeks aanroepen. `save_garment_with_private` roept hem intern nog aan, dus opslaan loopt altijd langs de controle van de foto's alleen voor controle.
+- De website heeft geen terugval meer naar de oude functie. Ontbreekt de nieuwe functie of de tabel `garment_private` (404), dan volgt een duidelijke fout en wordt er niets opgeslagen; bewerken stopt in plaats van interne foto's stil weg te laten.
+- Tests: database (PGlite) controleert dat ook een beheerder `save_garment` niet direct kan aanroepen en dat opslaan via de nieuwe functie blijft werken; API-test controleert dat de oude route niet meer wordt aangeroepen. `npm test` (78/78) en de browsertests slagen lokaal. Uitrollen door Martijn: `npx.cmd supabase db push --remote`, daarna `npm.cmd run check:live`. Live niet getest.
+
 ### 15 november 2026 — review door zes Fable-agents verwerkt
 - Zes agents (beveiliging, invoer, boetiek, Gemini, bediening op 390/320 px, tests/bouw) reviewden main `7cfadf3`; geen kritieke of ernstige beveiligingsproblemen. Besluiten per bevinding in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md).
 - Belangrijkst: op verzoek van Martijn stelt Gemini ook materiaal, bont, bontsoort en periode voor; elk onderdeel dat Gemini invulde wacht op één tik op Klopt, en claimwoorden in titel/beschrijving blijven staan maar moeten bevestigd worden; concept wordt gewist bij uitloggen en alleen na inloggen teruggezet; uploadfouten, late Gemini-antwoorden en versieconflicten na verkoop afgehandeld; duidelijke melding bij een verkeerd wachtwoord; livecontrole kijkt naar de nieuwe migratie.

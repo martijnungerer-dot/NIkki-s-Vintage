@@ -31,6 +31,8 @@ test('internal photos and the AI proposal are staff only; visitors never see the
     assert.equal((await db.query("select has_function_privilege('authenticated','public.valid_internal_images(uuid,jsonb,jsonb)','EXECUTE') as a")).rows[0].a,false);
     await as('anon',null,async()=>{await assert.rejects(save,/permission denied/);await assert.rejects(()=>db.query('select * from public.garment_private'),/permission denied/);});
     await as('authenticated',outsider,async()=>{await assert.rejects(save,/STAFF_REQUIRED/);});
+    // The older function is closed: internal photos can never be skipped by calling it directly.
+    await as('authenticated',staff,async()=>{await assert.rejects(()=>db.query('select public.save_garment($1,$2,0)',[id,product]),/permission denied/);});
     await as('authenticated',staff,async()=>{
       await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',front]);
       await assert.rejects(save,/PHOTO_NOT_UPLOADED/,'internal photos must be uploaded too');

@@ -40,9 +40,9 @@ window.NikkiApp={
   openAccount:()=>show('manage'),
   prepareImage,
   preparePhotos:(photos,primary)=>transferPhotos(photos,primary,{prepareImage}),
-  async analyse(files,signal){
+  async analyse(files,signal,lists){
     if(!admin.state.staff)throw Error('Log eerst in.');
-    try{const result=await api.analyse(files,signal);lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
+    try{const result=await api.analyse(files,signal,lists);lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
   },
   // Taste ranking (docs/SMAAKPROFIEL.md): only the compact profile summary leaves the browser.
   personalise:profile=>api.request('/functions/v1/personalise',{method:'POST',auth:false,body:{profile},signal:AbortSignal.timeout(50000)}),
@@ -53,6 +53,8 @@ window.NikkiApp={
     admin.state.editVersions.set(product.key,saved.version);
     try{await admin.refresh();show('shop');admin.say(saved.status==='sold'?'Wijziging opgeslagen. Dit stuk blijft verkocht.':product.title+' is opgeslagen en staat in de boetiek.');}
     catch{admin.say('Het stuk is opgeslagen. De collectie kon niet worden vernieuwd; probeer Collectie vernieuwen.','error');}
+    // Reset once the intake has finished its own save handling (next task), so Nieuw stuk starts empty.
+    setTimeout(()=>{try{$('intake').contentWindow.NikkiIntake?.reset();}catch{}});
   }
 };
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);

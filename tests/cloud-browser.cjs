@@ -158,6 +158,8 @@ await p.evaluate(()=>{document.dispatchEvent(new Event('visibilitychange'));dele
 await p.clock.setFixedTime(new Date());row.data.images=savedImages;photos.delete(detailPath);
 await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await shop().locator('#track .slide').count(),1);
 const visitor=await context(),v=await visitor.newPage();await v.goto('https://app.test');await v.waitForFunction(()=>document.getElementById('status').textContent==='Collectie geladen.');assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),1);
+// The visitor has this unique piece in the basket when it is sold.
+await v.frames().find(f=>f.name()==='shop').locator('#price').click();
 await shop().getByRole('button',{name:'Mijn account'}).click();
 const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold',{timeout:10000});
 await p.getByRole('button',{name:'Markeer verkocht'}).click();
@@ -179,6 +181,8 @@ const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.l
 assert.deepEqual(await p.evaluate(()=>window.photoWork),{decode:0,read:0});
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
 await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),0);
+{const vs=v.frames().find(f=>f.name()==='shop');await vs.locator('.shop').click();await vs.getByRole('menuitem',{name:'Winkelmand',exact:true}).click();
+ await vs.locator('.cart-note').filter({hasText:'inmiddels verkocht'}).waitFor();await vs.locator('#cart [data-act=close]').first().click().catch(()=>{});}
 // Photos "Alleen voor controle": Gemini sees them, the boutique never does, and editing keeps them.
 {
  await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();

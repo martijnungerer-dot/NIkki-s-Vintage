@@ -46,6 +46,11 @@ intake=patchIntake(intake,"  if (sending || !STEPS.every(s => s.done())) return;
 // Text typed in "+ nieuw" survives a tap on another chip (every tap rebuilds the checklist).
 intake=patchIntake(intake,"'\" placeholder=\"Typ en voeg toe\"><button type=\"button\" data-addok=\"'","'\" placeholder=\"Typ en voeg toe\" value=\"' + esc(addDraft[key] || '') + '\"><button type=\"button\" data-addok=\"'");
 intake=patchIntake(intake,"    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;","    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;\n    delete addDraft[key];");
+// A photo can also be removed in Controleren, not only in the first step.
+intake=patchIntake(intake,"'<button type=\"button\" class=\"okb\" data-ok=\"' + i + '\" aria-pressed=\"' + p.ok + '\">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +",
+  "'<button type=\"button\" class=\"okb\" data-ok=\"' + i + '\" aria-pressed=\"' + p.ok + '\">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +\n          '<button type=\"button\" class=\"okb\" data-delrev=\"' + i + '\" aria-label=\"Foto ' + (i + 1) + ' verwijderen\">Verwijderen</button>' +");
+intake=patchIntake(intake,"    if ((t = e.target.closest('[data-intern]'))) {",
+  "    if ((t = e.target.closest('[data-delrev]'))) { var di = Number(t.getAttribute('data-delrev')); if (!confirm('Foto ' + (di + 1) + ' verwijderen?')) return; URL.revokeObjectURL(photos[di].url); photos.splice(di, 1); renderThumbs(); renderPath(); return; }\n    if ((t = e.target.closest('[data-intern]'))) {");
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 // The chosen design supplies the actual markup and CSS, not a second approximation.
 let shop=await read('concept/ontdekken-optie-b.html');

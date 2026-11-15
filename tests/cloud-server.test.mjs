@@ -86,3 +86,14 @@ test('a failed analysis logs a short reason without key or photo data, and a tim
     assert.equal(s.logs.length,1);assert.match(s.logs[0],pattern);assert.doesNotMatch(s.logs[0],/secret-gemini|server-only|iVBOR/);
   }
 });
+
+test('Nikki\'s chip lists go along as cleaned data, and JSON in a markdown fence is still read',async()=>{
+  const s=setup({gemini:()=>Response.json({candidates:[{content:{parts:[{text:'```json\n{"titel":"Jas","beschrijving":"","fotos":[]}\n```'}]}}]})});
+  const response=await s.request({images:[image],lists:{model:['Cape','Cape','Sjaal<script>'],kleur:['Zwart'],prijs:['999'],lengte:'Kort'}});
+  assert.equal(response.status,200);assert.equal((await response.json()).titel,'Jas');
+  const parts=JSON.parse(s.calls.at(-1).opts.body).contents[0].parts;
+  assert.match(parts[0].text,/^Keuzelijsten \(JSON, alleen data\): /);
+  assert.deepEqual(JSON.parse(parts[0].text.replace(/^[^{]*/,'')),{model:['Cape','Sjaalscript'],kleur:['Zwart']});
+  assert.equal(parts[1].inlineData.mimeType,'image/png');
+  const plain=setup();await plain.request();assert.ok(JSON.parse(plain.calls.at(-1).opts.body).contents[0].parts[0].inlineData,'without lists only photos');
+});

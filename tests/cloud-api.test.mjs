@@ -100,3 +100,24 @@ test('internal photos are loaded with signed links, and a missing one stops edit
   const {a:c}=api({'/rest/v1/garment_private':()=>Response.json({code:'42P01'},{status:404})});c.keep(session);
   assert.deepEqual(await c.internalPhotos(id),[],'before the migration there are none');
 });
+
+test('photos upload three at a time with progress, keep their order, and a duplicate photo is kept once',async()=>{
+  const id='33333333-3333-4333-8333-333333333333';
+  let active=0,peak=0;const progress=[];
+  const a=new Api(config,async(url,opts={})=>{
+    const path=new URL(url).pathname;
+    if(path.startsWith('/storage/v1/object/garment-photos/')){active++;peak=Math.max(peak,active);await new Promise(r=>setTimeout(r,5));active--;return Response.json({Key:path});}
+    if(path==='/rest/v1/rpc/save_garment_with_private'){a.lastBody=JSON.parse(opts.body);return Response.json({id,version:1});}
+    if(url.startsWith('data:'))return new Response(new Blob([url.slice(-1)],{type:'image/jpeg'}));
+    throw Error('Unexpected '+url);
+  },memory());a.keep(session);
+  const img=(c,extra={})=>({src:'data:image/jpeg;base64,'+c,role:'Detail',main:false,internal:false,...extra});
+  const product={key:id,title:'Jas',description:'',priceMinor:100,material:'Wol',species:null,model:'Cape',colour:'Zwart',length:'Kort',fit:'',era:'',details:[],measurements:[50,null,null,80],furClass:'Nee',
+    images:[img('A',{main:true,role:'Voorkant'}),img('B'),img('C'),img('D'),img('E'),img('A',{internal:true,role:'Label'})]};
+  await a.save(product,0,{onProgress:m=>progress.push(m)});
+  assert.equal(peak,3,'three uploads at a time');
+  assert.equal(progress[0],'Foto’s opslaan: 0 van 6…');assert.equal(progress.at(-2),'Foto’s opslaan: 6 van 6…');assert.equal(progress.at(-1),'Stuk opslaan…');
+  const imgs=a.lastBody.p_data.images;
+  assert.equal(imgs.length,5,'the duplicate is kept once');assert.equal(imgs[0].main,true);assert.equal(imgs[0].role,'Voorkant');
+  assert.deepEqual(a.lastBody.p_internal,[],'a photo that is also a boutique photo is not internal');
+});

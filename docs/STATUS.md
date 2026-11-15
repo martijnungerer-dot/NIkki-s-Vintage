@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — mock Nieuw stuk als gesprek, versie 2
+- PR #55 (eerste mock) staat op `main` (`c281edd`). Martijn vond die te statisch en vroeg om één geïntegreerde beleving.
+- Versie 2 van `concept/invoer-gesprek.html`: een podium met een groot cameravlak, daarna de foto groot in beeld en bij maatvragen de meettekening; een lichtbaan terwijl de AI kijkt; de vraag verschijnt woord voor woord; eerdere antwoorden staan als rij knoppen boven de vraag; golfjes bewegen levendiger en reageren op het begin en einde van spraak; een vinkje bij klaar. Bij "minder beweging" op het toestel staat alles stil.
+- Nog steeds een mock met nagespeelde AI; de app, de server en Gemini zijn niet veranderd. `node tests/invoer-gesprek.cjs` slaagt op 390 en 320 px. Echte spraak op een telefoon is niet getest.
+
 ### 15 november 2026 — mock: Nieuw stuk als gesprek
 - PR #52, #53 en #54 staan op `main` (`84b8a55`); de migratie `20261115120000_close_save_garment.sql` moet Martijn nog uitrollen.
 - Nieuw: `concept/invoer-gesprek.html`, een mock van invoeren als gesprek met een nagespeelde AI. Eén vraag per keer, knoppen of typen, en praten via het vakje met de golfjes (voorlezen en luisteren met de stem van de browser, pas na een tik). Elke vraag is over te slaan; ontbreekt er iets dat de boetiek nodig heeft, dan eindigt het als concept.

@@ -58,6 +58,13 @@ export async function runChecks({config,site=DEFAULT_SITE,fetch:fetcher=fetch}){
   else if(internal.status===200)fail('Bezoekers kunnen de tabel met foto’s alleen voor controle opvragen. Laat een agent de rechten nakijken.');
   else warn('Afscherming van foto’s alleen voor controle niet te controleren ('+internal.status+').');
 
+  // 3. Verkoopprijzen (migratie 20261115140000): bestaat de tabel, en is hij dicht voor bezoekers?
+  const sales=await call('/rest/v1/garment_sales?select=id&limit=1');
+  if(sales.status===404)warn('De tabel met verkoopprijzen ontbreekt: voer npx supabase db push --remote uit. Tot dan kan een stuk niet als verkocht worden opgeslagen.');
+  else if(sales.status===401||sales.status===403)ok('Verkoopprijzen zijn afgeschermd voor bezoekers.');
+  else if(sales.status===200)fail('Bezoekers kunnen de tabel met verkoopprijzen opvragen. Laat een agent de rechten nakijken.');
+  else warn('Afscherming van verkoopprijzen niet te controleren ('+sales.status+').');
+
   // 3. Smaakfunctie: herkomst, lege aanvraag, echte aanvraag
   const fn='/functions/v1/personalise',post=(body,from=origin)=>call(fn,{method:'POST',headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify(body),ms:60000});
   const evil=await post({profile:{v:1,budget_max_minor:null,prefer:{},avoid:{}}},'https://niet-toegestaan.example');

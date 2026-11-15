@@ -120,6 +120,19 @@ test('photos upload three at a time with progress, keep their order, and a dupli
   assert.deepEqual(a.lastBody.p_internal,[],'a photo that is also a boutique photo is not internal');
 });
 
+test('marking sold sends the sale price; a missing function is a clear error and the old function is never called',async()=>{
+  const id='33333333-3333-4333-8333-333333333333';
+  const {a,calls}=api({'/rest/v1/rpc/mark_garment_sold_with_price':()=>Response.json({id,version:2,status:'sold'})});a.keep(session);
+  await a.sold(id,1,11050);
+  assert.deepEqual(JSON.parse(calls[0].opts.body),{p_id:id,p_version:1,p_price_minor:11050});
+  const old=api({'/rest/v1/rpc/mark_garment_sold_with_price':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/mark_garment_sold':()=>assert.fail('the price would be lost')});old.a.keep(session);
+  await assert.rejects(old.a.sold(id,1,11050),e=>e.status===404&&/staat nog te koop/.test(e.message));
+  const {a:s}=api({'/rest/v1/garment_sales':()=>Response.json([{id,sold_price_minor:11050,sold_at:'x'}])});s.keep(session);
+  assert.deepEqual((await s.sales()).map(r=>r.sold_price_minor),[11050]);
+  const {a:none}=api({'/rest/v1/garment_sales':()=>Response.json({code:'42P01'},{status:404})});none.keep(session);
+  assert.deepEqual(await none.sales(),[],'before the migration the grid simply shows no sale prices');
+});
+
 test('a version conflict as PostgREST really sends it (500, 40001) still gets the clear message',async()=>{
   const {a}=api({'/rest/v1/rpc/save_garment':()=>Response.json({code:'40001',message:'VERSION_CONFLICT'},{status:500})});a.keep(session);
   await assert.rejects(a.request('/rest/v1/rpc/save_garment',{method:'POST',body:{}}),e=>/elders gewijzigd/.test(e.message));

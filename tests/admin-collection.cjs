@@ -7,7 +7,7 @@ const piece=(n,title,priceMinor,status,file='a'.repeat(64))=>{
   return {...structuredClone(garment),id,display_id:n,status,data:{...garment.data,title,priceMinor,images:[{path:id+'/'+file+'.jpg',role:'Voorkant',main:true}]}};
 };
 const rows=()=>[piece(1,'Leren mantel',12500,'published'),piece(2,'Korte zwarte jas',32050,'sold'),piece(3,'Jas zonder foto',9900,'sold','missing')];
-const soldCalls=f=>f.state.requests.filter(r=>r.path==='/rest/v1/rpc/mark_garment_sold').length;
+const soldCalls=f=>f.state.requests.filter(r=>r.path==='/rest/v1/rpc/mark_garment_sold_with_price').length;
 const status=(f,title)=>f.page.locator('.piece').filter({hasText:title}).locator('.piece-status').innerText();
 
 (async()=>{
@@ -50,8 +50,18 @@ const status=(f,title)=>f.page.locator('.piece').filter({hasText:title}).locator
       // Only an available piece can be marked sold.
       assert.equal(await p.getByRole('button',{name:/^Markeer verkocht/}).count(),1);
       // Markeer verkocht: nothing is saved for five seconds, and Ongedaan maken cancels it.
+      // First one question: what did it sell for? The asking price is filled in; nonsense is refused; Annuleer goes back.
       await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
-      assert.equal(await status(f,'Leren mantel'),'Wordt verkocht…');
+      const price=p.getByLabel('Verkocht voor');
+      assert.equal(await price.inputValue(),'125');assert.equal(await price.evaluate(e=>document.activeElement===e),true);
+      for(const b of await p.locator('.piece-ask button, .piece-ask input').all()){const r=await b.boundingBox();assert.ok(r.height>=44,'price question controls at least 44px');}
+      assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),width+'px price question fits');
+      await price.fill('veel');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
+      assert.match(await p.locator('.piece-error').innerText(),/Vul een bedrag in/);assert.equal(soldCalls(f),0);
+      await p.getByRole('button',{name:'Annuleer'}).click();assert.equal(await status(f,'Leren mantel'),'Beschikbaar');
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
+      await p.getByLabel('Verkocht voor').fill('110,50');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
+      assert.equal((await status(f,'Leren mantel')).replace(/\s/g,' '),'Wordt verkocht voor € 110,50…');
       const undo=p.getByRole('button',{name:/^Ongedaan maken/});
       assert.equal(await undo.evaluate(e=>document.activeElement===e),true,'focus moves to Ongedaan maken');
       assert.ok((await undo.boundingBox()).height>=44);
@@ -62,12 +72,15 @@ const status=(f,title)=>f.page.locator('.piece').filter({hasText:title}).locator
       await p.clock.runFor(10000);assert.equal(soldCalls(f),0,'undone: never saved');
       // A refresh during the five seconds keeps the choice and the undo button.
       await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
+      await p.getByLabel('Verkocht voor').fill('110,50');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
       await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Collectie vernieuwd.'));
-      assert.equal(await status(f,'Leren mantel'),'Wordt verkocht…');assert.equal(soldCalls(f),0);
+      assert.match(await status(f,'Leren mantel'),/^Wordt verkocht voor/);assert.equal(soldCalls(f),0);
       // After five seconds it is saved; sold has no way back.
       await p.clock.runFor(5200);
       await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
       assert.equal(soldCalls(f),1);assert.equal(f.state.rows[0].status,'sold');
+      assert.equal(f.state.requests.find(r=>r.path==='/rest/v1/rpc/mark_garment_sold_with_price').body.p_price_minor,11050,'the sale price is saved in cents');
+      assert.equal((await p.locator('.piece').filter({hasText:'Leren mantel'}).locator('.piece-soldfor').innerText()).replace(/\s/g,' '),'voor € 110,50','the grid shows what it sold for');
       assert.equal(await status(f,'Leren mantel'),'Verkocht');
       assert.equal(await p.getByRole('button',{name:/^(Markeer verkocht|Ongedaan maken)/}).count(),0,'sold cannot go back to available');
       // Tap a card to edit it; the + card opens an empty Nieuw stuk.
@@ -83,7 +96,7 @@ const status=(f,title)=>f.page.locator('.piece').filter({hasText:title}).locator
     const f=await fixture(390,{rows:rows(),clock:true,failSold:true});
     try{
       const p=f.page;await f.login();await p.locator('#items li.piece').first().waitFor();
-      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.clock.runFor(5200);
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:'Verkocht',exact:true}).click();await p.clock.runFor(5200);
       await p.locator('#status').filter({hasText:'elders gewijzigd'}).waitFor();
       assert.equal(await status(f,'Leren mantel'),'Beschikbaar');
       assert.equal(await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).count(),1);
@@ -97,5 +110,5 @@ const status=(f,title)=>f.page.locator('.piece').filter({hasText:title}).locator
       assert.equal(await f.page.locator('#empty').isVisible(),true);
     }finally{await f.browser.close();}
   }
-  console.log('PASS admin collection: two-column photo grid at 390/320, + card first, photo/title/price/status per card, sold photos, missing photo isolated, 16px/44px/Newsreader/no yellow, five-second undo before saving, refresh keeps the choice, sold has no way back, failed save restored, empty collection.');
+  console.log('PASS admin collection: two-column photo grid at 390/320, + card first, photo/title/price/status per card, sold photos, missing photo isolated, 16px/44px/Newsreader/no yellow, sale price asked first (asking price filled in, nonsense refused) and saved in cents, five-second undo before saving, refresh keeps the choice, sold has no way back, failed save restored, empty collection.');
 })().catch(e=>{console.error(e);process.exit(1);});

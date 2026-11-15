@@ -67,6 +67,17 @@ ul { list-style: none; padding: 0; }
 .piece[data-status=sold] .piece-photo img { opacity: .55; }
 .piece-sold { flex: none; width: var(--admin-target-min); height: var(--admin-target-min); padding: 10px; border: 0; }
 .piece-sold svg { display: block; width: 24px; height: 24px; }
+.piece-soldfor { font-size: var(--admin-text-min); color: var(--muted); }
+/* Markeer verkocht: first one question (what did it sell for), stacked to fit a narrow card. */
+.piece-ask { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 4px; }
+.piece-ask label { font-size: var(--admin-text-min); }
+.piece-euro { display: flex; align-items: center; gap: 6px; font-size: 18px; }
+.piece-euro input { min-width: 0; min-height: var(--admin-target-min); padding: 8px 10px; border-radius: var(--admin-radius-control); font-size: 18px; }
+.piece-error { margin: 0; color: var(--admin-error); font-size: var(--admin-text-min); }
+.piece-error:empty { display: none; }
+.piece-confirm { width: 100%; padding: 9px 8px; border-color: var(--fg); border-radius: var(--admin-radius-control); background: var(--fg); color: var(--bg); }
+.piece-confirm:hover { background: var(--fg); }
+.piece-cancel { width: 100%; padding: 9px 8px; border: 0; border-radius: var(--admin-radius-control); color: var(--muted); }
 .piece-undo { width: 100%; margin-top: 4px; padding: 9px 8px; border-color: var(--chip-line); border-radius: var(--admin-radius-control); background: var(--chip); }
 .new-tile { display: grid; place-items: center; background: var(--chip); }
 .new-mark { position: relative; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--bg); }

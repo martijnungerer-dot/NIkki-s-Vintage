@@ -10,6 +10,13 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — verkoopprijs bijhouden
+- Op verzoek van Martijn: bij "Markeer verkocht" vraagt de kaart eerst "Verkocht voor", met de vraagprijs ingevuld. Daarna vijf seconden "Ongedaan maken", zoals het was. Een verkocht stuk toont in Jouw collectie voor welk bedrag het wegging.
+- Nieuwe migratie `20261115140000_garment_sales.sql`: tabel `garment_sales` (bedrag in centen en datum, alleen leesbaar voor beheerders) en de functie `mark_garment_sold_with_price`, die de bestaande `mark_garment_sold` aanroept en het bedrag in dezelfde stap bewaart. Eén verkoop per stuk; een herhaling verandert niets. Bezoekers zien verkoopprijzen nooit; ze staan niet in de catalogus.
+- De website heeft geen terugval naar de oude functie: ontbreekt de migratie, dan volgt een duidelijke fout en blijft het stuk te koop. De livecontrole kijkt of de tabel bestaat en dicht is voor bezoekers.
+- Nog niet gebouwd: het prijsvoorstel in Nieuw stuk op basis van deze verkopen. Stukken die al verkocht waren, hebben geen verkoopprijs.
+- Tests: database (PGlite: rechten, ongeldige bedragen, één keer verkocht, onzichtbaar voor bezoekers), API, livecontrole en de browserroute op 390/320 px. `npm test` (81/81) en alle browsertests slagen lokaal. Uitrollen door Martijn direct na merge: `npx.cmd supabase db push --remote`, daarna `npm.cmd run check:live`. Live niet getest.
+
 ### 15 november 2026 — mock Nieuw stuk als gesprek, versie 2
 - PR #55 (eerste mock) staat op `main` (`c281edd`). Martijn vond die te statisch en vroeg om één geïntegreerde beleving.
 - Versie 2 van `concept/invoer-gesprek.html`: een podium met een groot cameravlak, daarna de foto groot in beeld en bij maatvragen de meettekening; een lichtbaan terwijl de AI kijkt; de vraag verschijnt woord voor woord; eerdere antwoorden staan als rij knoppen boven de vraag; golfjes bewegen levendiger en reageren op het begin en einde van spraak; een vinkje bij klaar. Bij "minder beweging" op het toestel staat alles stil.

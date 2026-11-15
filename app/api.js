@@ -174,7 +174,23 @@ export class Api {
     if(list.some(i=>!urls.has(i.path))) throw Error('Niet alle foto’s van dit stuk konden worden geopend. Probeer het later opnieuw.');
     return list.map(i=>({path:i.path, role:i.role, src:urls.get(i.path)}));
   }
-  sold(id, version) {return this.request('/rest/v1/rpc/mark_garment_sold',{method:'POST',body:{p_id:id,p_version:version}});}
+  // Marks a piece as sold and records what it was sold for (staff-only table garment_sales).
+  // No fallback to the older function: the sale price would then be lost without anyone noticing.
+  async sold(id, version, priceMinor) {
+    try { return await this.request('/rest/v1/rpc/mark_garment_sold_with_price',{method:'POST',body:{p_id:id,p_version:version,p_price_minor:priceMinor}}); }
+    catch(e) {
+      if(e.status === 404) e.message = 'Niet als verkocht opgeslagen: de database is niet bijgewerkt. Het stuk staat nog te koop; vraag Martijn om hulp.';
+      else if(e.code === '22023' || /INVALID_PRICE/.test(e.message)) e.message = 'Niet als verkocht opgeslagen: controleer het bedrag.';
+      throw e;
+    }
+  }
+  // Sale prices for the staff grid. Staff only (RLS); before the migration there are none.
+  async sales() {
+    let rows;
+    try { rows = await this.request('/rest/v1/garment_sales?select=id,sold_price_minor,sold_at'); }
+    catch(e) { if(e.status === 404) return []; throw e; }
+    return Array.isArray(rows) ? rows : [];
+  }
   async analyse(files, signal, lists) {
     const images = await Promise.all(files.map(file=>new Promise((resolve,reject)=>{
       if(file.size>2*1024*1024) {reject(Error('Foto te groot voor analyse.'));return;}

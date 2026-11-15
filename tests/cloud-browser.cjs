@@ -170,7 +170,7 @@ releaseSoldResponse();
 await p.waitForFunction(()=>document.getElementById('status').textContent==='Als verkocht opgeslagen.');
 assert.equal(await p.locator('#items li > span').innerText(),title+' — Verkocht');
 assert.equal(await shop().locator('#track .slide').count(),0);
-await p.getByRole('button',{name:'Bewerken',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
+await p.getByRole('button',{name:/^Bewerken/}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
 // Once opened, changing text must not decode a saved image or read it as a data URL again.
 await p.evaluate(()=>{
  window.photoWork={decode:0,read:0};

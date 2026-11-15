@@ -141,7 +141,8 @@ test('server rejects malformed or oversized profiles',()=>{
 test('payload: only published pieces within budget, no prices, UUIDs or private data',()=>{
   const rows=[row(1,coat),row(2,jacket),row(3,cape,'sold'),row(4,{...cape,purchaseCostMinor:777,storageLocation:'zolder'})];
   const req=buildRequest({summary:{v:1,budget_max_minor:30000,prefer:{'material:wol':0.5},avoid:{}},rows});
-  assert.deepEqual(req.ids,[uuid(1),uuid(4)]);
+  // Rows arrive newest first; ties follow the boutique order (oldest first), as app/taste/ranking.js does.
+  assert.deepEqual(req.ids,[uuid(4),uuid(1)]);
   const text=JSON.stringify(req.payload);
   for(const leak of [uuid(1),'15000','777','zolder','priceMinor','42000'])assert.ok(!text.includes(leak),leak);
   assert.deepEqual(req.payload.candidates.map(c=>c.id),['c1','c2']);
@@ -160,7 +161,10 @@ test('payload caps candidates by local score to bound token cost',()=>{
 });
 
 test('AI answer cannot invent, drop or duplicate pieces, nor pick a photo the piece lacks',()=>{
-  const req=buildRequest({summary:{v:1,budget_max_minor:null,prefer:{},avoid:{}},rows:[row(1,coat),row(2,jacket),row(3,cape)]});
+  // Newest first, as the server reads them; with equal scores the candidates come out as c1=1, c2=2, c3=3.
+  const req=buildRequest({summary:{v:1,budget_max_minor:null,prefer:{},avoid:{}},rows:[row(3,cape),row(2,jacket),row(1,coat)]});
+  assert.deepEqual(req.ids,[uuid(1),uuid(2),uuid(3)]);
+  assert.deepEqual(geminiBody(req.payload).generationConfig.responseSchema.properties.ranking.items.properties.id.enum,['c1','c2','c3']);
   const raw={ranking:[{id:'c3',photo:'Detail',why:'Past bij je voorkeur voor wol en een cape.'},{id:'c3',photo:'Voorkant'},{id:'c9'},{id:uuid(2)},{id:'c1',photo:'Gebrek',why:'Echte nerts, € 99 korting <script>'}]};
   const out=normalizeRanking(raw,{...req,wantRationale:true});
   assert.deepEqual(out.map(r=>r.id),[uuid(3),uuid(1),uuid(2)]);

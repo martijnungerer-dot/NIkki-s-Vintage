@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — review door zes Fable-agents verwerkt
+- Zes agents (beveiliging, invoer, boetiek, Gemini, bediening op 390/320 px, tests/bouw) reviewden main `7cfadf3`; geen kritieke of ernstige beveiligingsproblemen. Besluiten per bevinding in [REVIEW-GEBRUIKSVRIENDELIJKHEID.md](REVIEW-GEBRUIKSVRIENDELIJKHEID.md).
+- Belangrijkst: Gemini vinkt geen bijzonderheden meer aan en kan geen materiaal-, diersoort-, periode- of echtheidsclaims in titel/beschrijving zetten; concept wordt gewist bij uitloggen en alleen na inloggen teruggezet; uploadfouten, late Gemini-antwoorden en versieconflicten na verkoop afgehandeld; duidelijke melding bij een verkeerd wachtwoord; livecontrole kijkt naar de nieuwe migratie.
+- `npm test` (78/78) en alle browsertests slagen lokaal. Uitrollen na merge: `npx.cmd supabase functions deploy analyse` en `npx.cmd supabase functions deploy personalise`. Live niet getest.
+
 ### 15 november 2026 — concepten bewaren
 - Een half ingevoerd stuk, foto's inbegrepen, wordt elke twee seconden en bij het naar de achtergrond gaan bewaard in IndexedDB op het toestel zelf (database `gsf-intake`). Na verversen of heropenen staat het terug, met een melding; zat je in Nieuw stuk, dan kom je daar terug. Ook het Gemini-voorstel en de versie van een bewerkt stuk gaan mee.
 - Gewist na opslaan, bij bewust opnieuw beginnen en bij het openen van een opgeslagen stuk. De waarschuwing bij verlaten verschijnt alleen nog als de laatste invoer niet bewaard kon worden (bijvoorbeeld geblokkeerde opslag).

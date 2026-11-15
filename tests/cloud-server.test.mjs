@@ -29,7 +29,8 @@ test('invalid image counts and signatures rejected before quota/payment',async()
 });
 test('quota is durable RPC gate and errors never leak upstream details or secrets',async()=>{
   const s=setup({quota:false});assert.equal((await s.request()).status,429);assert.equal(s.calls.length,3);
-  const u=setup({upstreamOK:false});const response=await u.request();assert.equal(response.status,502);assert.deepEqual(await response.json(),{error:'ANALYSIS_FAILED'});
+  // Upstream 429 (Google busy or over its limit) has its own code, without upstream details.
+  const u=setup({upstreamOK:false});const response=await u.request();assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'GEMINI_BUSY'});
 });
 test('server chooses instructions/model, output allowlist omits price, measurements and species',async()=>{
   const s=setup({result:{titel:'Korte jas',price:100,measurements:[20],bontsoort:{waarde:'Nerts'},kleur:{waarde:'Zwart',zekerheid:'hoog'},fotos:[{nr:50,rol:'bad'}]}});
@@ -96,4 +97,22 @@ test('Nikki\'s chip lists go along as cleaned data, and JSON in a markdown fence
   assert.deepEqual(JSON.parse(parts[0].text.replace(/^[^{]*/,'')),{model:['Cape','Sjaalscript'],kleur:['Zwart']});
   assert.equal(parts[1].inlineData.mimeType,'image/png');
   const plain=setup();await plain.request();assert.ok(JSON.parse(plain.calls.at(-1).opts.body).contents[0].parts[0].inlineData,'without lists only photos');
+});
+
+test('claims about material, species, period or authenticity are never prefilled in title or description',async()=>{
+  const s=setup({result:{titel:'Lange nertsjas met sjaalkraag',beschrijving:'Een jas uit de jaren 70 met grote kraag',fotos:[]}});
+  const out=await (await s.request()).json();
+  assert.equal(out.titel,'');assert.equal(out.beschrijving,'');
+  assert.match(out.waarschuwingen.join(' '),/leeggelaten; vul zelf in/);
+  const ok=setup({result:{titel:'Lange jas met capuchon',beschrijving:'Grote kraag en twee zakken',fotos:[]}});
+  const plain=await (await ok.request()).json();assert.equal(plain.titel,'Lange jas met capuchon');assert.equal(plain.waarschuwingen.length,1);
+});
+test('a model without the thinking setting is remembered; a blocked prompt logs its reason',async()=>{
+  let n=0;const s=setup({gemini:()=>++n===1?Response.json({error:{status:'INVALID_ARGUMENT',message:'thinking_level is not supported'}},{status:400}):Response.json({candidates:[{content:{parts:[{text:'{"titel":"Jas","beschrijving":"","fotos":[]}'}]}}]})});
+  await s.request();await s.request();
+  const asks=s.calls.filter(c=>c.url.includes('googleapis'));
+  assert.equal(asks.length,3,'one retry, then no thinking setting on the next request');
+  assert.equal(JSON.parse(asks[2].opts.body).generationConfig.thinkingConfig,undefined);
+  const b=setup({gemini:()=>Response.json({promptFeedback:{blockReason:'SAFETY'}})});
+  assert.equal((await b.request()).status,502);assert.match(b.logs[0],/EMPTY SAFETY/);
 });

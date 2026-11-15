@@ -22,7 +22,7 @@ intake=patchIntake(intake,'Wijziging in proefwinkel bijwerken','Wijziging opslaa
 intake=patchIntake(intake,'Toegevoegd aan de proefwinkel.','Opgeslagen.');
 intake=patchIntake(intake,'Na jouw controle kun je het stuk in de proefwinkel bekijken.','Na jouw controle sla je dit stuk op in de gezamenlijke collectie.');
 // The existing capture listener already intercepts sample publication.
-intake=patchIntake(intake,"  sending = true; $('publish').disabled = true;", "  if(!confirm('Zijn foto’s, kenmerken, maten en prijs gecontroleerd? Met opslaan wordt een nieuw stuk zichtbaar in de boetiek. Een verkocht stuk blijft verkocht.')) return;\n  sending = true; $('publish').disabled = true;");
+intake=patchIntake(intake,"  sending = true; $('publish').disabled = true;", "  if(!confirm('Zijn foto’s, kenmerken, maten en prijs gecontroleerd? Met opslaan staat dit stuk zo in de boetiek. Een verkocht stuk blijft verkocht.')) return;\n  sending = true; $('publish').disabled = true;");
 intake=patchIntake(intake,"}[e && e.code] || 'Er ging iets mis. Probeer het opnieuw of vul zelf in.';", "}[e && e.code] || (e && e.message) || 'Er ging iets mis. Vul zelf in.';");
 // Photo analysis uses the same resized images as storage.
 intake=patchIntake(intake,"sample.json(prompt(), { images: files, modelTier: 'default', signal: ctl.signal })", "Promise.all(files.map(f=>window.parent.NikkiApp.prepareImage(f))).then(prepared=>sample.json('', { images: prepared, signal: ctl.signal }))");
@@ -42,7 +42,7 @@ intake=patchIntake(intake,"    if ((t = e.target.closest('[data-main]'))) {",
 // is missing, instead of a grey button that gives no reason (Martijn on his phone, 15 November 2026).
 intake=patchIntake(intake,"    $('publish').disabled = !all;","    $('publish').disabled = false; $('publish').classList.toggle('incomplete', !all);");
 intake=patchIntake(intake,"  if (sending || !STEPS.every(s => s.done())) return;",
-  "  if (sending) return;\n  const missing = STEPS.filter(s => !s.done());\n  if (missing.length) {\n    open = missing[0].id; adding = null; renderPath();\n    $('review-err').textContent = 'Nog niet af: ' + missing.map(s => s.title + ' (' + s.sum() + ')').join(', ') + '.';\n    const head = document.querySelector('[data-step=\"' + missing[0].id + '\"] .stephead');\n    if (head) { head.scrollIntoView({block:'center'}); head.focus({preventScroll:true}); }\n    return;\n  }");
+  "  if (sending) return;\n  const missing = STEPS.filter(s => !s.done());\n  if (missing.length) {\n    open = missing[0].id; adding = null; renderPath();\n    $('review-err').textContent = 'Nog niet af: ' + missing[0].title + ' (' + missing[0].sum() + ')' + (missing.length > 1 ? ', en nog ' + (missing.length - 1) + ' onderdeel' + (missing.length > 2 ? 'en' : '') : '') + '.';\n    const head = document.querySelector('[data-step=\"' + missing[0].id + '\"] .stephead');\n    if (head) { head.scrollIntoView({block:'center'}); head.focus({preventScroll:true}); }\n    return;\n  }");
 // Text typed in "+ nieuw" survives a tap on another chip (every tap rebuilds the checklist).
 intake=patchIntake(intake,"'\" placeholder=\"Typ en voeg toe\"><button type=\"button\" data-addok=\"'","'\" placeholder=\"Typ en voeg toe\" value=\"' + esc(addDraft[key] || '') + '\"><button type=\"button\" data-addok=\"'");
 intake=patchIntake(intake,"    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;","    var inp = $('add-' + key); var v = inp ? inp.value.trim() : '';\n    if (!v) return;\n    delete addDraft[key];");
@@ -51,6 +51,27 @@ intake=patchIntake(intake,"'<button type=\"button\" class=\"okb\" data-ok=\"' + 
   "'<button type=\"button\" class=\"okb\" data-ok=\"' + i + '\" aria-pressed=\"' + p.ok + '\">' + (p.ok ? '✓ Goed' : 'Goed') + '</button>' +\n          '<button type=\"button\" class=\"okb\" data-delrev=\"' + i + '\" aria-label=\"Foto ' + (i + 1) + ' verwijderen\">Verwijderen</button>' +");
 intake=patchIntake(intake,"    if ((t = e.target.closest('[data-intern]'))) {",
   "    if ((t = e.target.closest('[data-delrev]'))) { var di = Number(t.getAttribute('data-delrev')); if (!confirm('Foto ' + (di + 1) + ' verwijderen?')) return; URL.revokeObjectURL(photos[di].url); photos.splice(di, 1); renderThumbs(); renderPath(); return; }\n    if ((t = e.target.closest('[data-intern]'))) {");
+// Review 15 November 2026 (Fable):
+// - Gemini's "bijzonderheden" are only shown as suggestions (green dot); Nikki taps them herself, so no
+//   claim reaches the boutique unseen. Other fields stay prefilled; that step needs Nikki anyway.
+intake=patchIntake(intake,"        if (k === 'bijzonderheden') { if (!sel[k].length && Array.isArray(o.waarde)) sel[k] = o.waarde.slice(); }",
+  "        if (k === 'bijzonderheden') { /* suggestion only: Nikki taps what applies */ }");
+// - A photo role is escaped where it is put into HTML.
+intake=patchIntake(intake,"(p.rol ? ', ' + p.rol : '')","(p.rol ? ', ' + esc(p.rol) : '')");
+// - A late Gemini answer for an earlier piece is ignored (generation counter, raised on Volgend stuk / Bewerken).
+intake=patchIntake(intake,"    ctl = new AbortController();","    ctl = new AbortController(); var gen = ++analysisGen;");
+intake=patchIntake(intake,"      .then(function (d) { startReview(d || {}, files.length, ''); })\n      .catch(function (e) {","      .then(function (d) { if (gen !== analysisGen) return; startReview(d || {}, files.length, ''); })\n      .catch(function (e) {\n        if (gen !== analysisGen) return;");
+// - Gemini's warnings (for example possible protected fur) stay visible when the checklist is reopened.
+intake=patchIntake(intake,"    var warns = Array.isArray(d.waarschuwingen) ? d.waarschuwingen : [];","    var warns = Array.isArray(d.waarschuwingen) ? (lastWarnings = d.waarschuwingen.slice()) : lastWarnings;");
+// - Same limits as the database: measurements up to 300 cm, title up to 200 characters.
+intake=patchIntake(intake,"      done: function () { return positiveDecimal(m.chest, 1) && positiveDecimal(m.length, 1) && ['shoulder', 'sleeve'].every(function (k) { return m[k] === '' || positiveDecimal(m[k], 1); }); },",
+  "      done: function () { return positiveDecimal(m.chest, 1) && positiveDecimal(m.length, 1) && ['shoulder', 'sleeve'].every(function (k) { return m[k] === '' || positiveDecimal(m[k], 1); }) && ['chest', 'shoulder', 'sleeve', 'length'].every(function (k) { return m[k] === '' || Number(m[k]) <= 300; }); },");
+intake=patchIntake(intake,"      done: function () { return !!text.titel.trim() && positiveDecimal(text.prijs, 2); },","      done: function () { return !!text.titel.trim() && text.titel.trim().length <= 200 && positiveDecimal(text.prijs, 2); },");
+// - Photos the app cannot use are refused when chosen, with a reason, not only at saving.
+intake=patchIntake(intake,"Array.from(list || []).slice(0, Math.max(0, maxPhotos() - photos.length)).forEach(","Array.from(list || []).filter(usablePhoto).slice(0, Math.max(0, maxPhotos() - photos.length)).forEach(");
+// The cloud intake saves for real: no "oefenscherm" text and no "proef" in the header (review 15 November 2026).
+intake=patchIntake(intake,'<p class="muted">Dit is een oefenscherm. Na jouw controle sla je dit stuk op in de gezamenlijke collectie. Eigen keuzewoorden worden wel in deze browser onthouden.</p>','<p class="muted">Na jouw controle sla je dit stuk op in de collectie. Je eigen keuzewoorden worden in deze browser onthouden.</p>');
+intake=patchIntake(intake,'<span class="name">Nieuw stuk · proef</span>','<span class="name">Nieuw stuk</span>');
 intake=injectAt(intake,'CLOUD_INTAKE_EXTENSION',await read('app/intake-extension.js'),'demo/intake-bridge.js');
 // The chosen design supplies the actual markup and CSS, not a second approximation.
 let shop=await read('concept/ontdekken-optie-b.html');

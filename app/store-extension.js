@@ -228,7 +228,7 @@
     var a = b.getAttribute('data-act');
     if (a === 'prev-photo') goPhoto(-1, true);
     else if (a === 'next-photo') goPhoto(1, true);
-    else if (a === 'like') { var it=ITEMS[S.item]; S.liked[it.displayId] = !S.liked[it.displayId]; save('gsf-liked',S.liked); render(false); emit(S.liked[it.displayId]?'like':'unlike',it); }
+    else if (a === 'like') { var it=ITEMS[S.item]; S.liked[it.displayId] = !S.liked[it.displayId]; save('gsf-liked',S.liked); render(false, true); emit(S.liked[it.displayId]?'like':'unlike',it); }
     else if (a === 'info' || a === 'menu') open(a);
     else if (a === 'destination') { destination=b.dataset.screen; open('cart'); }
     else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
@@ -332,9 +332,11 @@
         var published=new Set(publishedIds), before=Object.keys(S.cart).length;
         S.cart=Object.fromEntries(Object.keys(S.cart).filter(key=>published.has(key)).map(key=>[key,true]));
         // Unique pieces: if one left the collection (sold), say so once in the basket.
-        S.goneFromCart+=before-Object.keys(S.cart).length;
+        var gone=before-Object.keys(S.cart).length;
+        S.goneFromCart+=gone;
+        // Only write when something was removed, so another tab's newer basket is not overwritten.
+        if(gone)save('nikki-cart',S.cart);
       }
-      save('nikki-cart',S.cart);
       var infoScroll=$('info').scrollTop, infoFocused=$('info').contains(document.activeElement); render(false);
       if(S.open==='info'){renderInfo();$('info').scrollTop=infoScroll;if(infoFocused)$('info').querySelector('button').focus();}
       refreshList();
@@ -354,7 +356,7 @@
   // Contract and ownership: docs/FRONTEND-PLAN.md. Only public catalog fields are exposed.
   var SCREENS={}, catalogListeners=[], signalListeners=[];
   function toggleCart(key, value=!S.cart[key]) {
-    var was=!!S.cart[key]; if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false);
+    var was=!!S.cart[key]; if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false, true);
     var it=ITEMS.find(x=>x.key===key); if(it && was!==!!value)emit(value?'cart':'uncart',it);
   }
   // Signals for the taste profile: only a copy of public fields, never photos or links.
@@ -406,6 +408,12 @@
     onSignal(fn) { signalListeners.push(fn); },
     api
   };
+  // Another tab changed the basket or hearts: take that over instead of writing an old copy back.
+  window.addEventListener('storage', function (e) {
+    if (e.key !== 'nikki-cart' && e.key !== 'gsf-liked') return;
+    if (e.key === 'nikki-cart') S.cart = read('nikki-cart'); else S.liked = read('gsf-liked');
+    render(false, true); refreshList();
+  });
   // Do not clear the saved local basket until the catalog has actually loaded.
   render(false);
 })();

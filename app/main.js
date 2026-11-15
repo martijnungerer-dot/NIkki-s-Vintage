@@ -33,9 +33,9 @@ const returnTo=location.hash?null:lastScreen();
 const admin=createAdmin({api,$,show});
 function mount(frame,source){return new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.srcdoc=source;});}
 // Latest Gemini proposal for the piece being entered; saved staff-only next to Nikki's final version.
-let lastAnalysis=null;
+let lastAnalysis=null, analysisToken=0;
 window.NikkiApp={
-  forgetAnalysis(){lastAnalysis=null;},
+  forgetAnalysis(){lastAnalysis=null;analysisToken++;},
   // Used by drafts (concepten) to keep the Gemini proposal and the edit version across a refresh.
   currentAnalysis:()=>lastAnalysis,
   restoreAnalysis(value){lastAnalysis=value;},
@@ -43,32 +43,50 @@ window.NikkiApp={
   restoreEditVersion(key,version){if(Number.isInteger(version))admin.state.editVersions.set(key,version);},
   internalPhotos:id=>api.internalPhotos(id),
   openAccount:()=>show('manage'),
+  // Called once the user is confirmed as staff: put back an unsaved piece (concept) from this device.
+  staffReady(){try{return $('intake').contentWindow.NikkiIntake?.restoreDraft()??Promise.resolve(false);}catch{return Promise.resolve(false);}},
+  // Logout removes the unsaved piece from this device (it can include photos only for checking).
+  async clearDraft(){try{await $('intake').contentWindow.NikkiIntake?.clearDraft();}catch{}},
   prepareImage,
   preparePhotos:(photos,primary)=>transferPhotos(photos,primary,{prepareImage}),
   async analyse(files,signal,lists){
     if(!admin.state.staff)throw Error('Log eerst in.');
-    try{const result=await api.analyse(files,signal,lists);lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
+    // An answer that arrives after Nikki moved on to another piece is not kept as that piece's proposal.
+    const token=++analysisToken;
+    try{const result=await api.analyse(files,signal,lists);if(token===analysisToken)lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
   },
   // Taste ranking (docs/SMAAKPROFIEL.md): only the compact profile summary leaves the browser.
   personalise:profile=>api.request('/functions/v1/personalise',{method:'POST',auth:false,body:{profile},signal:AbortSignal.timeout(50000)}),
   async publish(product,onProgress){
     if(!admin.state.staff)throw Error('Log eerst in.');
-    const saved=await api.save(product,admin.state.editVersions.get(product.key)||0,{ai:lastAnalysis,onProgress:typeof onProgress==='function'?onProgress:undefined});
+    const version=admin.state.editVersions.get(product.key)||0;
+    let saved;
+    try{saved=await api.save(product,version,{ai:lastAnalysis,onProgress:typeof onProgress==='function'?onProgress:undefined});}
+    catch(error){
+      // A new piece whose first save went through but whose answer was lost: it exists already.
+      if(version===0&&/elders gewijzigd/.test(error.message)){
+        await admin.refresh().catch(()=>{});
+        const row=admin.state.rows.find(r=>r.id===product.key);
+        if(row){admin.state.editVersions.set(row.id,row.version);throw Error('Dit stuk was al opgeslagen. Je ziet het in Jouw collectie; open het met Bewerken om verder te gaan.');}
+      }
+      throw error;
+    }
     lastAnalysis=null;
     admin.state.editVersions.set(product.key,saved.version);
-    try{await admin.refresh();show('shop');admin.say(saved.status==='sold'?'Wijziging opgeslagen. Dit stuk blijft verkocht.':product.title+' is opgeslagen en staat in de boetiek.');}
+    try{await admin.refresh();show('shop');try{$('shop').contentWindow.NikkiShop?.api?.show(product.key);}catch{}admin.say(saved.status==='sold'?'Wijziging opgeslagen. Dit stuk blijft verkocht.':product.title+' is opgeslagen en staat in de boetiek.');}
     catch{admin.say('Het stuk is opgeslagen. De collectie kon niet worden vernieuwd; probeer Collectie vernieuwen.','error');}
     // Reset once the intake has finished its own save handling (next task), so Nieuw stuk starts empty.
-    setTimeout(()=>{try{$('intake').contentWindow.NikkiIntake?.reset();}catch{}});
+    setTimeout(()=>{try{$('intake').contentWindow.NikkiIntake?.reset(product.key);}catch{}});
   }
 };
 await Promise.all([mount($('shop'),shopSource),mount($('intake'),intakeSource)]);
 await admin.start();
+const draftBack=admin.state.staff?window.NikkiApp.staffReady():Promise.resolve(false);
 // A shared piece or a reset link in the address decides the screen itself.
 if(returnTo&&document.body.dataset.screen==='shop'){
   // Back to Nieuw stuk only when an unsaved piece was put back; otherwise to Jouw collectie.
   let to='manage';
-  if(returnTo==='intake'&&admin.state.staff){try{if(await $('intake').contentWindow.NikkiIntake.draftRestored)to='intake';}catch{}}
+  if(returnTo==='intake'&&admin.state.staff&&await draftBack)to='intake';
   show(to);
 }
 startReview({api,admin});

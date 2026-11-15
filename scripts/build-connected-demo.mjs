@@ -32,6 +32,10 @@ const result=`<!doctype html><html lang="nl"><meta charset="utf-8"><meta name="v
 <header><strong>Nikki’s proefapp</strong><button data-view="shop" aria-pressed="true">Boetiek</button><button data-view="intake" aria-pressed="false">Nieuw stuk</button><button id="download">Bewaar app met foto's</button><span id="count"></span></header><p>Oefen met invoeren → bekijk je stuk in de carrousel. Geen echte verkoop of e-mails.</p><p id="status" role="status">Je kunt lokaal oefenen. Download je app om ingevulde stukken en foto's mee te nemen.</p>
 <iframe id="shop" title="Boetiek"></iframe><iframe id="intake" title="Nieuw stuk invoeren" hidden></iframe>
 <script id="saved-products" type="application/json">[]</script><script id="shop-source" type="application/json">${json(shop)}</script><script id="intake-source" type="application/json">${json(intake)}</script><script>${await read('demo/host.js')}</script></html>`;
+// Write the demo files only when this script is run itself, not when the cloud build imports it.
+const runDirectly=process.argv[1]&&import.meta.url===(await import('node:url')).pathToFileURL(process.argv[1]).href;
+if(runDirectly){
 await writeFile(new URL('../concept/nikki-proefapp.html',import.meta.url),result);
 await writeFile(new URL('../concept/NIKKI-PROEFAPP-VOOR-GEMINI.txt',import.meta.url),'Maak van onderstaande complete HTML een Canvas-voorbeeld. Voer de bestaande app uit en behoud de code en vijf stijlen. De invoer is handmatig en voegt stukken met foto, prijs en maten toe aan de lokale carrousel. Geen API-sleutel nodig. Behoud beide gemonteerde frames zodat invoer niet verdwijnt. Als Canvas frames of downloads blokkeert, zeg dat eerlijk: het HTML-bestand kan lokaal in een browser worden geopend. Stel na het tonen één vraag tegelijk over Nikki’s ervaring.\n\n'+result);
 console.log('Built connected HTML and Gemini text export.');
+}

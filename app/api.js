@@ -31,6 +31,7 @@ export class Api {
         response.status === 429 ? 'De analyselimiet is bereikt. Vul zelf in of probeer morgen opnieuw.' :
         response.status === 403 ? 'Dit account heeft geen beheerrechten.' :
         data?.error === 'NOT_CONFIGURED' ? 'Fotoanalyse is nog niet ingesteld. Je kunt zelf invullen.' :
+        data?.error === 'GEMINI_BUSY' ? 'Gemini is even te druk. Wacht een minuut en probeer opnieuw, of vul zelf in.' :
         data?.error === 'ANALYSIS_TIMEOUT' ? 'Gemini deed er te lang over. Probeer het nog eens of vul zelf in.' :
         data?.error === 'BAD_IMAGES' ? 'Een foto is niet geschikt voor analyse. Kies een andere foto of vul zelf in.' :
         'De handeling is niet afgerond. Je invoer blijft staan; probeer opnieuw.');
@@ -45,7 +46,13 @@ export class Api {
     return this.refreshing;
   }
   async login(email, password) {
-    const s = await this.request('/auth/v1/token?grant_type=password', {method:'POST', auth:false, body:{email,password}});
+    let s;
+    try { s = await this.request('/auth/v1/token?grant_type=password', {method:'POST', auth:false, body:{email,password}}); }
+    catch(e) {
+      // Supabase answers a wrong address or password with 400 invalid_credentials.
+      if(e.status === 400 || e.status === 401) { e.message = 'E-mailadres of wachtwoord klopt niet.'; e.badLogin = true; }
+      throw e;
+    }
     this.keep({...s, expires_at:s.expires_at || Date.now()/1000+s.expires_in});
     try { await this.request('/rest/v1/rpc/require_staff', {method:'POST', body:{}}); }
     catch(e) {
@@ -120,14 +127,16 @@ export class Api {
   // is stored next to them for later comparison (never in the browser of a visitor).
   async save(product, version, {ai = null, onProgress = () => {}} = {}) {
     // Upload up to three photos at a time (much faster on a phone than one by one), keeping order.
-    const stored = new Array(product.images.length); let next = 0, done = 0;
+    const stored = new Array(product.images.length); let next = 0, done = 0, failed = false;
     const total = product.images.length;
     onProgress(total === 1 ? 'Foto opslaan…' : 'Foto’s opslaan: 0 van ' + total + '…');
     const worker = async () => {
-      while(next < total) {
+      // After one failure the others stop, so the error stays on screen instead of a stuck counter.
+      while(next < total && !failed) {
         const index = next++;
-        stored[index] = await this.upload(product.key, product.images[index]);
-        done++; if(total > 1) onProgress('Foto’s opslaan: ' + done + ' van ' + total + '…');
+        try { stored[index] = await this.upload(product.key, product.images[index]); }
+        catch(e) { failed = true; throw e; }
+        done++; if(total > 1 && !failed) onProgress('Foto’s opslaan: ' + done + ' van ' + total + '…');
       }
     };
     await Promise.all(Array.from({length: Math.min(3, total)}, worker));
@@ -154,7 +163,7 @@ export class Api {
       // Until the database migration is applied the new function does not exist (PostgREST 404).
       // Without internal photos the old save is equivalent; with them, stop instead of publishing them.
       if(e.status !== 404) throw e;
-      if(internal.length) throw Object.assign(Error('Foto’s alleen voor controle kunnen nog niet worden bewaard: de database is nog niet bijgewerkt. Zet ze op Voor de boetiek of verwijder ze.'), {status:404});
+      if(internal.length) throw Object.assign(Error('Foto’s alleen voor controle kunnen nog niet worden bewaard: de database is nog niet bijgewerkt. Zet bij die foto’s Alleen voor controle uit, of verwijder ze.'), {status:404});
       return this.request('/rest/v1/rpc/save_garment', {method:'POST',body:{p_id:product.key,p_data:data,p_version:version}});
     }
   }
@@ -176,6 +185,9 @@ export class Api {
       const reader = new FileReader(); reader.onerror=()=>reject(Error('Foto onleesbaar.'));
       reader.onload=()=>resolve({mimeType:file.type,data:reader.result.split(',')[1]}); reader.readAsDataURL(file);
     })));
-    return this.request('/functions/v1/analyse',{method:'POST',body:lists ? {images, lists} : {images},signal});
+    // Stop button and a time limit just above the server's own 90 seconds.
+    const limit = AbortSignal.timeout(120000);
+    const both = signal && AbortSignal.any ? AbortSignal.any([signal, limit]) : signal || limit;
+    return this.request('/functions/v1/analyse',{method:'POST',body:lists ? {images, lists} : {images},signal:both});
   }
 }

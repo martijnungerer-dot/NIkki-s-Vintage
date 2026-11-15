@@ -121,3 +121,32 @@ test('photos upload three at a time with progress, keep their order, and a dupli
   assert.equal(imgs.length,5,'the duplicate is kept once');assert.equal(imgs[0].main,true);assert.equal(imgs[0].role,'Voorkant');
   assert.deepEqual(a.lastBody.p_internal,[],'a photo that is also a boutique photo is not internal');
 });
+
+test('a version conflict as PostgREST really sends it (500, 40001) still gets the clear message',async()=>{
+  const {a}=api({'/rest/v1/rpc/save_garment':()=>Response.json({code:'40001',message:'VERSION_CONFLICT'},{status:500})});a.keep(session);
+  await assert.rejects(a.request('/rest/v1/rpc/save_garment',{method:'POST',body:{}}),e=>/elders gewijzigd/.test(e.message));
+});
+test('the collection is read page by page (100 per request) until a short page',async()=>{
+  const all=Array.from({length:101},(_,i)=>({id:String(i)}));const offsets=[];
+  const a=new Api(config,async url=>{const u=new URL(url);const off=Number(u.searchParams.get('offset'));offsets.push(off);return Response.json(all.slice(off,off+Number(u.searchParams.get('limit'))));},memory());a.keep(session);
+  const rows=await a.list();assert.equal(rows.length,101);assert.deepEqual(offsets,[0,100]);
+});
+test('a failing photo upload stops the other uploads and leaves no stuck progress message',async()=>{
+  const id='33333333-3333-4333-8333-333333333333';const progress=[];let uploads=0;
+  const a=new Api(config,async(url,opts={})=>{
+    if(url.startsWith('data:'))return new Response(new Blob([url.slice(-1)],{type:'image/jpeg'}));
+    const path=new URL(url).pathname;
+    if(path.startsWith('/storage/v1/object/garment-photos/')){uploads++;if(uploads===2)return Response.json({error:'boom'},{status:500});await new Promise(r=>setTimeout(r,5));return Response.json({Key:path});}
+    throw Error('Unexpected '+path);
+  },memory());a.keep(session);
+  const img=c=>({src:'data:image/jpeg;base64,'+c,role:'Detail',main:c==='A',internal:false});
+  const product={key:id,title:'Jas',description:'',priceMinor:100,material:'Wol',species:null,model:'Cape',colour:'Zwart',length:'Kort',fit:'',era:'',details:[],measurements:[50,null,null,80],furClass:'Nee',images:['A','B','C','D','E','F'].map(img)};
+  await assert.rejects(a.save(product,0,{onProgress:m=>progress.push(m)}));
+  await new Promise(r=>setTimeout(r,30));
+  assert.ok(uploads<6,'the remaining photos are not uploaded');
+  assert.ok(!progress.some(m=>/[3-6] van 6/.test(m)),'no progress after the failure: '+progress.join(' | '));
+});
+test('a wrong address or password gets a plain message',async()=>{
+  const {a}=api({'/auth/v1/token':()=>Response.json({code:'invalid_credentials'},{status:400})});
+  await assert.rejects(a.login('x@example.test','fout'),e=>e.badLogin&&/klopt niet/.test(e.message));
+});

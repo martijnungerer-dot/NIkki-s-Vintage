@@ -34,7 +34,10 @@ export function stripFence(text){
   return m?m[1]:text;
 }
 
-export function createHandler({env,fetcher,now=()=>new Date(),log=message=>console.warn(message)}){return async req=>{
+export function createHandler({env,fetcher,now=()=>new Date(),log=message=>console.warn(message)}){
+  // Models that rejected the thinking setting, so later calls skip the extra round trip.
+  const noThinking=new Set();
+  return async req=>{
   const origin=req.headers.get('origin');
   const allowed=(env('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim()).filter(Boolean);
   const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin'};
@@ -76,15 +79,20 @@ export function createHandler({env,fetcher,now=()=>new Date(),log=message=>conso
       // Gemini krijgt 40 seconden; de winkel toont intussen al de eigen volgorde.
       const ask=briefThinking=>call('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
         method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':geminiKey},body:JSON.stringify(geminiBody(request.payload,{briefThinking}))},40000);
-      let result=await ask(true),answer=await result.json().catch(()=>null);
-      // Een ouder model kent de denkinstelling niet en weigert met 400; dat kost geen tokens. Vraag dan opnieuw zonder.
-      if(result.status===400&&/thinking/i.test(String(answer?.error?.message||''))){result=await ask(false);answer=await result.json().catch(()=>null);}
+      let result=await ask(!noThinking.has(model)),answer=await result.json().catch(()=>null);
+      // Een ouder model kent de denkinstelling niet en weigert met 400; dat kost geen tokens. Vraag dan opnieuw
+      // zonder, en onthoud dat voor dit model zolang de functie draait.
+      if(result.status===400&&/thinking/i.test(String(answer?.error?.message||''))){noThinking.add(model);result=await ask(false);answer=await result.json().catch(()=>null);}
       if(!result.ok)return fallback('HTTP_'+result.status+(typeof answer?.error?.status==='string'?' '+answer.error.status.replace(/[^A-Z_]/g,'').slice(0,40):''));
       const candidate=answer?.candidates?.[0];
       const text=candidate?.content?.parts?.filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');
-      if(!text)return fallback('EMPTY'+(typeof candidate?.finishReason==='string'?' '+candidate.finishReason.replace(/[^A-Z_]/g,'').slice(0,40):''));
+      const why=candidate?.finishReason??answer?.promptFeedback?.blockReason;
+      if(!text)return fallback('EMPTY'+(typeof why==='string'?' '+why.replace(/[^A-Z_]/g,'').slice(0,40):''));
       try{raw=JSON.parse(stripFence(text));}catch{return fallback('NOT_JSON'+(typeof candidate?.finishReason==='string'?' '+candidate.finishReason.replace(/[^A-Z_]/g,'').slice(0,40):''));}
     }catch(error){return fallback(error?.name==='TimeoutError'?'TIMEOUT':'NETWORK');}
+    // Only call it an AI order if Gemini named at least one real candidate.
+    const known=new Set(request.payload.candidates.map(c=>c.id));
+    if(!(Array.isArray(raw?.ranking)&&raw.ranking.some(r=>known.has(r?.id))))return fallback('NO_VALID_IDS');
     return reply(200,{source:'ai',ranking:normalizeRanking(raw,{...request,wantRationale})});
   }catch{return reply(503,{error:'UNAVAILABLE'});}
 };}

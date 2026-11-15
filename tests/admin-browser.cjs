@@ -201,6 +201,8 @@ async function realNewsreader(p){
       const voice=intake.locator('#voice');
       assert.equal(await voice.getAttribute('data-voice'),'idle');assert.equal(await voice.getAttribute('aria-label'),'Praat met de AI');
       // In this test browser there is no speech service: the app says so and typing keeps working.
+      // As on the CI runner: the voice starts but never reports that it finished. The screen must not hang on "speaking".
+      await frame.evaluate(()=>{window.speechSynthesis.speak=()=>{};});
       await voice.click();await intake.locator('.voice-note').filter({hasText:'Luisteren lukt hier niet'}).waitFor();
       assert.equal(await intake.locator('#voice').getAttribute('data-voice'),'idle');assert.equal(await intake.locator('#free').isEnabled(),true);
       await intake.locator('[data-skip]').click();

@@ -414,8 +414,11 @@
     synth.cancel();
     var u = new SpeechSynthesisUtterance(text); u.lang = 'nl-NL';
     // Some browsers report both an error and an end for the same sentence: listen only once.
-    var next = false;
-    u.onend = u.onerror = function () { if (next) return; next = true; if (voice.on && voice.said === step.id + text) listen(); };
+    var next = false, guard = null;
+    u.onend = u.onerror = function () { clearTimeout(guard); if (next) return; next = true; if (voice.on && voice.said === step.id + text) listen(); };
+    // Zonder (Nederlandse) stem melden sommige browsers nooit dat de zin klaar is: na de verwachte
+    // spreektijd stopt het voorlezen dan alsnog en gaat het scherm luisteren, in plaats van te blijven hangen.
+    guard = setTimeout(function () { if (next) return; try { synth.cancel(); } catch (e) {} u.onend(); }, 2000 + text.length * 90);
     setVoice('speaking'); synth.speak(u);
   }
 

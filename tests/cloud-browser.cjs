@@ -1,4 +1,5 @@
 const {chromium}=require('playwright');const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
+const {answer,change}=require('./intake-helper.cjs');
 (async()=>{
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
 try{
@@ -83,15 +84,16 @@ const cleaned=await p.evaluate(async bytes=>{
 assert.ok(cleaned.src.startsWith('data:image/jpeg;base64,'));assert.equal(cleaned.main,true);
 const encoded=Buffer.from(cleaned.src.split(',')[1],'base64');assert.ok(!encoded.includes(marker));assert.ok(!encoded.includes(Buffer.from('Exif\0\0')));assert.notDeepEqual(encoded,original);
 const f=intake();
-await f.locator('#gallery').setInputFiles({name:'jas.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
-await f.locator('#analyse').click();await f.locator('#step-review').waitFor({state:'visible'});assert.equal(analyses,1);
-await f.locator('[data-allok]').click();await f.locator('[data-open=wat]').click();
-for(const [k,v]of [['bont','Nee'],['materiaal','Leer'],['model','Autojas'],['lengte','Lang']])await f.locator(`[data-k="${k}"][data-v="${v}"]`).click();
-await f.locator('[data-open=maten]').click();await f.locator('#m-chest').fill('56,5');await f.locator('#m-length').fill('100');
-await f.locator('[data-open=bijz]').click();await f.locator('[data-k=bijzonderheden][data-v=Geen]').click();
-await f.locator('[data-open=tekst]').click();const title='<img src=x onerror=alert(1)> Testjas';await f.locator('#t-titel').fill(title);await f.locator('#t-prijs').fill('125,50');
-await f.locator('#publish').click();await f.locator('#review-err').filter({hasText:'niet afgerond'}).waitFor().catch(async e=>{console.error('SAVE ERROR:',await f.locator('#review-err').innerText());throw e;});assert.equal(db.size,0);assert.equal(await f.locator('#t-titel').inputValue(),title);
-await f.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
+await f.locator('#files').setInputFiles({name:'jas.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+await f.getByRole('button',{name:'Laat Gemini kijken'}).click();await f.locator('#question').waitFor();assert.equal(analyses,1);
+// Gemini's colour is only marked, never chosen for Nikki; its title is only a proposal.
+assert.equal(await f.locator('#answer .chip[aria-pressed=true]').count(),0);
+const title='<img src=x onerror=alert(1)> Testjas';
+await answer(f,{bont:'Nee',materiaal:'Leer',model:'Autojas'},{stopAt:'kleur'});
+assert.equal(await f.locator('#answer .chip.guess').getAttribute('data-value'),'Zwart');assert.match(await f.locator('#hint').innerText(),/Gemini denkt: Zwart/);
+await answer(f,{kleur:'Zwart',lengte:'Lang',bijzonderheden:[],chest:'56,5',length:'100',titel:title,beschrijving:'',prijs:'125,50'});
+await f.locator('#save').click();await f.locator('#save-error').filter({hasText:'niet afgerond'}).waitFor().catch(async e=>{console.error('SAVE ERROR:',await f.locator('#answer').innerText());throw e;});assert.equal(db.size,0);assert.ok((await f.locator('#summary').innerText()).includes('Testjas'),'the input stays after a failed save');
+await f.locator('#save').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
 assert.equal(db.size,1);assert.equal([...db.values()][0].data.measurements[0],56.5);assert.equal([...db.values()][0].data.priceMinor,12550);assert.equal([...db.values()][0].data.furClass,'Nee');assert.equal(photos.size,1);
 assert.equal(await shop().locator('#track .slide').count(),1);assert.ok(await shop().locator('#track img').first().evaluate(i=>i.complete&&i.naturalWidth>0));
 const originalKey=[...db.keys()][0];
@@ -178,7 +180,7 @@ await p.evaluate(()=>{
  const decode=window.createImageBitmap;window.createImageBitmap=function(...args){window.photoWork.decode++;return decode.apply(this,args);};
  const read=FileReader.prototype.readAsDataURL;FileReader.prototype.readAsDataURL=function(...args){window.photoWork.read++;return read.apply(this,args);};
 });
-const edit=intake();await edit.locator('[data-open=tekst]').click();await edit.locator('#t-titel').fill('Gewijzigde verkochte jas');await edit.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
+const edit=intake();await edit.locator('#summary').waitFor();await change(edit,'titel','Gewijzigde verkochte jas');await edit.locator('#save').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('blijft verkocht'));
 assert.deepEqual(await p.evaluate(()=>window.photoWork),{decode:0,read:0});
 assert.equal(db.size,1);assert.equal(photos.size,1);assert.equal([...db.values()][0].status,'sold');assert.equal([...db.values()][0].version,3);
 await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').locator('#track .slide').count(),0);
@@ -187,24 +189,24 @@ await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').
 // Photos "Alleen voor controle": Gemini sees them, the boutique never does, and editing keeps them.
 {
  await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
- const n=intake();await n.evaluate(()=>document.getElementById('again').click());
+ const n=intake();await n.locator('#restart').click();
  const colours=['#111','#933','#393','#339','#990','#909','#099','#777','#abc'];
  const files=[];for(const [i,colour] of colours.entries())files.push({name:'foto-'+i+'.png',mimeType:'image/png',buffer:Buffer.from(await p.evaluate(c=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=c;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},colour),'base64')});
- await n.locator('#gallery').setInputFiles(files);
- assert.equal(await n.locator('#thumbs .thumb').count(),8,'at most eight photos');
- assert.match(await n.locator('#photo-count').innerText(),/meer kan niet/);
- for(let i=7;i>=2;i--){await n.locator(`[data-del="${i}"]`).dispatchEvent("click");assert.equal(await n.locator("#thumbs .thumb").count(),i);}
- await n.locator('#analyse').click();await n.locator('#step-review').waitFor({state:'visible'});assert.equal(lastAnalysisCount,2,'Gemini sees every photo');
- await n.locator('#intern-1').click();assert.equal(await n.locator('#intern-1').getAttribute('aria-pressed'),'true');
- assert.equal(await n.locator('[data-main="1"]').count(),0,'an internal photo cannot be the main photo');
- assert.equal(await n.locator('#intern-1').evaluate(e=>document.activeElement===e),true);
- await n.locator('[data-allok]').click();await n.locator('[data-open=wat]').click();
- for(const [k,v]of [['bont','Nee'],['materiaal','Wol'],['model','Cape'],['lengte','Kort']])await n.locator(`[data-k="${k}"][data-v="${v}"]`).click();
- await n.locator('[data-open=maten]').click();await n.locator('#m-chest').fill('50');await n.locator('#m-length').fill('80');
- await n.locator('[data-open=bijz]').click();await n.locator('[data-k=bijzonderheden][data-v=Geen]').click();
- await n.locator('[data-open=tekst]').click();await n.locator('#t-titel').fill('Cape met controlefoto');await n.locator('#t-prijs').fill('90');
- await n.locator('[data-open=fotos]').click();await n.locator('[data-main="0"]').click();
- await n.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
+ await n.locator('#files').setInputFiles(files);
+ const thumbs=n.locator('#thumbs [data-view]');
+ assert.equal(await thumbs.count(),8,'at most eight photos');
+ assert.match(await n.locator('#note').innerText(),/maximaal 8 foto/);assert.equal(await n.locator('#more').count(),0,'no room for more');
+ for(let i=7;i>=2;i--){await thumbs.nth(i).click();await n.locator('[data-del]').click();assert.equal(await thumbs.count(),i);}
+ await n.getByRole('button',{name:'Laat Gemini kijken'}).click();await n.locator('#question').waitFor();assert.equal(lastAnalysisCount,2,'Gemini sees every photo');
+ await n.locator('#talk [data-photos]').click();await thumbs.nth(1).click();
+ await n.locator('[data-intern]').click();assert.equal(await n.locator('[data-intern]').getAttribute('aria-pressed'),'true');
+ assert.equal(await n.locator('[data-main]').isDisabled(),true,'an internal photo cannot be the main photo');
+ assert.equal(await n.locator('[data-intern]').evaluate(e=>document.activeElement===e),true);
+ assert.equal(await n.locator('#thumbs .intern').count(),1);
+ await n.getByRole('button',{name:'Verder',exact:true}).click();assert.equal(lastAnalysisCount,2,'no second analysis for the same photos');
+ await answer(n,{bont:'Nee',materiaal:'Wol',model:'Cape',kleur:'Zwart',lengte:'Kort',bijzonderheden:[],chest:'50',length:'80',titel:'Cape met controlefoto',beschrijving:'',prijs:'90'});
+ assert.match(await n.locator('#summary').innerText(),/1 alleen voor controle/);
+ await n.locator('#save').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
  const cape=[...db.values()].find(r=>r.data.title==='Cape met controlefoto'),hidden=privateRows.get(cape.id);
  assert.equal(cape.data.images.length,1);assert.equal(cape.data.images[0].main,true);
  assert.equal(hidden.internal.length,1);assert.deepEqual(Object.keys(hidden.internal[0]).sort(),['path','role']);
@@ -216,12 +218,14 @@ await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').
  // Editing loads the internal photo again, marked, and saving without a new analysis keeps it and the proposal.
  await p.evaluate(()=>window.NikkiApp.openAccount());
  await p.locator('#items li').filter({hasText:'Cape met controlefoto'}).getByRole('button',{name:'Bewerken'}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
- const e=intake();await e.locator('.ph').first().waitFor();
- assert.equal(await e.locator('.ph').count(),2);assert.equal(await e.locator('.ph.intern').count(),1);assert.equal(await e.locator('#intern-1').getAttribute('aria-pressed'),'true');assert.equal(await e.locator('#intern-0').getAttribute('aria-pressed'),'false');
+ const e=intake();await e.locator('#summary').waitFor();
+ assert.equal(await e.locator('#thumbs [data-view]').count(),2);assert.equal(await e.locator('#thumbs .intern').count(),1);
+ await e.locator('#talk [data-photos]').first().click();await e.locator('#thumbs [data-view]').nth(1).click();
+ assert.equal(await e.locator('[data-intern]').getAttribute('aria-pressed'),'true');await e.locator('#thumbs [data-view]').nth(0).click();assert.equal(await e.locator('[data-intern]').getAttribute('aria-pressed'),'false');
  fs.mkdirSync('test-results/intake',{recursive:true});
- for(const width of [390,320]){await p.setViewportSize({width,height:844});await e.locator('.ph-grid').scrollIntoViewIfNeeded();await p.screenshot({path:`test-results/intake/fotos-${width}.png`});}
+ for(const width of [390,320]){await p.setViewportSize({width,height:844});await p.screenshot({path:`test-results/intake/fotos-${width}.png`});}
  await p.setViewportSize({width:390,height:844});
- await e.locator('[data-open=tekst]').click();await e.locator('#t-prijs').fill('95');await e.locator('#publish').click();
+ await e.getByRole('button',{name:'Verder',exact:true}).click();await change(e,'prijs','95');await e.locator('#save').click();
  await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
  assert.equal(privateRows.get(cape.id).internal.length,1);assert.equal(privateRows.get(cape.id).ai.titel,'AI voorstel');
 }

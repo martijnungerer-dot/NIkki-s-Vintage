@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {fixture}=require('./admin-fixture.cjs');
+const {answer,change,type}=require('./intake-helper.cjs');
 async function fill(p){
   await p.locator('#email').fill('nikki@example.test');
   await p.locator('#password').fill('test-password');
@@ -178,59 +179,64 @@ async function realNewsreader(p){
     } finally {await f.browser.close();}
   }
   {
-    // Editing on a phone: a tap on save with an unfinished step opens that step and names it,
-    // instead of a grey button without a reason.
+    // Editing on a phone: nothing blocks the conversation. If something the boutique needs is missing,
+    // the overview names it and offers to keep the piece as a concept instead of a save button.
     const f=await fixture(390),p=f.page;try {
       await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.getByRole('button',{name:'Bewerken'}).click();await p.waitForFunction(()=>!document.getElementById('intake').hidden);
-      const intake=p.frameLocator('#intake');
-      assert.equal(await intake.locator('#publish').isDisabled(),false,'save stays tappable');
-      assert.equal(await intake.locator('#publish').textContent(),'Wijziging opslaan');
-      assert.match(await intake.locator('#publish').getAttribute('class'),/incomplete/);
-      await intake.locator('#publish').click();
-      await intake.locator('#review-err').filter({hasText:'Nog niet af: Bijzonderheden'}).waitFor();
-      // The message sits right above the save button, inside the sticky bar.
-      assert.equal(await intake.locator('.bar #review-err + #publish').count(),1);
+      const intake=p.frameLocator('#intake'),frame=p.frames().find(x=>x.name()==='intake');
+      await intake.locator('#summary').waitFor();
+      assert.equal(await intake.locator('#name').textContent(),'Stuk bewerken');
+      assert.equal(await intake.locator('#save').textContent(),'Wijziging opslaan');assert.equal(await intake.locator('#save').isDisabled(),false);
+      assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),false,'an opened piece without changes is not unsaved');
       // Project rules in the intake too: every control at least 44 px, all text at least 16 px.
-      const shortfalls=await intake.locator('body').evaluate(()=>{const out=[];
-        for(const el of document.querySelectorAll('button,input,select,label.picker')){const r=el.getBoundingClientRect();if(el.offsetParent===null||!r.width)continue;if(r.width<44||r.height<44)out.push('size '+(el.getAttribute('aria-label')||el.textContent.trim()).slice(0,30)+' '+Math.round(r.width)+'x'+Math.round(r.height));}
+      const shortfalls=()=>intake.locator('body').evaluate(()=>{const out=[];
+        for(const el of document.querySelectorAll('button,input,select,textarea,label.add,label.camera')){const r=el.getBoundingClientRect();if(el.offsetParent===null||!r.width||el.type==='file')continue;if(r.width<44||r.height<44)out.push('size '+(el.getAttribute('aria-label')||el.textContent.trim()).slice(0,30)+' '+Math.round(r.width)+'x'+Math.round(r.height));}
         for(const el of document.querySelectorAll('body *')){if(el.closest('svg')||el.offsetParent===null)continue;if([...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&parseFloat(getComputedStyle(el).fontSize)<16)out.push('text '+el.textContent.trim().slice(0,30));}
         return out;});
-      assert.deepEqual(shortfalls,[]);
-      assert.equal(await intake.locator('[data-step=bijz] .stephead').getAttribute('aria-expanded'),'true');
-      assert.equal(f.state.saved,undefined,'nothing saved while incomplete');
-      await p.screenshot({path:'test-results/admin/opslaan-ontbreekt-390.png'});
-      // "Volgend stuk" is secondary and asks before throwing away unsaved input.
-      assert.equal(await intake.locator('#new-draft').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
-      const frame=p.frames().find(x=>x.name()==='intake');
-      assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),false,'an opened piece without changes is not unsaved');
-      await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
+      assert.deepEqual(await shortfalls(),[],'overview');
+      // Take away something the boutique needs: no save button, a clear list, nothing saved.
+      await intake.locator('#talk [data-edit=chest]').click();assert.deepEqual(await shortfalls(),[],'question');
+      // The voice box sits on every question and starts only after a tap; a second tap stops it again.
+      const voice=intake.locator('#voice');
+      assert.equal(await voice.getAttribute('data-voice'),'idle');assert.equal(await voice.getAttribute('aria-label'),'Praat met de AI');
+      // In this test browser there is no speech service: the app says so and typing keeps working.
+      await voice.click();await intake.locator('.voice-note').filter({hasText:'Luisteren lukt hier niet'}).waitFor();
+      assert.equal(await intake.locator('#voice').getAttribute('data-voice'),'idle');assert.equal(await intake.locator('#free').isEnabled(),true);
+      await intake.locator('[data-skip]').click();
+      assert.match(await intake.locator('#open').innerText(),/Borstbreedte/);assert.equal(await intake.locator('#save').count(),0);
+      assert.equal(await intake.getByRole('button',{name:'Bewaar als concept'}).count(),1);
+      assert.equal(f.state.saved,undefined,'nothing saved while incomplete');assert.deepEqual(await shortfalls(),[],'missing list');
       assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),true);
-      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Geen]').evaluate(e=>document.activeElement===e),true,'focus stays on the chip after the redraw');
+      await p.screenshot({path:'test-results/admin/opslaan-ontbreekt-390.png'});
+      // Starting over asks before throwing away unsaved input.
       await frame.evaluate(()=>{window.__confirm=window.confirm;window.confirm=m=>{window.__asked=m;return false;};});
-      await intake.locator('#new-draft').click();
+      await intake.locator('#restart').click();
       assert.match(await frame.evaluate(()=>window.__asked),/nog niet opgeslagen/);
-      await frame.evaluate(()=>{window.confirm=window.__confirm;});assert.equal(await intake.locator('#step-review').isVisible(),true,'cancel keeps the input');
-      // Text typed in "+ nieuw" survives a tap on another chip.
-      await intake.locator('[data-add=bijzonderheden]').click();await intake.locator('#add-bijzonderheden').fill('Leren bies');
-      await intake.locator('[data-k=bijzonderheden][data-v=Vlek]').click();
-      assert.equal(await intake.locator('#add-bijzonderheden').inputValue(),'Leren bies');
-      await intake.locator('[data-k=bijzonderheden][data-v=Vlek]').click();await intake.locator('[data-add=bijzonderheden]').click();
-      if(await intake.locator('[data-k=bijzonderheden][data-v=Geen]').getAttribute('aria-pressed')!=='true')await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
-      assert.doesNotMatch(await intake.locator('#publish').getAttribute('class'),/incomplete/);
-      await intake.locator('#publish').click();
+      await frame.evaluate(()=>{window.confirm=window.__confirm;});assert.equal(await intake.locator('#open').isVisible(),true,'cancel keeps the input');
+      // An own word is added next to the buttons and stays while other buttons are tapped; focus stays in the field.
+      await intake.locator('#talk [data-edit=bijzonderheden]').click();
+      await type(intake,'Leren bies');
+      assert.equal(await intake.locator('#free').evaluate(e=>document.activeElement===e),true);
+      await intake.locator('#answer [data-value=Vlek]').click();await intake.locator('#answer [data-value=Vlek]').click();
+      assert.equal(await intake.locator('#answer [data-value="Leren bies"]').getAttribute('aria-pressed'),'true');
+      await intake.locator('[data-ready]').click();
+      await change(intake,'chest','54');
+      await intake.locator('#save').click();
       await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
-      assert.deepEqual(f.state.saved.p_data.details,['Geen']);
+      assert.deepEqual(f.state.saved.p_data.details,['Leren bies']);assert.equal(f.state.saved.p_data.measurements[0],54);
+      assert.deepEqual(await frame.evaluate(()=>JSON.parse(localStorage.getItem('gsf-learned')).bijzonderheden),['Leren bies'],'the own word is offered next time');
       // After saving, Nieuw stuk starts empty instead of showing the saved piece again.
       await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
-      assert.equal(await intake.locator('#step-photos').isVisible(),true);
-      assert.equal(await intake.locator('#thumbs .thumb').count(),0);
-      assert.equal(await intake.locator('#publish').textContent(),'Opslaan en tonen in boetiek');
-      // A photo can be removed in Controleren too.
+      assert.equal(await intake.locator('label.camera').isVisible(),true);assert.equal(await intake.locator('#thumbs [data-view]').count(),0);
+      assert.equal(await intake.locator('#name').textContent(),'Nieuw stuk');
+      // A photo can be removed again, also after the questions have started.
       const png=c=>p.evaluate(colour=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=colour;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},c);
-      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
-      await intake.locator('#manual').click();assert.equal(await intake.locator('.ph').count(),2);
-      await intake.locator('[data-delrev="1"]').click();assert.equal(await intake.locator('.ph').count(),1);
+      await intake.locator('#files').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
+      assert.deepEqual(await shortfalls(),[],'photos');
+      await intake.getByRole('button',{name:'Zelf invullen'}).click();await intake.locator('#question').waitFor();assert.equal(await intake.locator('#thumbs [data-view]').count(),2);
+      await intake.locator('#talk [data-photos]').click();await intake.locator('#thumbs [data-view]').nth(1).click();await intake.locator('[data-del]').click();
+      assert.equal(await intake.locator('#thumbs [data-view]').count(),1);
       assert.equal(await frame.evaluate(()=>window.NikkiIntake.hasUnsavedInput()),true,'a new piece with a photo is unsaved');
       // The phone's back button returns to the previous screen of the app.
       await p.goBack();assert.equal(await p.locator('#manage').isVisible(),true,'back from Nieuw stuk to Jouw collectie');
@@ -264,9 +270,9 @@ async function realNewsreader(p){
       await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.locator('#new').click();
       const png=c=>p.evaluate(colour=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=colour;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},c);
-      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
-      await intake.locator('#manual').click();
-      await intake.locator('[data-open=tekst]').click();await intake.locator('#t-titel').fill('Half ingevulde cape');
+      await intake.locator('#files').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(await png('#111'),'base64')},{name:'b.png',mimeType:'image/png',buffer:Buffer.from(await png('#933'),'base64')}]);
+      await intake.getByRole('button',{name:'Zelf invullen'}).click();
+      await answer(intake,{bont:'Nee',materiaal:'Wol'},{stopAt:'model'});
       if(blocked){
         assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),true,'without storage, leaving still warns');
         assert.deepEqual(f.state.errors,[]);continue;
@@ -275,20 +281,15 @@ async function realNewsreader(p){
       assert.equal(await frame().evaluate(()=>window.NikkiIntake.needsLeaveWarning()),false,'stored on the device, so no warning needed');
       await p.reload();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       await p.waitForFunction(()=>!document.getElementById('intake').hidden);
-      assert.equal(await intake.locator('.ph').count(),2,'photos are back');
-      assert.match(await intake.locator('#warnings').innerText(),/niet-opgeslagen stuk .* is teruggezet/);
-      await intake.locator('[data-open=tekst]').click();assert.equal(await intake.locator('#t-titel').inputValue(),'Half ingevulde cape');
+      assert.equal(await intake.locator('#thumbs [data-view]').count(),2,'photos are back');
+      assert.match(await intake.locator('#note').innerText(),/niet-opgeslagen stuk .* is teruggezet/);
+      assert.equal(await intake.locator('#question').getAttribute('data-step'),'model','the conversation continues where it stopped');
+      assert.equal(await intake.locator('#talk [data-edit=materiaal]').innerText(),'Wol');
       await p.screenshot({path:'test-results/admin/concept-teruggezet-390.png'});
       // Finish and save: the draft is removed, a refresh goes to Jouw collectie and Nieuw stuk is empty.
-      await intake.locator('[data-allok]').click().catch(()=>{});
-      await intake.locator('[data-open=fotos]').click();if(await intake.locator('[data-allok]').getAttribute('aria-pressed')!=='true')await intake.locator('[data-allok]').click();
-      await intake.locator('[data-main="0"]').click();
-      await intake.locator('[data-open=wat]').click();
-      for(const [k,v] of [['bont','Nee'],['materiaal','Wol'],['model','Cape'],['kleur','Zwart'],['lengte','Kort']])await intake.locator(`[data-k="${k}"][data-v="${v}"]`).click();
-      await intake.locator('[data-open=maten]').click();await intake.locator('#m-chest').fill('50');await intake.locator('#m-length').fill('80');
-      await intake.locator('[data-open=bijz]').click();await intake.locator('[data-k=bijzonderheden][data-v=Geen]').click();
-      await intake.locator('[data-open=tekst]').click();await intake.locator('#t-prijs').fill('90');
-      await intake.locator('#publish').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
+      await answer(intake,{model:'Cape',kleur:'Zwart',lengte:'Kort',bijzonderheden:[],chest:'50',length:'80',titel:'Half ingevulde cape',beschrijving:'',prijs:'90'});
+      await intake.locator('#save').click();await p.waitForFunction(()=>document.getElementById('status').textContent.includes('is opgeslagen'));
+      assert.equal(f.state.saved.p_data.title,'Half ingevulde cape');assert.equal(f.state.saved.p_data.images.length,2);
       await p.waitForTimeout(300);
       assert.equal(await frame().evaluate(()=>new Promise(r=>{const q=indexedDB.open('gsf-intake',1);q.onsuccess=()=>{const g=q.result.transaction('drafts').objectStore('drafts').get('current');g.onsuccess=()=>r(g.result===undefined);};})),true,'draft removed after saving');
       await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
@@ -298,31 +299,33 @@ async function realNewsreader(p){
     } finally {await f.browser.close();}
   }
   {
-    // Gemini's "bijzonderheden" are suggestions only; its warnings stay; logout removes the draft.
+    // Gemini's proposals are marked but never chosen for Nikki; its warnings stay; logout removes the draft.
     const f=await fixture(390),p=f.page;try {
       const intake=p.frameLocator('#intake'),frame=()=>p.frames().find(x=>x.name()==='intake');
       await fill(p);await p.locator('#login [type=submit]').click();await p.locator('#items li.piece').waitFor();
       await p.locator('#new').click();
       const png=await p.evaluate(()=>{const k=document.createElement('canvas');k.width=20;k.height=20;k.getContext('2d').fillRect(0,0,20,20);return k.toDataURL().split(',')[1];});
-      await intake.locator('#gallery').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
-      await intake.locator('#analyse').click();await intake.locator('#step-review').waitFor({state:'visible'});
-      // Gemini fills in, also material and fur; each filled step needs one tap on Klopt.
-      for(const step of ['wat','bijz','tekst'])assert.match(await intake.locator(`[data-step=${step}] .stepsum`).innerText(),/voorstel · controleer/,step+' waits for Klopt');
-      await intake.locator('[data-open=wat]').click();
-      assert.equal(await intake.locator('[data-k=materiaal][data-v=Leer]').getAttribute('aria-pressed'),'true','material proposed and filled in');
-      await intake.locator('[data-step=wat] .stephead').scrollIntoViewIfNeeded();await p.screenshot({path:'test-results/admin/gemini-klopt-390.png'});
-      await intake.locator('[data-aiok=wat]').click();
-      assert.doesNotMatch(await intake.locator('[data-step=wat] .stepsum').innerText(),/voorstel · controleer/);
-      await intake.locator('[data-open=bijz]').click();
-      assert.equal(await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').getAttribute('aria-pressed'),'true','filled in, Nikki confirms');
-      await intake.locator('[data-k=bijzonderheden][data-v=Bontkraag]').click();
-      assert.doesNotMatch(await intake.locator('[data-step=bijz] .stepsum').innerText(),/voorstel · controleer/,'changing a chip also counts as checked');
-      await intake.locator('[data-open=tekst]').click();
-      assert.match(await intake.locator('[data-step=tekst] .aiok').innerText(),/Gemini noemt in de titel: leren/);
-      assert.equal(await intake.locator('#t-titel').inputValue(),'Korte leren jas','title kept');
-      assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/);
-      await intake.locator('#back-photos').click();await intake.locator('#manual').click();
-      assert.match(await intake.locator('#warnings').innerText(),/controleer de bontsoort/,'warning still there after going back');
+      await intake.locator('#files').setInputFiles([{name:'a.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
+      await intake.getByRole('button',{name:'Laat Gemini kijken'}).click();await intake.locator('#question').waitFor();
+      // Fur and material: Gemini's guess is marked and named, but nothing is selected until Nikki taps.
+      assert.equal(await intake.locator('#answer .chip[aria-pressed=true]').count(),0);
+      assert.equal(await intake.locator('#answer .chip.guess').getAttribute('data-value'),'Nee');assert.match(await intake.locator('#hint').innerText(),/Gemini denkt: Nee, geen bont/);
+      await answer(intake,{bont:'Nee'},{stopAt:'materiaal'});
+      assert.equal(await intake.locator('#answer .chip.guess').getAttribute('data-value'),'Leer');assert.equal(await intake.locator('#answer .chip[aria-pressed=true]').count(),0);
+      await p.screenshot({path:'test-results/admin/gemini-klopt-390.png'});
+      await answer(intake,{materiaal:'Leer'},{stopAt:'bijzonderheden'});
+      // Details Gemini saw are switched on in the list; Nikki changes them or confirms with Klaar.
+      assert.match(await intake.locator('#question').innerText(),/Ik zie: bontkraag/);
+      assert.equal(await intake.locator('#answer [data-value=Bontkraag]').getAttribute('aria-pressed'),'true');
+      await intake.locator('#answer [data-value=Bontkraag]').click();await intake.locator('[data-ready]').click();
+      assert.equal(await intake.locator('#talk [data-edit=bijzonderheden]').innerText(),'Niets bijzonders');
+      await answer(intake,{},{stopAt:'titel'});
+      // The title is a proposal; words about material in it are named so Nikki checks them.
+      assert.match(await intake.locator('#question').innerText(),/Korte leren jas/);assert.match(await intake.locator('#hint').innerText(),/Gemini noemt hierin: leren/);
+      await answer(intake,{titel:'Korte leren jas'});
+      assert.match(await intake.locator('#talk .warn').innerText(),/controleer de bontsoort/);
+      await intake.locator('#summary [data-photos]').click();await intake.getByRole('button',{name:'Verder',exact:true}).click();
+      assert.match(await intake.locator('#talk .warn').innerText(),/controleer de bontsoort/,'warning still there after going back');
       await p.waitForFunction(()=>!document.getElementById('intake').contentWindow.NikkiIntake.needsLeaveWarning(),null,{timeout:10000});
       await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#logout').click();
       await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
@@ -330,5 +333,5 @@ async function realNewsreader(p){
       assert.deepEqual(f.state.errors,[]);
     } finally {await f.browser.close();}
   }
-  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, save explains what is missing, refresh keeps the screen, drafts survive a refresh, busy renewal guard and missing configuration.');
+  console.log('PASS admin: real Newsreader, 390/320 layout, keyboard, login/logout, auth/refresh failure recovery, wachtwoord vergeten and reset link, Nieuw stuk as a conversation (16px/44px, missing answers end as a concept, own words, Gemini proposals marked but never chosen), refresh keeps the screen, drafts survive a refresh, busy renewal guard and missing configuration.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

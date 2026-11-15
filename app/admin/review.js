@@ -16,7 +16,8 @@ export function startReview({api,admin}) {
         const f=frame.getBoundingClientRect(),r=photo.getBoundingClientRect();
         return {top:Math.round(f.top+r.top+8)+'px',left:Math.round(f.left+r.left+8)+'px'};
       }
-      return screen==='intake'?{top:'50%',right:'12px'}:{bottom:'12px',right:'12px'};
+      // Nieuw stuk and Jouw collectie: bottom right, where the answer buttons leave room.
+      return {bottom:'12px',right:'12px'};
     },
     save:(kind,body,context)=>api.request('/rest/v1/rpc/add_review_note',{method:'POST',body:{p_kind:kind,p_body:body,p_context:context}})
   });

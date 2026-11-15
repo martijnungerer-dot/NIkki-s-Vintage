@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nieuw stuk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/*INTAKE_STYLE*/
+</style>
+</head>
+<body>
+<div class="app" id="app" data-mode="talk">
+  <header class="top">
+    <button type="button" class="ic" id="back" aria-label="Vorige vraag"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 class="name" id="name">Nieuw stuk</h1>
+    <span class="steps" id="steps" aria-live="polite"></span>
+    <button type="button" class="ic" id="restart" aria-label="Opnieuw beginnen met een leeg stuk" title="Opnieuw beginnen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg></button>
+  </header>
+  <!-- Het podium: de foto groot in beeld; bij een maatvraag de tekening van waar het meetlint ligt. -->
+  <section class="stage" id="stage" data-state="empty">
+    <div class="hero" id="hero"></div>
+    <div class="thumbs" id="thumbs" role="group" aria-label="Foto’s van dit stuk" hidden></div>
+    <div class="photo-tools" id="photo-tools" hidden></div>
+  </section>
+  <main class="talk" id="talk" aria-live="polite"></main>
+  <form class="answer" id="answer" novalidate></form>
+</div>
+<script>
+/*INTAKE_SCRIPT*/
+</script>
+</body>
+</html>

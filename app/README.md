@@ -10,7 +10,7 @@ Start met [de begeleide installatie](../docs/SUPABASE-START.md). Scope: gezamenl
 | `main.js` | Verbindt invoer, catalogus en beheer |
 | `api.js` | Sessies, REST-opslag, foto-overdracht en AI-aanroep |
 | `images.js` | Foto verkleinen en metadata uit de upload verwijderen |
-| `intake-extension.js` | Bestaande checklist hergebruiken, opgeslagen stuk openen |
+| `intake/` | Nieuw stuk als gesprek: `steps.js` (vragen, lijsten, productcontract), `drafts.js` (concept op het toestel), `main.js` (scherm, foto's, Gemini, opslaan, bewerken), `style.css`, `intake.html` |
 | `store-extension.js` | Optie B bedienen met de publieke NikkiStore-catalogus; onderaan het contract `window.NikkiShop` voor losse onderdelen |
 | `taste/*.js` | Smaakprofiel: datamodel (`types.d.ts`), opslag/verval, signaalverwerking en lokale rangschikking als pure functies (`window.NikkiTaste`). Zie [smaakprofiel](../docs/SMAAKPROFIEL.md). |
 | `../supabase/functions/personalise/` | Smaakprofiel serverkant: openbare functie met daglimiet, payload, systeemprompt en controle van het AI-antwoord, terugval bij storing. |

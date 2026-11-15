@@ -10,6 +10,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 15 november 2026 — Nieuw stuk is een gesprek (in de app)
+- PR #56 (mock versie 2) en #57 (verkoopprijs) staan op `main` (`3f29113`). Martijn meldde dat de migraties zijn uitgerold; dat is vanuit de cloudsessie niet na te gaan.
+- Op verzoek van Martijn ("in één keer") is het invoerscherm vervangen door het gesprek uit de mock, als eigen bron onder `app/intake/` (besluit van 12 november). De build gebruikt het oude prototype met tekstpatches niet meer; `app/intake-extension.js` is weg.
+- Zo werkt het: eerst de foto's op een podium (maximaal 8, hoofdfoto, "Alleen voor controle", plek, verwijderen), dan "Laat Gemini kijken" of "Zelf invullen", daarna één vraag per keer met knoppen, typen/dicteren of praten (golfjes). Elke vraag heeft "Weet ik nog niet". Aan het eind een overzicht; ontbreekt iets dat de boetiek nodig heeft, dan staat er wat, en blijft het stuk een concept op het toestel. Bewerken opent meteen het overzicht.
+- Regels die gelijk blijven: een voorstel van Gemini is gemarkeerd ("Gemini denkt: …") maar nooit vooraf gekozen; de bontsoort komt alleen van Nikki; woorden over materiaal in Gemini's titel of tekst worden genoemd; maten in cm tot 300, een overgeslagen maat is leeg; opslaan vraagt bevestiging; foto's worden verkleind en ontdaan van EXIF; foto's alleen voor controle gaan nooit naar de catalogus; één concept op het toestel, gewist bij opslaan en uitloggen.
+- Nieuw ten opzichte van het oude scherm: een eigen vraag voor de beschrijving; het losse vinkje "Goed" per foto is vervallen. Concepten van het oude scherm worden niet teruggezet (ander formaat).
+- Tests: `tests/intake-steps.test.mjs` (vraaglogica en productcontract), herschreven delen van `tests/cloud-browser.cjs` en `tests/admin-browser.cjs` met `tests/intake-helper.cjs`, en aangepaste `tests/build-anchors.test.mjs`. `npm test` (87/87) en alle browsertests slagen lokaal. Live Supabase/Gemini en echte spraak op een telefoon zijn niet getest. Schermafbeeldingen: `docs/screenshots/nieuw-stuk-gesprek/`.
+
 ### 15 november 2026 — verkoopprijs bijhouden
 - Op verzoek van Martijn: bij "Markeer verkocht" vraagt de kaart eerst "Verkocht voor", met de vraagprijs ingevuld. Daarna vijf seconden "Ongedaan maken", zoals het was. Een verkocht stuk toont in Jouw collectie voor welk bedrag het wegging.
 - Nieuwe migratie `20261115140000_garment_sales.sql`: tabel `garment_sales` (bedrag in centen en datum, alleen leesbaar voor beheerders) en de functie `mark_garment_sold_with_price`, die de bestaande `mark_garment_sold` aanroept en het bedrag in dezelfde stap bewaart. Eén verkoop per stuk; een herhaling verandert niets. Bezoekers zien verkoopprijzen nooit; ze staan niet in de catalogus.

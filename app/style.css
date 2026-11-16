@@ -16,6 +16,8 @@ button[data-icon] { flex: none; padding: 10px; width: 44px; height: 44px; border
 button[data-icon] svg { display: block; width: 24px; height: 24px; }
 /* All toolbar icons look the same (Martijn, 14 November 2026: uniform and minimal); aria-pressed still tells screen readers which screen is open. */
 .app-toolbar button[aria-pressed=true] { background: transparent; box-shadow: none; }
+/* The screen you are on: subtle background and underline, same place as before. */
+.app-toolbar button[aria-current=page] { background: var(--surface); box-shadow: inset 0 -2px 0 var(--fg); opacity: 1; cursor: default; }
 .app-messages { flex: none; width: 100%; max-width: 720px; margin: 0 auto; padding: 10px 16px; }
 .app-messages:has(#status[hidden]), .app-messages:has(#status:empty) { display: none; }
 #status { margin: 0; overflow-wrap: anywhere; }

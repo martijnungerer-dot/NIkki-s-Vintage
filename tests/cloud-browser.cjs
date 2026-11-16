@@ -165,7 +165,7 @@ const visitor=await context(),v=await visitor.newPage();await v.goto('https://ap
 await v.frames().find(f=>f.name()==='shop').locator('#price').click();
 await shop().locator('.shop').click();await shop().getByRole('menuitem',{name:'Beheer'}).click();
 const soldRequest=p.waitForRequest(req=>new URL(req.url()).pathname==='/rest/v1/rpc/mark_garment_sold_with_price',{timeout:10000});
-await p.getByRole('button',{name:'Markeer verkocht'}).click();await p.getByRole('button',{name:'Verkocht',exact:true}).click();
+await p.getByRole('button',{name:'Markeer verkocht'}).click();await p.getByRole('button',{name:/^Verkocht voor/}).click();
 await soldRequest;
 assert.equal(await shop().locator('#track .slide').count(),1);
 assert.equal(await p.locator('#items .piece .piece-title').innerText(),title);assert.equal(await p.locator('#items .piece .piece-status').innerText(),'Wordt verkocht voor '+await p.locator('#items .piece .piece-price').innerText()+'…','not shown as sold before the server confirmed');

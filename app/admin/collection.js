@@ -20,7 +20,7 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
   // Capture the version at confirmation; undo only cancels a request that has not started.
   const pendingSold=new Map();
   const errors=new Map();
-  // Pieces whose sale price is being asked: id -> what is typed so far (survives a refresh of the grid).
+  // Pieces being marked as sold: id -> {value: what is typed so far, editing: the amount field is open}. Survives a refresh of the grid.
   const asking=new Map();
   // What sold pieces went for (staff only): id -> cents.
   let sales=new Map();
@@ -58,29 +58,42 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
         foot.append(undo);
       }
     }else if(!sold&&asking.has(row.id)){
-      // One question before anything happens: what did it sell for? The asking price is filled in.
-      const form=el('form','piece-ask');form.noValidate=true;
-      const label=el('label',null,'Verkocht voor');label.htmlFor='sold-price-'+row.id;
-      const field=el('span','piece-euro','€ '), input=el('input');input.id='sold-price-'+row.id;input.inputMode='decimal';input.autocomplete='off';input.value=asking.get(row.id);
-      input.setAttribute('aria-describedby','sold-error-'+row.id);input.addEventListener('input',()=>asking.set(row.id,input.value));field.append(input);
-      const error=el('p','piece-error');error.id='sold-error-'+row.id;error.setAttribute('role','alert');
-      const confirm=el('button','piece-confirm','Verkocht');confirm.type='submit';
-      const cancel=el('button','piece-cancel','Annuleer');cancel.type='button';
-      cancel.addEventListener('click',()=>{asking.delete(row.id);redraw(row.id,'.piece-sold');});
-      form.addEventListener('submit',event=>{
-        event.preventDefault();
+      const ask=asking.get(row.id);
+      // Nothing is saved for five seconds, so a wrong tap can be undone. Sold itself can never be undone.
+      const begin=price=>{
         if(state.busy||pendingSold.has(row.id)||row.status!=='published')return;
-        const price=cents(input.value);
-        if(price===null){error.textContent='Vul een bedrag in, bijvoorbeeld 120.';input.focus();return;}
-        // Nothing is saved for five seconds, so a wrong tap can be undone. Sold itself can never be undone.
         asking.delete(row.id);errors.delete(row.id);
         const entry={price,version:row.version,saving:false};pendingSold.set(row.id,entry);
         entry.timer=setTimeout(()=>commitSold(row.id,entry),UNDO_MS);redraw(row.id,'.piece-undo');
-      });
-      form.append(label,field,error,confirm,cancel);foot.append(form);
+      };
+      const cancelAsk=el('button','piece-cancel','Annuleer');cancelAsk.type='button';
+      cancelAsk.addEventListener('click',()=>{asking.delete(row.id);redraw(row.id,'.piece-sold');});
+      if(!ask.editing){
+        // First question: sold for the asking price? One tap. A different amount opens the field.
+        const box=el('div','piece-ask piece-ask-quick');box.setAttribute('role','group');box.setAttribute('aria-label','Verkocht: '+row.data.title);
+        const direct=el('button','piece-confirm piece-direct','Verkocht voor '+euro(row.data.priceMinor));direct.type='button';
+        direct.addEventListener('click',()=>begin(row.data.priceMinor));
+        const other=el('button','piece-other','Ander bedrag');other.type='button';
+        other.addEventListener('click',()=>{ask.editing=true;ask.value=String(row.data.priceMinor/100).replace('.',',');redraw(row.id,'.piece-euro input');});
+        box.append(direct,other,cancelAsk);foot.append(box);
+      }else{
+        const form=el('form','piece-ask');form.noValidate=true;
+        const label=el('label',null,'Verkocht voor');label.htmlFor='sold-price-'+row.id;
+        const field=el('span','piece-euro','€ '), input=el('input');input.id='sold-price-'+row.id;input.inputMode='decimal';input.autocomplete='off';input.value=ask.value;
+        input.setAttribute('aria-describedby','sold-error-'+row.id);input.addEventListener('input',()=>{ask.value=input.value;});field.append(input);
+        const error=el('p','piece-error');error.id='sold-error-'+row.id;error.setAttribute('role','alert');
+        const confirm=el('button','piece-confirm','Verkocht');confirm.type='submit';
+        form.addEventListener('submit',event=>{
+          event.preventDefault();
+          const price=cents(input.value);
+          if(price===null){error.textContent='Vul een bedrag in, bijvoorbeeld 120.';input.focus();return;}
+          begin(price);
+        });
+        form.append(label,field,error,confirm,cancelAsk);foot.append(form);
+      }
     }else if(!sold){
       const mark=el('button','piece-sold');mark.type='button';mark.title='Markeer verkocht';mark.setAttribute('aria-label','Markeer verkocht: '+row.data.title);mark.append(icon('tag'));
-      mark.addEventListener('click',()=>{if(state.busy||pendingSold.has(row.id))return;errors.delete(row.id);asking.set(row.id,String(row.data.priceMinor/100).replace('.',','));redraw(row.id,'.piece-euro input');});
+      mark.addEventListener('click',()=>{if(state.busy||pendingSold.has(row.id))return;errors.delete(row.id);asking.set(row.id,{value:String(row.data.priceMinor/100).replace('.',','),editing:false});redraw(row.id,'.piece-direct');});
       foot.append(mark);
     }
     item.append(open,foot);

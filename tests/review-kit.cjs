@@ -61,10 +61,12 @@ try{
  await fab.click();await page.mouse.click(60,60);await page.getByRole('textbox',{name:'Jouw opmerking'}).fill('Later versturen');
  await page.getByRole('button',{name:'Bewaar',exact:true}).click();
  await page.getByRole('status').filter({hasText:'later vanzelf'}).waitFor();
- assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('review-kit-queue')).length),1);
+ assert.equal(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('review-kit-queue:')).length),1,'one key per waiting note');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('review-kit-queue')),null,'no shared array any more');
  await page.evaluate(()=>{window.fail=false;});
- await page.waitForFunction(()=>window.saved.length===3&&!localStorage.getItem('review-kit-queue'),null,{timeout:4000});
+ await page.waitForFunction(()=>window.saved.length===3&&!Object.keys(localStorage).some(k=>k.startsWith('review-kit-queue')),null,{timeout:14000}); // retries after 10 seconds
  assert.equal((await page.evaluate(()=>window.saved))[2].body,'Later versturen');
+ assert.match((await page.evaluate(()=>window.saved))[2].context.clientId,/^[0-9a-f-]{36}$/,'every note has a client id');
 
  // Signed out: the button disappears; destroy removes everything.
  await page.evaluate(()=>{window.enabled=false;});await fab.waitFor({state:'hidden',timeout:3000});

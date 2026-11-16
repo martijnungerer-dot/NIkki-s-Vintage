@@ -35,6 +35,15 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 - **Controle:** `node tests/ontdekken-optie-b.cjs` (Playwright) op 390 en 320 px, offline.
 - **Cloudpilot:** de build in `app/` leest deze HTML/CSS rechtstreeks en vult hem via de bestaande NikkiStore met de publieke catalogus en beveiligde fotolinks. De menu-bestemmingen zijn daar alleen plaatshouders; het mandje bewaart lokaal stuk-ID's, zonder checkout. `npm run test:browser` vergelijkt de app met deze referentie op 390, 320 en 280 px. Zie [schermafbeeldingen](../docs/screenshots/README.md).
 
+## Zoeken als gesprek (mock, november 2026)
+
+[zoeken-gesprek.html](zoeken-gesprek.html): de zoekbalk uit bovenbalk B ("Wat zoek je?") als gesprek voor bezoekers. Martijn koos op 16 november 2026 voor een zoekbalk en voor variant B. Alleen een mock met een nagespeelde AI en voorbeeldstukken; de winkel is niet veranderd.
+
+- **Telefoon:** geen apart scherm. Het gesprek leeft in de zoekbalk: daaronder één zin en hooguit één rij knoppen. De gevonden stukken staan in de grote foto en de onderrij (vier vakjes, leeg en uit als er minder zijn). Wie gaat bladeren, ziet de strook inklappen tot één regel ("2 van 3"); "Verder vragen" opent hem weer. Het kruisje in de zoekbalk stopt het zoeken.
+- **Laptop (vanaf 900 px):** het hele gesprek in een kolom naast de winkel, met de gevonden stukken als raster.
+- **Regels:** hooguit één vervolgvraag, en alleen als die helpt (bont, lengte, prijs). Maat alleen als de bezoeker erom vraagt: meet een jas die goed zit plat van oksel tot oksel; het antwoord zegt "past waarschijnlijk", nooit "jouw maat". Niets gevonden: eerlijk zeggen en iets dichtbij voorstellen. Alleen kenmerken uit de catalogus.
+- **Controle:** `node tests/zoeken-gesprek.cjs` op 390, 320 × 568 en 1280 px, offline. Schermafbeeldingen in `docs/screenshots/zoeken-gesprek/`.
+
 ## Invoerprototype voor Nikki
 
 [intake-prototype.html](intake-prototype.html) laat Nikki ervaren hoe invoeren met automatische voorstellen gaat. Scherm 1: foto's maken of kiezen in willekeurige volgorde, dan *Verwerken*. Scherm 2: één compacte checklist met het hele pad tot publiceren (Foto's, Wat is het, Bontsoort, Maten, Bijzonderheden, Titel en prijs). Tik aan wat klopt; het voorstel staat al aan. Een keuze die nog niet bestaat typ je via *+ nieuw* en die staat de volgende keer klaar. Daarna *Publiceren (proef)* en zie je welke voorbeeldklanten een mail zouden krijgen.

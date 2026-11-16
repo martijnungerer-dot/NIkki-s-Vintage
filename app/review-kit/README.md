@@ -19,7 +19,8 @@ const kit = createReviewKit({
 ```
 
 - `save(kind, body, context)` moet een Promise teruggeven en bij een fout gooien. `kind` is `opmerking`, `aanpassing` of `vraag`.
-- Mislukt bewaren (bijvoorbeeld zonder bereik), dan blijft de opmerking in `localStorage` (`review-kit-queue`) en wordt hij vanzelf opnieuw verstuurd zodra `save` weer lukt.
+- Elke opmerking krijgt een vaste UUID (`context.clientId`) en wordt vóór het versturen apart bewaard in `localStorage` onder `review-kit-queue:<clientId>`. Mislukt versturen, dan wordt hij na 10 seconden opnieuw geprobeerd; een geslaagde verzending verwijdert alleen die sleutel. Laat `save` herhalen onschadelijk zijn (dezelfde `clientId` is dezelfde opmerking). De oude lijst onder `review-kit-queue` wordt bij de eerste keer overgezet.
+- Lukt zowel opslaan als versturen niet, dan blijft het formulier met de tekst open. **Beperking:** de wachtrij hoort bij het browserprofiel, niet bij een gebruiker; bij accountwissel verstuurt de dan ingelogde sessie de wachtende opmerkingen.
 - `context` bevat altijd: `target` (frame, tag, id, aria-label en de zichtbare tekst van het gemarkeerde element, hoogstens 120 tekens), `rect` (de gele markering), `viewport`, `page` en `at`, plus wat jouw `context()` teruggeeft.
 - **Nooit bewaard:** waarden van invoervelden (dus geen wachtwoorden of ingetypte gegevens).
 - Kleuren en letter zijn aan te passen met de CSS-variabelen `--rk-bg`, `--rk-fg`, `--rk-line`, `--rk-mark`, `--rk-mark-fill`, `--rk-mark-line` en `--rk-font` op `.rk-host`.
@@ -30,7 +31,7 @@ Test: `tests/review-kit.cjs` (Playwright).
 ## In Nikki's Boetiek
 
 - Zichtbaar alleen voor ingelogde beheerders (`app/admin/review.js`).
-- Opmerkingen gaan naar de tabel `public.review_notes` via de serverfunctie `add_review_note` (`supabase/migrations/20261114120000_review_notes.sql`). Alleen beheerders kunnen schrijven en lezen; niemand kan opmerkingen wijzigen of wissen via de app. Hoogstens 500 per tester per dag.
+- Opmerkingen gaan naar de tabel `public.review_notes` via de serverfunctie `add_review_note` (`supabase/migrations/20261114120000_review_notes.sql`). Alleen beheerders kunnen schrijven en lezen; niemand kan opmerkingen wijzigen of wissen via de app. Hoogstens 500 per tester per dag. Migratie `20261116090000_review_note_retry.sql` voegt `client_id` toe: dezelfde opmerking opnieuw versturen levert dezelfde record op (andere inhoud met hetzelfde client-ID geeft `REVIEW_NOTE_CONFLICT`). Eerst deze migratie uitrollen, daarna de frontend.
 - Uitrollen: `npx supabase db push --remote` (voegt alleen deze tabel en functie toe). Uitgerold op 14 november 2026.
 - Lezen, in de SQL-editor van Supabase:
 

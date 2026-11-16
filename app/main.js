@@ -13,7 +13,14 @@ function show(screen,{fromHistory=false}={}){
   if(screen==='intake'&&!admin.state.staff)screen='manage';
   document.body.dataset.screen=screen;
   for(const name of ['shop','intake','manage'])$(name).hidden=name!==screen;
-  document.querySelectorAll('button[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
+  // The button of the screen you are on does nothing, so it is switched off and marked as the current page.
+  // Other screens (Nieuw stuk) keep both buttons working, so Jouw collectie is the way back from there.
+  document.querySelectorAll('.app-toolbar button[data-screen]').forEach(b=>{
+    const here=b.dataset.screen===screen;
+    b.setAttribute('aria-pressed',String(here));b.disabled=here;
+    if(here)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+  if(document.activeElement?.disabled)$('manage-title')?.focus?.({preventScroll:true});
   try{sessionStorage.setItem(SCREEN_KEY,screen);}catch{}
   // The phone's back button goes to the previous screen of the app instead of leaving the site.
   if(!fromHistory&&history.state?.screen!==screen)history.pushState({...history.state,screen},'');

@@ -50,5 +50,34 @@ test('review notes: only staff can add and read, notes are append-only and bound
       await db.query("insert into public.review_notes(author,kind,body) select $1,'opmerking','x' from generate_series(1,498)",[staff]);
     });
     await as('authenticated',staff,async()=>{await assert.rejects(()=>add(),/RATE_LIMIT/,'daily limit per tester');});
+
+    // Safe retries: same author + client id stores once; changed content conflicts; authors are separate.
+    await as('service_role',null,async()=>{await db.query('delete from public.review_notes where body=$1',['x']);});
+    const cid='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const ctx={screen:'manage',clientId:cid};
+    await as('authenticated',staff,async()=>{
+      const first=(await add('vraag','Herhaal mij',ctx)).rows[0].id;
+      assert.equal((await add('vraag','Herhaal mij',ctx)).rows[0].id,first,'same note returns the same id');
+      assert.equal((await db.query('select count(*)::int n from public.review_notes where client_id=$1',[cid])).rows[0].n,1,'stored once');
+      await assert.rejects(()=>add('vraag','Andere tekst',ctx),/REVIEW_NOTE_CONFLICT/,'same id, different body');
+      await assert.rejects(()=>add('aanpassing','Herhaal mij',ctx),/REVIEW_NOTE_CONFLICT/,'same id, different kind');
+      await assert.rejects(()=>add('vraag','Herhaal mij',{...ctx,screen:'shop'}),/REVIEW_NOTE_CONFLICT/,'same id, different context');
+      const a=(await add('vraag','Zonder id',{screen:'x'})).rows[0].id,b=(await add('vraag','Zonder id',{screen:'x'})).rows[0].id;
+      assert.notEqual(a,b,'old clients without a client id still work');
+    });
+    await db.query('insert into auth.users values($1)',['33333333-3333-4333-8333-333333333333']);await db.query('insert into public.staff values($1)',['33333333-3333-4333-8333-333333333333']);
+    await as('authenticated','33333333-3333-4333-8333-333333333333',async()=>{
+      const other=(await add('vraag','Herhaal mij',ctx)).rows[0].id;
+      assert.equal((await db.query('select count(*)::int n from public.review_notes where client_id=$1',[cid])).rows[0].n,2,'another author may reuse a client id');
+      assert.ok(other>0);
+    });
+    // A retry still succeeds when the daily quota has just been reached.
+    await as('service_role',null,async()=>{
+      await db.query("insert into public.review_notes(author,kind,body) select $1,'opmerking','q' from generate_series(1,600)",[staff]);
+    });
+    await as('authenticated',staff,async()=>{
+      assert.ok((await add('vraag','Herhaal mij',ctx)).rows[0].id>0,'existing note returned at the quota');
+      await assert.rejects(()=>add('vraag','Nieuw',{clientId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}),/RATE_LIMIT/,'new notes still limited');
+    });
   }finally{await db.close();}
 });

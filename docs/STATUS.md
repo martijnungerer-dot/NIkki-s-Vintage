@@ -10,6 +10,14 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 16 november 2026 — feedbackreparaties (herstel van een uitgevallen sessie)
+- Gereconstrueerd vanaf `main` (`e6dc223`); de oorspronkelijke werkmap was niet meer beschikbaar. Zes feedbackrecords uit `review_notes`, afhandeling in [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md); de records zelf zijn niet gewijzigd.
+- Review kit: opmerkingen apart bewaard per client-ID (geen verlies bij gelijktijdig verzenden), migratie van de oude wachtrij, herhaling na 10 seconden. Beperking: de wachtrij is per browserprofiel, niet per beheerder.
+- Migratie `20261116090000_review_note_retry.sql` (ontdubbeling per auteur en client-ID): lokaal met PGlite getest, niet live toegepast. Eerst migratie, dan frontend.
+- Markeer verkocht: één tik op de vraagprijs of Ander bedrag. Collectieknop uitgeschakeld op het eigen scherm. Geen echte betaling.
+- Ontwerpvoorstellen A/B voor de bovenbalk met zoekbalk staan alleen als beelden en script klaar; Martijn moet kiezen.
+- Gecontroleerd lokaal (Node 22, niet 24): `npm test` 96/96, volledige `test:browser`, `npm run check`, `git diff --check`.
+
 ### 15 november 2026 — Nieuw stuk praat natuurlijker (bovenop PR #58)
 - Aanleiding: Martijn liet PR #58 door Fable bekijken; vaste zinnen ("O, mooi spul.") en het ontbrekende prijsvoorstel waren de open punten. Martijn koos "mix": Gemini waar het de ervaring echt beter maakt, verder direct op het toestel.
 - Reacties: per gelegenheid een paar zinnen, vast per stuk (geen verspringen bij hertekenen), met verwijzing naar eerdere antwoorden ("Cognac en suède, mooie combinatie."). Ook vragen variëren licht. Reacties komen nooit in titel of beschrijving.

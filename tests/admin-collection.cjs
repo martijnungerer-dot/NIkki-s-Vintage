@@ -17,6 +17,7 @@ async function paused(){
 }
 async function propose(f){
   await first(f).getByRole('button',{name:/^Markeer verkocht/}).click();
+  await f.page.getByRole('button',{name:'Ander bedrag',exact:true}).click();
   await f.page.getByLabel('Verkocht voor').fill('110,50');
 }
 async function schedule(f){await propose(f);await first(f).getByRole('button',{name:'Verkocht',exact:true}).click();}
@@ -156,8 +157,21 @@ async function safeguards(){
       // Only an available piece can be marked sold.
       assert.equal(await p.getByRole('button',{name:/^Markeer verkocht/}).count(),1);
       // Markeer verkocht: nothing is saved for five seconds, and Ongedaan maken cancels it.
-      // First one question: what did it sell for? The asking price is filled in; nonsense is refused; Annuleer goes back.
+      // First one question: sold for the asking price? Three buttons; the amount field only opens with Ander bedrag.
       await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
+      const direct=p.getByRole('button',{name:/^Verkocht voor/});
+      assert.equal((await direct.innerText()).replace(/\s/g,' '),'Verkocht voor € 125');assert.equal(await direct.evaluate(e=>document.activeElement===e),true);
+      assert.equal(await p.getByLabel('Verkocht voor').count(),0,'no amount field yet');
+      for(const b of await p.locator('.piece-ask button').all()){const r=await b.boundingBox();assert.ok(r.height>=44,'sale buttons at least 44px');}
+      assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),width+'px sale question fits');
+      await p.getByRole('button',{name:'Annuleer'}).click();assert.equal(await status(f,'Leren mantel'),'In de boetiek');assert.equal(soldCalls(f),0);
+      // Tapping the asking price: five seconds to undo, then saved at exactly the asking price in cents.
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:/^Verkocht voor/}).click();
+      assert.equal((await status(f,'Leren mantel')).replace(/\s/g,' '),'Wordt verkocht voor € 125…');
+      await p.clock.runFor(2000);assert.equal(soldCalls(f),0);await p.getByRole('button',{name:/^Ongedaan maken/}).click();
+      assert.equal(await status(f,'Leren mantel'),'In de boetiek');await p.clock.runFor(10000);assert.equal(soldCalls(f),0);
+      // Ander bedrag: the amount field opens with the asking price filled in; nonsense is refused; Annuleer goes back.
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:'Ander bedrag',exact:true}).click();
       const price=p.getByLabel('Verkocht voor');
       assert.equal(await price.inputValue(),'125');assert.equal(await price.evaluate(e=>document.activeElement===e),true);
       for(const b of await p.locator('.piece-ask button, .piece-ask input').all()){const r=await b.boundingBox();assert.ok(r.height>=44,'price question controls at least 44px');}
@@ -165,7 +179,7 @@ async function safeguards(){
       await price.fill('veel');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
       assert.match(await p.locator('.piece-error').innerText(),/Vul een bedrag in/);assert.equal(soldCalls(f),0);
       await p.getByRole('button',{name:'Annuleer'}).click();assert.equal(await status(f,'Leren mantel'),'In de boetiek');
-      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:'Ander bedrag',exact:true}).click();
       await p.getByLabel('Verkocht voor').fill('110,50');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
       assert.equal((await status(f,'Leren mantel')).replace(/\s/g,' '),'Wordt verkocht voor € 110,50…');
       const undo=p.getByRole('button',{name:/^Ongedaan maken/});
@@ -177,7 +191,7 @@ async function safeguards(){
       assert.equal(await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).evaluate(e=>document.activeElement===e),true);
       await p.clock.runFor(10000);assert.equal(soldCalls(f),0,'undone: never saved');
       // A refresh during the five seconds keeps the choice and the undo button.
-      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:'Ander bedrag',exact:true}).click();
       await p.getByLabel('Verkocht voor').fill('110,50');await p.getByRole('button',{name:'Verkocht',exact:true}).click();
       await p.locator('#reload').click();await p.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Collectie vernieuwd.'));
       assert.match(await status(f,'Leren mantel'),/^Wordt verkocht voor/);assert.equal(soldCalls(f),0);
@@ -194,6 +208,14 @@ async function safeguards(){
       await p.waitForFunction(()=>!document.getElementById('intake').hidden);
       await p.evaluate(()=>window.NikkiApp.openAccount());
       await p.locator('#new').click();assert.equal(await p.locator('#intake').isVisible(),true);
+      // Navigation: the button of the open screen is switched off and marked; from Nieuw stuk Jouw collectie works as the way back.
+      const nav=p.locator('.app-toolbar button[data-screen=manage]');
+      assert.equal(await nav.isEnabled(),true,'Jouw collectie works from Nieuw stuk');assert.equal(await nav.getAttribute('aria-current'),null);
+      await nav.click();await p.waitForFunction(()=>document.getElementById('intake').hidden&&!document.getElementById('manage').hidden);
+      assert.equal(await nav.isDisabled(),true,'on Jouw collectie the button does nothing, so it is off');
+      assert.equal(await nav.getAttribute('aria-current'),'page');assert.equal(await nav.getAttribute('aria-pressed'),'true');
+      const home=p.locator('.app-toolbar button[data-screen=shop]');assert.equal(await home.isEnabled(),true);assert.equal(await home.getAttribute('aria-current'),null);
+      await p.locator('#new').click();assert.equal(await nav.isEnabled(),true,'back to enabled on Nieuw stuk');
       assert.deepEqual(f.state.errors,[]);
     }finally{await f.browser.close();}
   }
@@ -202,7 +224,7 @@ async function safeguards(){
     const f=await fixture(390,{rows:rows(),clock:true,failSold:true});
     try{
       const p=f.page;await f.login();await p.locator('#items li.piece').first().waitFor();
-      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:'Verkocht',exact:true}).click();await p.clock.runFor(5200);
+      await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).click();await p.getByRole('button',{name:/^Verkocht voor/}).click();await p.clock.runFor(5200);
       await p.locator('#status').filter({hasText:'elders gewijzigd'}).waitFor();
       assert.equal(await status(f,'Leren mantel'),'In de boetiek');
       assert.equal(await p.getByRole('button',{name:'Markeer verkocht: Leren mantel'}).count(),1);

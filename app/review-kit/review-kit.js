@@ -38,19 +38,84 @@ export function createReviewKit({save, isEnabled = () => true, context = () => (
   host.innerHTML = '<style>' + CSS + '</style><button type="button" class="rk-fab" aria-label="Opmerking maken: markeer iets op het scherm" hidden>' + PEN + '</button>';
   doc.body.appendChild(host);
   const fab = host.querySelector('.rk-fab');
-  let open = null, timer = 0, flushing = false;
+  let open = null, timer = 0;
 
-  const readQueue = () => { try { return JSON.parse(win.localStorage.getItem(QUEUE) || '[]'); } catch { return []; } };
-  const writeQueue = list => { try { list.length ? win.localStorage.setItem(QUEUE, JSON.stringify(list)) : win.localStorage.removeItem(QUEUE); return true; } catch { return false; } };
-  async function flush() {
-    if (flushing || !isEnabled()) return;
-    flushing = true;
+  // Every note is stored on its own under review-kit-queue:<clientId> BEFORE it is sent, so a note added while
+  // another one is being sent can never be overwritten. The clientId also makes a repeated send harmless on the server.
+  const PREFIX = QUEUE + ':', RETRY_MS = 10000;
+  const sending = new Set(), retryAt = new Map();
+  let destroyed = false, migrating = false;
+  const store = () => { try { return win.localStorage; } catch { return null; } };
+  const newId = () => {
+    const c = win.crypto;
+    if (c && c.randomUUID) return c.randomUUID();
+    const b = c.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  };
+  // Same old note at the same position always gets the same id, also from another tab or after a partial migration.
+  async function legacyId(index, note) {
+    const d = new Uint8Array(await win.crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([index, note]))));
+    d[6] = (d[6] & 15) | 64; d[8] = (d[8] & 63) | 128;
+    const h = [...d.slice(0, 16)].map(x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  const validNote = n => n && typeof n === 'object' && KINDS.some(k => k[0] === n.kind) && typeof n.body === 'string' && n.body &&
+    n.context && typeof n.context === 'object' && typeof n.context.clientId === 'string';
+  const putNote = n => { try { store().setItem(PREFIX + n.context.clientId, JSON.stringify(n)); return true; } catch { return false; } };
+  const dropNote = id => { try { store().removeItem(PREFIX + id); } catch {} };
+  function queuedNotes() {
+    const out = []; let ls = store();
     try {
-      let list = readQueue();
-      while (list.length) { const n = list[0]; await save(n.kind, n.body, n.context); list = list.slice(1); writeQueue(list); }
-    } catch { /* stays queued; retried later */ } finally { flushing = false; }
+      for (let i = 0; ls && i < ls.length; i++) {
+        const key = ls.key(i);
+        if (!key || !key.startsWith(PREFIX)) continue;
+        try { const n = JSON.parse(ls.getItem(key)); if (validNote(n) && PREFIX + n.context.clientId === key) out.push(n); } catch {}
+      }
+    } catch {}
+    return out;
+  }
+  async function migrateLegacy() {
+    const ls = store(); if (!ls || migrating) return;
+    let raw = null; try { raw = ls.getItem(QUEUE); } catch { return; }
+    if (!raw) return;
+    let list; try { list = JSON.parse(raw); } catch { return; }
+    if (!Array.isArray(list)) return;
+    migrating = true;
+    try {
+      let all = true;
+      for (let i = 0; i < list.length; i++) {
+        const n = list[i];
+        if (!n || typeof n.body !== 'string' || !n.body || !KINDS.some(k => k[0] === n.kind)) continue;
+        const id = (n.context && typeof n.context.clientId === 'string') ? n.context.clientId : await legacyId(i, n);
+        let have = null; try { have = ls.getItem(PREFIX + id); } catch {}
+        if (have) continue;
+        if (!putNote({kind: n.kind, body: n.body, context: {...(n.context || {}), clientId: id}})) all = false;
+      }
+      // Only remove the old array when everything is stored and nobody changed it meanwhile.
+      if (all) { try { if (ls.getItem(QUEUE) === raw) ls.removeItem(QUEUE); } catch {} }
+    } catch { /* stays in the old array; retried later */ } finally { migrating = false; }
+  }
+  // Sends one stored note. Never throws; a failure schedules a retry for this note only.
+  async function send(n) {
+    const id = n.context.clientId;
+    if (destroyed || sending.has(id)) return false;
+    sending.add(id);
+    try { await save(n.kind, n.body, n.context); dropNote(id); retryAt.delete(id); return true; }
+    catch { retryAt.set(id, Date.now() + RETRY_MS); return false; }
+    finally { sending.delete(id); }
+  }
+  async function flush() {
+    if (destroyed || !isEnabled()) return;
+    await migrateLegacy();
+    for (const n of queuedNotes()) {
+      if (destroyed || !isEnabled()) return;
+      if ((retryAt.get(n.context.clientId) || 0) > Date.now()) continue;
+      await send(n);
+    }
   }
   function toast(text) {
+    if (destroyed) return;
     const t = doc.createElement('div'); t.className = 'rk-toast'; t.setAttribute('role', 'status'); t.textContent = text;
     host.appendChild(t); win.setTimeout(() => t.remove(), 3000);
   }
@@ -90,7 +155,7 @@ export function createReviewKit({save, isEnabled = () => true, context = () => (
     const layer = doc.createElement('div'), bar = doc.createElement('div'), mark = doc.createElement('div');
     layer.className = 'rk-layer'; mark.className = 'rk-mark'; mark.hidden = true; bar.className = 'rk-bar';
     bar.innerHTML = '<span>Sleep over wat je bedoelt, of tik erop.</span><button type="button">Annuleer</button>';
-    const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+    const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); if (!(open && open.busy)) close(); } };
     open = {parts: [layer, mark, bar], onKey, back: fab};
     host.append(layer, mark, bar); fab.hidden = true;
     doc.addEventListener('keydown', onKey, true);
@@ -123,21 +188,35 @@ export function createReviewKit({save, isEnabled = () => true, context = () => (
       kind = b.dataset.kind; s.querySelectorAll('[data-kind]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
     }));
     const text = s.querySelector('textarea'); text.focus();
-    s.querySelector('.rk-cancel').addEventListener('click', close);
-    s.querySelector('.rk-save').addEventListener('click', async () => {
+    const btnSave = s.querySelector('.rk-save'), btnCancel = s.querySelector('.rk-cancel'), kindBtns = [...s.querySelectorAll('[data-kind]')];
+    const lock = on => { text.disabled = on; kindBtns.forEach(b => { b.disabled = on; }); btnSave.disabled = on; btnCancel.disabled = on; btnSave.textContent = on ? 'Bewaren…' : 'Bewaar'; };
+    const me = open;
+    btnCancel.addEventListener('click', () => { if (!me.busy) close(); });
+    // After a failed attempt the same text and kind keep the same note (and so the same clientId).
+    let attempt = null;
+    btnSave.addEventListener('click', async () => {
+      if (me.busy || destroyed) return;
       const body = text.value.trim();
       if (!body) { text.focus(); toast('Typ eerst je opmerking.'); return; }
-      let extra = {}; try { extra = context() || {}; } catch {}
-      const note = {kind, body, context: {...extra, target, rect: {x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.w), h: Math.round(rect.h)},
-        viewport: {w: win.innerWidth, h: win.innerHeight}, page: win.location.pathname + win.location.hash, at: new Date().toISOString()}};
-      const btn = s.querySelector('.rk-save'); btn.disabled = true; btn.textContent = 'Bewaren…';
-      try { await save(note.kind, note.body, note.context); close(); toast('Bewaard. Dank je!'); }
-      catch {
-        const queued = writeQueue([...readQueue(), note]);
-        close(); toast(queued ? 'Nog niet verstuurd. Hij wordt later vanzelf opnieuw verstuurd.' : 'Bewaren lukte niet. Probeer het opnieuw.');
+      if (!attempt || attempt.kind !== kind || attempt.body !== body) {
+        let extra = {}; try { extra = context() || {}; } catch {}
+        attempt = {kind, body, context: {...extra, target, rect: {x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.w), h: Math.round(rect.h)},
+          viewport: {w: win.innerWidth, h: win.innerHeight}, page: win.location.pathname + win.location.hash, at: new Date().toISOString(), clientId: newId()}};
       }
+      const note = attempt; me.busy = true; lock(true);
+      const stored = putNote(note);
+      const ok = await send(note);
+      me.busy = false;
+      if (destroyed) return;
+      const current = open === me; // a late answer must not close a form that was opened afterwards
+      if (ok || stored) {
+        if (current) close();
+        toast(ok ? 'Bewaard. Dank je!' : 'Nog niet verstuurd. Hij wordt later vanzelf opnieuw verstuurd.');
+      } else if (current) {
+        lock(false); text.focus(); toast('Bewaren lukte niet. Probeer het opnieuw.');
+      } else toast('Bewaren lukte niet.');
     });
   }
   fab.addEventListener('click', start);
-  return {destroy() { win.clearInterval(timer); close(); host.remove(); }, flush, start};
+  return {destroy() { destroyed = true; win.clearInterval(timer); if (open) { open.busy = false; close(); } host.remove(); }, flush, start};
 }

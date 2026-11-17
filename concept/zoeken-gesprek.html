@@ -5,20 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Zoeken als gesprek (mock)</title>
 <!--
-  Mock "Zoeken als gesprek" voor bezoekers van de boetiek (Martijn, 16 november 2026).
-  Uitgangspunt: concept/ontdekken-optie-b.html met bovenbalk B (embleem links naast de naam, zoekbalk eronder,
-  docs/FEEDBACK-OPVOLGING.md). Eén zelfstandig bestand: geen opslag, geen verbinding, de AI is nagespeeld.
-  Telefoon: geen apart scherm. Het gesprek leeft in de zoekbalk: één zin en hooguit één rij knoppen eronder;
-  de gevonden stukken staan in de grote foto en de onderrij. Bij bladeren klapt de strook in.
+  Mock "Zoeken als gesprek" voor bezoekers van de boetiek (Martijn, 16 en 17 november 2026).
+  Uitgangspunt: concept/ontdekken-optie-b.html met bovenbalk B (embleem links naast de naam, zoekbalk eronder).
+  Eén zelfstandig bestand: geen verbinding, de AI is nagespeeld. Alleen de gekozen hulpstand wordt in deze browser onthouden.
+  Telefoon: het gesprek leeft in de zoekbalk (één zin, hooguit één rij knoppen), de gevonden stukken in de grote foto
+  en de onderrij; de strook klapt in bij bladeren en kan worden uitvergroot tot het hele gesprek.
   Laptop (vanaf 900 px): het hele gesprek in een kolom naast de winkel.
-  Regels: maat alleen als de bezoeker erom vraagt; platte maat is geen lichaamsmaat ("past waarschijnlijk");
-  alleen kenmerken die in de catalogus staan; geen tekst over foto's; knoppen 44 px; tekst minstens 16 px.
+  Hulpstand (knop rechtsboven): Uit (alleen zoeken op woorden), Zakelijk, Gewoon, Meer uitleg.
+  Regels: terughoudend aanraden (geen "perfect voor jou", hooguit twee stukken bij naam, als link); maat alleen
+  als de bezoeker erom vraagt; platte maat is geen lichaamsmaat ("past waarschijnlijk"); alleen kenmerken uit de
+  catalogus; geen tekst over foto's; knoppen 44 px; tekst minstens 16 px.
 -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
 <style>
 :root {
   --page: #EFE9E2; --bg: #FAF6F0; --fg: #2E2420; --muted: #6B5A50; --line: #E3DAD0;
-  --chip: #F3ECE3; --chip-line: #D9CFC4; --chip-on: #E4D6C5; --band: #F1E9DF; --photo-bg: #E9E1D6; --gold: #A8833A;
+  --chip: #F3ECE3; --chip-line: #D9CFC4; --chip-on: #E4D6C5; --band: #F1E9DF; --photo-bg: #E9E1D6;
   --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
 }
 * { box-sizing: border-box; }
@@ -29,30 +31,42 @@ button, input { font: inherit; color: inherit; }
 button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 svg { display: block; }
-.note { margin: 0; font-size: 16px; color: var(--muted); text-align: center; max-width: 46ch; }
+.note { margin: 0; font-size: 16px; color: var(--muted); text-align: center; max-width: 52ch; }
 .try { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
 .try button { min-height: 44px; padding: 8px 14px; border: 1px dashed var(--chip-line); border-radius: 22px; background: transparent; font-size: 16px; color: var(--muted); }
 
 .stage { display: flex; gap: 24px; align-items: flex-start; justify-content: center; width: 100%; }
 .ph { position: relative; overflow: hidden; width: min(390px, 100%); height: min(844px, max(560px, calc(100svh - 40px))); border-radius: 44px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(40, 28, 22, .10); background: var(--bg); display: flex; flex-direction: column; padding: 34px 12px 20px; container-type: inline-size; flex: none; }
 
-/* Bovenbalk B: embleem links naast de naam, zoekbalk eronder. */
-.top { padding: 0 4px 8px; }
-.brand { display: flex; align-items: center; gap: 10px; font-size: 21px; line-height: 1.1; }
+/* Bovenbalk B: embleem links naast de naam, rechts de hulpstand, zoekbalk eronder. */
+.top { padding: 0 0 8px 4px; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 21px; line-height: 1.1; min-width: 0; }
 .brand svg { width: 44px; height: 44px; border-radius: 10px; flex: none; }
 .brand span { display: flex; flex-direction: column; }
-.search { display: flex; align-items: center; gap: 2px; margin-top: 10px; min-height: 46px; border: 1px solid var(--line); border-radius: 23px; padding: 0 2px 0 14px; background: var(--bg); transition: border-color 200ms; }
+.ic { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--fg); position: relative; }
+.ic[aria-expanded="true"] { background: var(--chip); }
+.ic .off { position: absolute; right: 9px; top: 10px; width: 8px; height: 8px; border-radius: 4px; background: var(--muted); }
+.search { display: flex; align-items: center; gap: 2px; margin: 10px 4px 0 0; min-height: 46px; border: 1px solid var(--line); border-radius: 23px; padding: 0 2px 0 14px; background: var(--bg); }
 .search:focus-within, .search.on { border-color: var(--chip-line); background: #fff; }
 .search input { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 17px; min-height: 44px; outline: none; }
 .search input::-webkit-search-cancel-button { display: none; }
 .sq { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 22px; display: grid; place-items: center; flex: none; color: var(--muted); }
 
-/* De gespreksstrook onder de zoekbalk: één zin en hooguit één rij knoppen. */
+/* Gespreksstrook onder de zoekbalk: één zin, hooguit één rij knoppen. */
 .strip { padding: 8px 4px 6px; display: flex; flex-direction: column; gap: 8px; animation: in 220ms ease-out; }
-.strip.small .chips, .strip.small .ask-cm { display: none; }
-.say { margin: 0; font-size: 17px; line-height: 1.35; }
-.say .count { color: var(--muted); }
-.more { border: 0; background: transparent; padding: 0; min-height: 44px; margin: -12px 0 -12px; font-size: 16px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.strip.small .chips, .strip.small .ask-cm, .strip.small .q { display: none; }
+.line1 { display: flex; align-items: flex-start; gap: 4px; }
+.line1 .say { flex: 1; min-width: 0; }
+.line1 .ic { margin: -8px -4px -8px 0; color: var(--muted); }
+.say { margin: 0; font-size: 17px; line-height: 1.4; }
+.q { margin: 0; font-size: 17px; }
+.count { color: var(--muted); white-space: nowrap; }
+.named { font-style: italic; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.linkchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); font-size: 16px; text-align: left; }
+.linkchip svg { flex: none; color: var(--muted); }
+.more { border: 0; background: transparent; padding: 0; min-height: 44px; margin: -12px 0; font-size: 16px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-align: left; }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
 .chips::-webkit-scrollbar { display: none; }
 .chip2 { flex: none; min-height: 44px; padding: 8px 14px; border: 1px solid var(--chip-line); border-radius: 22px; background: var(--chip); font-size: 16px; white-space: nowrap; }
@@ -71,13 +85,11 @@ svg { display: block; }
 .photo .drawing { width: 100%; height: 100%; display: block; }
 .photo.wissel .drawing { animation: fade 260ms ease-out; }
 @keyframes fade { from { opacity: .2; } }
-.fit { position: absolute; left: 0; right: 0; bottom: 0; height: 0; }
-.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0 10px; box-shadow: inset 0 -1px 0 var(--line); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; box-shadow: inset 0 -1px 0 var(--line); }
 .chip { height: 44px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 10px; background: var(--chip); }
 .chip.title { min-width: 0; }
 .chip.title span { font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip.price { flex: none; font-size: 20px; }
-.fitnote { font-size: 16px; color: var(--muted); padding: 6px 4px 0; }
 .band { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 8px; background: var(--band); border-radius: 14px; }
 .thumbs { display: flex; gap: 8px; }
 .th, .shop { width: min(52px, calc((100cqw - 88px) / 5)); min-width: 44px; aspect-ratio: 52 / 64; padding: 3px; border: 1px solid var(--chip-line); border-radius: 10px; background: var(--bg); overflow: hidden; flex: none; }
@@ -85,26 +97,44 @@ svg { display: block; }
 .th .drawing { width: 100%; height: 100%; border-radius: 7px; display: block; }
 .shop { background: var(--chip); display: grid; place-items: center; padding: 0; }
 
-/* Laptop: het gesprek in een eigen kolom naast de winkel; de strook in de telefoon verdwijnt. */
+/* Panelen groeien uit de knop die ze opent (zoals optie B). */
+.pop { position: absolute; z-index: 5; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 32px rgba(46, 36, 32, .18); animation: groei 220ms cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes groei { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+.set { right: 12px; top: 84px; width: min(300px, calc(100% - 24px)); padding: 10px; transform-origin: top right; display: flex; flex-direction: column; gap: 4px; }
+.set h3 { margin: 4px 8px 6px; font-weight: 500; font-size: 18px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: transparent; text-align: left; }
+.opt[aria-checked="true"] { background: var(--chip); }
+.opt i { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 9px; border: 1.5px solid var(--muted); display: grid; place-items: center; }
+.opt[aria-checked="true"] i::after { content: ''; width: 9px; height: 9px; border-radius: 5px; background: var(--fg); }
+.opt b { display: block; font-weight: 500; font-size: 17px; }
+.opt small { display: block; font-size: 16px; color: var(--muted); }
+/* Het gesprek uitvergroot (telefoon): van onder de zoekbalk tot onderaan, met alles wat besproken is. */
+.big { left: 0; right: 0; bottom: 0; border-radius: 16px 16px 0 0; border-bottom: 0; padding: 8px 16px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; transform-origin: top center; }
+.big .head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -8px; background: var(--bg); padding-top: 4px; }
+.big h2, .side h2 { margin: 0; font-weight: 500; font-size: 22px; }
+
+/* Gesprek in volle lengte: uitvergroot op de telefoon, en de kolom op de laptop. */
+.turn-me { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: var(--chip-on); font-size: 17px; }
+.turn-ai { max-width: 100%; font-size: 17px; line-height: 1.45; margin: 0; }
+.hits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hits button { padding: 0; border: 1px solid var(--chip-line); border-radius: 10px; overflow: hidden; background: var(--bg); text-align: left; }
+.hits .drawing { width: 100%; aspect-ratio: 3 / 4; display: block; }
+.hits span { display: block; padding: 4px 8px 6px; font-size: 16px; }
+.full .chips { flex-wrap: wrap; overflow: visible; }
+.empty { color: var(--muted); font-size: 17px; margin: 0; }
 .side { display: none; }
 @media (min-width: 900px) {
   .side { display: flex; flex-direction: column; gap: 14px; width: 380px; height: min(844px, calc(100svh - 40px)); padding: 24px; background: var(--bg); border: 1px solid var(--line); border-radius: 24px; overflow-y: auto; }
-  .ph .strip { display: none !important; }
-  .side h2 { margin: 0; font-weight: 500; font-size: 22px; }
-  .turn-me { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: var(--chip-on); font-size: 17px; }
-  .turn-ai { max-width: 95%; font-size: 17px; line-height: 1.4; }
-  .side .chips { flex-wrap: wrap; overflow: visible; }
-  .side .hits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .side .hits button { padding: 0; border: 1px solid var(--chip-line); border-radius: 10px; overflow: hidden; background: var(--bg); text-align: left; }
-  .side .hits .drawing { width: 100%; aspect-ratio: 3 / 4; display: block; }
-  .side .hits span { display: block; padding: 4px 8px 6px; font-size: 16px; }
-  .side .empty { color: var(--muted); font-size: 17px; margin: 0; }
+  .ph .strip, .ph .big { display: none !important; }
+  /* Gesprek uit: geen kolom, alleen de winkel met het aantal gevonden stukken onder de zoekbalk. */
+  .stage.uit .side { display: none; }
+  .stage.uit .ph .strip:not([hidden]) { display: flex !important; }
 }
-@media (prefers-reduced-motion: reduce) { .strip, .photo.wissel .drawing, .dots3 i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .strip, .pop, .photo.wissel .drawing, .dots3 i { animation: none; } }
 </style>
 </head>
 <body>
-<p class="note">Mock: zoeken als gesprek. De AI is nagespeeld, er wordt niets verstuurd. Probeer een van deze zinnen, of typ zelf iets in de zoekbalk.</p>
+<p class="note">Mock: zoeken als gesprek. De AI is nagespeeld, er wordt niets verstuurd. Tik een zin aan of typ zelf. Met de knop rechtsboven kies je hoeveel hulp je wilt, of zet je het gesprek uit.</p>
 <div class="try" id="try">
   <button type="button">Warme jas voor de winter, tot € 300</button>
   <button type="button">Iets met bont, niet te lang</button>
@@ -113,12 +143,17 @@ svg { display: block; }
 </div>
 
 <div class="stage">
-  <aside class="side" id="side" aria-label="Gesprek" aria-live="polite"></aside>
+  <aside class="side full" id="side" aria-label="Gesprek" aria-live="polite"></aside>
   <div class="ph" id="ph">
     <header class="top">
-      <div class="brand" role="img" aria-label="Guaranteed Secondhand Fur">
-        <svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#F3ECE3"/><ellipse cx="50" cy="50" rx="31" ry="39" fill="none" stroke="#A8833A" stroke-width="5"/><ellipse cx="50" cy="50" rx="25.5" ry="33.5" fill="none" stroke="#A8833A" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="0.01 5.3"/><text x="50" y="57.5" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-weight="600" font-size="21" fill="#A8833A">GSF</text></svg>
-        <span><span>Guaranteed</span><span>Secondhand Fur</span></span>
+      <div class="bar">
+        <div class="brand" role="img" aria-label="Guaranteed Secondhand Fur">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#F3ECE3"/><ellipse cx="50" cy="50" rx="31" ry="39" fill="none" stroke="#A8833A" stroke-width="5"/><ellipse cx="50" cy="50" rx="25.5" ry="33.5" fill="none" stroke="#A8833A" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="0.01 5.3"/><text x="50" y="57.5" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-weight="600" font-size="21" fill="#A8833A">GSF</text></svg>
+          <span><span>Guaranteed</span><span>Secondhand Fur</span></span>
+        </div>
+        <button type="button" class="ic" id="setbtn" aria-label="Hulp bij zoeken" aria-haspopup="dialog" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="off" id="offdot" hidden></span>
+        </button>
       </div>
       <form class="search" id="search" role="search">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="flex:none;color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -131,6 +166,12 @@ svg { display: block; }
     <div class="photo" id="photo"></div>
     <div class="row"><button type="button" class="chip title"><span id="title"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5A50" stroke-width="1.6" aria-hidden="true" style="flex:none"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" class="chip price" id="price"></button></div>
     <div class="band"><div class="thumbs" id="thumbs"></div><button type="button" class="shop" aria-label="Shop"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+
+    <div class="pop set" id="set" role="dialog" aria-label="Hulp bij zoeken" hidden>
+      <h3>Hulp bij zoeken</h3>
+      <div role="radiogroup" aria-label="Hulp bij zoeken" id="modes"></div>
+    </div>
+    <div class="pop big full" id="big" role="dialog" aria-label="Het gesprek" hidden></div>
   </div>
 </div>
 
@@ -148,26 +189,37 @@ svg { display: block; }
     { t: 'Korte jas met vossenkraag', p: 280, bont: 'Alleen kraag of rand', m: 'Leer', soort: 'Vos', l: 'Kort', k: 'Bruin', chest: 51, c: '#7A4E33' },
     { t: 'Lange nertsjas', p: 690, bont: 'Ja', m: 'Bont', soort: 'Nerts', l: 'Lang', k: 'Bruin', chest: 58, c: '#6B4530' }
   ];
+  // Hulpstanden. Uit = geen AI: de zoekbalk zoekt op woorden, zoals de bestaande Collectie-zoekfunctie.
+  var MODES = [
+    ['uit', 'Uit', 'Alleen zoeken, zonder gesprek.'],
+    ['zakelijk', 'Zakelijk', 'Korte antwoorden, knoppen om te verfijnen.'],
+    ['gewoon', 'Gewoon', 'Korte zinnen en soms één vraag.'],
+    ['meer', 'Meer uitleg', 'Zegt ook waarom, en helpt bij twijfel.']
+  ];
+  var KEY = 'gsf-zoekhulp';
   var $ = function (id) { return document.getElementById(id); };
   function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function drawing(it, label) {
-    return '<svg class="drawing" viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + (label ? 'Tekening: ' + esc(it.t.toLowerCase()) : '') + '"' + (label ? '' : ' aria-hidden="true"') + '><rect width="300" height="420" fill="#E9E1D6"/>' +
-      '<path d="M120 70 L150 95 L180 70 L222 92 L240 220 L222 228 L214 150 L210 ' + (it.l === 'Kort' ? 270 : it.l === 'Heuplang' ? 310 : it.l === 'Knielang' ? 360 : 395) + ' L90 ' + (it.l === 'Kort' ? 270 : it.l === 'Heuplang' ? 310 : it.l === 'Knielang' ? 360 : 395) + ' L86 150 L78 228 L60 220 L78 92 Z" fill="' + it.c + '"/>' +
+    var hem = it.l === 'Kort' ? 270 : it.l === 'Heuplang' ? 310 : it.l === 'Knielang' ? 360 : 395;
+    return '<svg class="drawing" viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"' + (label ? ' role="img" aria-label="Tekening: ' + esc(it.t.toLowerCase()) + '"' : ' aria-hidden="true"') + '><rect width="300" height="420" fill="#E9E1D6"/>' +
+      '<path d="M120 70 L150 95 L180 70 L222 92 L240 220 L222 228 L214 150 L210 ' + hem + ' L90 ' + hem + ' L86 150 L78 228 L60 220 L78 92 Z" fill="' + it.c + '"/>' +
       (it.bont !== 'Nee' ? '<path d="M112 66 Q150 118 188 66 L182 96 Q150 136 118 96 Z" fill="#D8CBB8"/>' : '<path d="M120 70 L150 140 L180 70" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3"/>') + '</svg>';
   }
+  function load() { try { var v = localStorage.getItem(KEY); return MODES.some(function (m) { return m[0] === v; }) ? v : 'gewoon'; } catch (e) { return 'gewoon'; } }
 
-  // Staat: de lijst waar je doorheen bladert (alles, of wat het gesprek vond), de plek erin, en het gesprek.
-  var S = { list: ITEMS.map(function (_, i) { return i; }), at: 0, prev: null, want: {}, turns: [], mine: null, busy: false, small: false, asked: false };
+  // Staat: de lijst waar je doorheen bladert (alles, of wat er gevonden is), de plek erin, het gesprek en de hulpstand.
+  var all = function () { return ITEMS.map(function (_, i) { return i; }); };
+  var S = { list: all(), at: 0, prev: null, want: {}, turns: [], busy: false, small: false, mode: load(), open: null };
 
   // ---------- de nagespeelde AI ----------
   // In de echte versie doet Gemini dit op de server, met de catalogus als data; hier simpele woordherkenning.
   function understand(text, want) {
     var t = text.toLowerCase(), w = Object.assign({}, want), n;
-    if (/maat|past|size|\b3[4-9]\b|\b4[0-6]\b|\bxs\b|\bs\b|\bm\b|\bl\b|\bxl\b/.test(t) && /maat|past|size/.test(t)) w.size = true;
+    if (/maat|past|size/.test(t)) w.size = true;
     if (/warm|winter|koud/.test(t)) w.warm = true;
     if (/geen bont|zonder bont/.test(t)) w.bont = 'Nee'; else if (/bont|nerts|vos|persianer/.test(t)) w.bont = 'ja';
     if (/kraag/.test(t) && w.bont !== 'Nee') w.bont = 'kraag';
-    ['suède', 'suede', 'leer', 'wol', 'shearling', 'lammy'].forEach(function (x) { if (t.indexOf(x) >= 0) w.m = { 'suede': 'Suède', 'suède': 'Suède', leer: 'Leer', wol: 'Wol', shearling: 'Shearling', lammy: 'Shearling' }[x]; });
+    ['suède', 'suede', 'leer', 'wol', 'shearling', 'lammy'].forEach(function (x) { if (t.indexOf(x) >= 0) w.m = { suede: 'Suède', 'suède': 'Suède', leer: 'Leer', wol: 'Wol', shearling: 'Shearling', lammy: 'Shearling' }[x]; });
     if (/niet te lang|kort|heuplang/.test(t)) w.l = 'kort'; else if (/lang/.test(t)) w.l = 'lang';
     ['zwart', 'bruin', 'cognac', 'camel', 'grijs', 'honing'].forEach(function (x) { if (t.indexOf(x) >= 0) w.k = x; });
     if ((n = t.match(/(?:tot|onder|max(?:imaal)?|hooguit)\s*(?:€\s*)?(\d{2,4})/)) || (n = t.match(/€\s*(\d{2,4})/))) w.max = Number(n[1]);
@@ -186,93 +238,139 @@ svg { display: block; }
     if (w.mine && Math.abs(it.chest - w.mine) > 2) return false;
     return true;
   }
-  function find(w) { return ITEMS.map(function (_, i) { return i; }).filter(function (i) { return matches(ITEMS[i], w); }); }
+  function find(w) { return all().filter(function (i) { return matches(ITEMS[i], w); }); }
+  // Zonder AI: elk woord van drie letters of meer moet in titel, materiaal, kleur, lengte of bontsoort staan.
+  function wordSearch(text) {
+    var words = text.toLowerCase().replace(/[^\p{L}\d ]/gu, ' ').split(/\s+/).filter(function (w) { return w.length >= 3; });
+    return all().filter(function (i) { var it = ITEMS[i], hay = [it.t, it.m, it.k, it.l, it.soort || ''].join(' ').toLowerCase(); return words.length && words.every(function (w) { return hay.indexOf(w) >= 0; }); });
+  }
   function describe(w, n) {
     var bits = [];
     if (w.warm) bits.push('warme');
     if (w.l === 'kort') bits.push('korte'); if (w.l === 'lang') bits.push('lange');
     if (w.k) bits.push(w.k === 'zwart' ? 'zwarte' : w.k);
-    var noun = n === 1 ? 'jas' : 'jassen';
-    var what = bits.join(', ') + (bits.length ? ' ' : '') + noun;
+    var what = bits.join(', ') + (bits.length ? ' ' : '') + (n === 1 ? 'jas' : 'jassen');
     if (w.m) what += ' van ' + w.m.toLowerCase();
     if (w.bont === 'ja') what += ' met bont'; if (w.bont === 'kraag') what += ' met een bontkraag'; if (w.bont === 'Nee') what += ' zonder bont';
     if (w.max && isFinite(w.max)) what += ' tot € ' + w.max;
     return what;
   }
   var NUM = ['geen', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen'];
-  // Eén vervolgvraag, alleen als die echt helpt: bij veel uitkomsten het kenmerk dat ze het best splitst. Nooit vanzelf over maat.
-  function followUp(w, hits) {
-    if (hits.length <= 3) return null;
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  // Een stuk bij naam is altijd een link naar dat stuk. Terughoudend: hooguit twee namen per antwoord.
+  function named(list) { var out = []; list.slice(0, 2).forEach(function (i, j) { if (j) out.push(' en '); out.push({ item: i }); }); return out; }
+  // Hooguit één vervolgvraag, en alleen als die helpt. Nooit vanzelf over maat.
+  function followUp(w, hits, mode) {
+    if (hits.length <= (mode === 'meer' ? 2 : 3)) return null;
     if (!w.bont && hits.some(function (i) { return ITEMS[i].bont !== 'Nee'; }) && hits.some(function (i) { return ITEMS[i].bont === 'Nee'; }))
-      return { say: 'Met of zonder bont?', chips: [['Met bont', { bont: 'ja' }], ['Alleen een bontkraag', { bont: 'kraag' }], ['Zonder bont', { bont: 'Nee' }]] };
-    if (!w.l) return { say: 'Kort of lang?', chips: [['Kort', { l: 'kort' }], ['Lang', { l: 'lang' }]] };
-    if (!w.max) return { say: 'Tot welk bedrag?', chips: [['Tot € 200', { max: 200 }], ['Tot € 300', { max: 300 }], ['Maakt niet uit', {}]] };
+      return { q: 'Met of zonder bont?', chips: [['Met bont', { bont: 'ja' }], ['Alleen een bontkraag', { bont: 'kraag' }], ['Zonder bont', { bont: 'Nee' }]] };
+    if (!w.l) return { q: 'Kort of lang?', chips: [['Kort', { l: 'kort' }], ['Lang', { l: 'lang' }]] };
+    if (!w.max) return { q: 'Tot welk bedrag?', chips: [['Tot € 200', { max: 200 }], ['Tot € 300', { max: 300 }], ['Maakt niet uit', { max: Infinity }]] };
     return null;
   }
-  function answer(w) {
-    // Maat: alleen als de bezoeker erom vraagt. Confectiematen zeggen weinig bij vintage; meet een jas die goed zit.
-    if (w.size && !w.mine) return { say: 'Bij vintage zegt een maat als 38 weinig. Heb je een jas die goed zit? Leg hem plat en meet van oksel tot oksel.', cm: true, hits: null };
-    var hits = find(w);
+  // Een antwoord is een lijst delen: tekst, of {item} voor een link naar een stuk.
+  function answer(w, mode, text) {
+    if (mode === 'uit') { var found = wordSearch(text); return { say: [found.length ? found.length + ' gevonden.' : 'Niets gevonden voor “' + text + '”.'], hits: found }; }
+    if (w.size && !w.mine) return {
+      say: mode === 'zakelijk' ? ['Meet een jas die goed zit plat, van oksel tot oksel.'] : ['Bij vintage zegt een maat als 38 weinig. Heb je een jas die goed zit? Leg hem plat en meet van oksel tot oksel.'],
+      why: mode === 'meer' ? 'Ik vergelijk die breedte met de platte borstbreedte van de stukken. Dat zegt iets over hoe de jas valt, niet over je lichaamsmaat.' : '', cm: true, hits: null };
+    var hits = find(w), f, say;
     if (!hits.length) {
       var looser = Object.assign({}, w); delete looser.max; var near = find(looser);
       if (!near.length) { looser = Object.assign({}, w); delete looser.m; delete looser.k; near = find(looser); }
-      if (!near.length) return { say: 'Dat heb ik nu niet. Nikki vult de collectie geregeld aan.', hits: [] };
-      var it = ITEMS[near[0]];
-      return { say: 'Geen ' + describe(w, 2) + '. Wel dichtbij: ' + it.t.toLowerCase() + ' voor € ' + it.p + '.', hits: near };
+      if (!near.length) return { say: [mode === 'zakelijk' ? 'Niets gevonden.' : 'Dat heb ik nu niet. Nikki vult de collectie geregeld aan.'], hits: [] };
+      say = mode === 'zakelijk' ? ['Niets gevonden. Dichtbij: ', { item: near[0] }, ', € ' + ITEMS[near[0]].p + '.'] : ['Geen ' + describe(w, 2) + '. Wel dichtbij: ', { item: near[0] }, ' voor € ' + ITEMS[near[0]].p + '.'];
+      return { say: say, hits: near.slice(0, 1), why: mode === 'meer' ? 'Die valt net buiten wat je vroeg: ' + (near[0] !== undefined && w.max && ITEMS[near[0]].p > w.max ? 'hij is duurder.' : 'een ander materiaal of een andere kleur.') : '' };
     }
-    var f = followUp(w, hits);
-    var lead = w.mine ? (hits.length === 1 ? 'Eén jas' : NUM[hits.length].charAt(0).toUpperCase() + NUM[hits.length].slice(1) + ' jassen') + ' die plat ongeveer ' + w.mine + ' cm breed zijn. Die passen waarschijnlijk zoals jouw jas.'
-      : 'Ik vond ' + (NUM[hits.length] || hits.length) + ' ' + describe(w, hits.length) + '.';
-    return { say: lead, follow: f, hits: hits };
+    f = followUp(w, hits, mode);
+    var lead = w.mine
+      ? (mode === 'zakelijk' ? hits.length + ' met platte borstbreedte rond ' + w.mine + ' cm.' : cap(NUM[hits.length] || String(hits.length)) + (hits.length === 1 ? ' jas' : ' jassen') + ' die plat ongeveer ' + w.mine + ' cm breed ' + (hits.length === 1 ? 'is' : 'zijn') + '. ' + (hits.length === 1 ? 'Die past' : 'Die passen') + ' waarschijnlijk zoals jouw jas.')
+      : (mode === 'zakelijk' ? hits.length + ' ' + describe(w, hits.length) + '.' : 'Ik vond ' + (NUM[hits.length] || hits.length) + ' ' + describe(w, hits.length) + '.');
+    say = [lead];
+    // Bij weinig uitkomsten noemt het gesprek ze bij naam (als link); bij veel niet, dan blader je zelf.
+    if (mode !== 'zakelijk' && hits.length <= 2 && !w.mine) say = say.concat([' Dat ' + (hits.length === 1 ? 'is ' : 'zijn '), ].concat(named(hits)).concat(['.']));
+    var why = '';
+    if (mode === 'meer' && w.warm) why = 'Warm betekent hier: bont, shearling of wol.';
+    if (mode === 'meer' && w.mine) why = 'Is een jas plat 1 à 2 cm breder dan de jouwe, dan zit hij iets ruimer.';
+    return { say: say, follow: f, hits: hits, why: why };
   }
 
   // ---------- gesprek ----------
+  function wait() { return matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 700; }
   function ask(text) {
     text = String(text || '').trim(); if (!text) return;
-    $('q').value = text; S.turns.push({ me: text }); S.busy = true; S.small = false; render();
+    $('q').value = text; S.turns.push({ me: text }); S.small = false;
+    if (S.mode === 'uit') { S.turns = [{ me: text }]; return reply(text); }
+    S.busy = true; render();
     // Nagespeelde wachttijd van de AI; in het echt 1 à 2 seconden.
-    setTimeout(function () { S.want = understand(text, S.turns.length > 1 ? S.want : {}); reply(); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 700);
+    setTimeout(function () { S.want = understand(text, S.turns.length > 1 ? S.want : {}); reply(text); }, wait());
   }
-  function reply() {
-    var a = answer(S.want); S.busy = false;
+  function reply(text) {
+    var a = answer(S.want, S.mode, text); S.busy = false;
     S.turns.push({ ai: a });
     if (a.hits && a.hits.length) { S.list = a.hits; S.at = 0; S.prev = null; }
     render(true);
   }
-  function refine(extra, label) { S.turns.push({ me: label }); Object.assign(S.want, extra); if (label === 'Maakt niet uit') S.want.max = Infinity; reply(); }
-  function stop() { S.turns = []; S.want = {}; S.list = ITEMS.map(function (_, i) { return i; }); S.at = 0; S.prev = null; $('q').value = ''; render(true); }
+  function refine(extra, label) { S.turns.push({ me: label }); Object.assign(S.want, extra); reply(label); }
+  function stop() { S.turns = []; S.want = {}; S.list = all(); S.at = 0; S.prev = null; S.busy = false; $('q').value = ''; closePop(); render(true); }
+  function setMode(m) {
+    S.mode = m; try { localStorage.setItem(KEY, m); } catch (e) {}
+    // Een andere stand geldt meteen: dezelfde vraag opnieuw, in de nieuwe stand.
+    var first = S.turns.length && S.turns[0].me; stop(); closePop(); if (first) ask(first); else render();
+  }
 
   // ---------- tekenen ----------
   function last() { for (var i = S.turns.length - 1; i >= 0; i--) if (S.turns[i].ai) return S.turns[i].ai; return null; }
-  function chipsHtml(a) {
+  // Een genoemd stuk staat cursief in de zin, en als knop (link) eronder: groot genoeg om aan te tikken.
+  function parts(list) { return list.map(function (p) { return typeof p === 'string' ? esc(p) : '<span class="named">' + esc(ITEMS[p.item].t.toLowerCase()) + '</span>'; }).join(''); }
+  var GO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  function links(a) {
+    var ids = a.say.filter(function (p) { return typeof p !== 'string'; }).map(function (p) { return p.item; });
+    return ids.length ? '<div class="links">' + ids.map(function (i) { return '<button type="button" class="linkchip" data-item="' + i + '">' + esc(ITEMS[i].t) + ' · € ' + ITEMS[i].p + GO + '</button>'; }).join('') + '</div>' : '';
+  }
+  function extra(a, inStrip) {
     if (a.cm) return '<form class="ask-cm" data-cm><input class="cm" inputmode="decimal" aria-label="Breedte van oksel tot oksel, in centimeter" placeholder="bijv. 54"><span>cm</span><button type="submit">Zoek</button></form>';
     if (!a.follow) return '';
-    return '<p class="say">' + esc(a.follow.say) + '</p><div class="chips" role="group">' + a.follow.chips.map(function (c, i) { return '<button type="button" class="chip2" data-chip="' + i + '">' + esc(c[0]) + '</button>'; }).join('') + '</div>';
+    // Zakelijk: alleen de knoppen, zonder vraag erbij.
+    return (S.mode === 'zakelijk' ? '' : '<p class="q">' + esc(a.follow.q) + '</p>') + '<div class="chips" role="group" aria-label="' + esc(a.follow.q) + '">' + a.follow.chips.map(function (c, i) { return '<button type="button" class="chip2" data-chip="' + i + '">' + esc(c[0]) + '</button>'; }).join('') + '</div>';
   }
+  var EXPAND = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>';
+  var SHRINK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7"/></svg>';
   function renderStrip() {
     var el = $('strip'), a = last();
     el.hidden = !S.turns.length;
     if (!S.turns.length) { el.innerHTML = ''; return; }
     if (S.busy) { el.innerHTML = '<div class="dots3" role="img" aria-label="Even zoeken"><i></i><i></i><i></i></div>'; return; }
     el.className = 'strip' + (S.small ? ' small' : '');
-    el.innerHTML = '<p class="say">' + esc(a.say) + (a.hits && a.hits.length > 1 ? ' <span class="count">' + (S.at + 1) + ' van ' + a.hits.length + '</span>' : '') + '</p>' +
-      (S.small && (a.follow || a.cm) ? '<button type="button" class="more" data-more>Verder vragen</button>' : chipsHtml(a));
+    var n = a.hits ? a.hits.length : 0, talk = S.mode !== 'uit';
+    // Ingeklapt (tijdens bladeren) alleen de eerste zin, zodat de foto zijn ruimte houdt.
+    el.innerHTML = '<div class="line1"><p class="say">' + parts(S.small ? a.say.slice(0, 1) : a.say) + (n > 1 ? ' <span class="count">' + (S.at + 1) + ' van ' + n + '</span>' : '') + '</p>' +
+      (talk ? '<button type="button" class="ic" data-big aria-label="Het hele gesprek bekijken">' + EXPAND + '</button>' : '') + '</div>' +
+      (!S.small && a.why ? '<p class="say count" style="white-space:normal">' + esc(a.why) + '</p>' : '') +
+      (!S.small && !a.follow ? links(a) : '') +
+      (S.small && (a.follow || a.cm) ? '<button type="button" class="more" data-more>Verder vragen</button>' : extra(a));
   }
-  function renderSide() {
-    var el = $('side');
-    if (!S.turns.length) { el.innerHTML = '<h2>Wat zoek je?</h2><p class="empty">Zeg het in je eigen woorden in de zoekbalk, bijvoorbeeld “een warme jas voor de winter, tot € 300”. Je kunt verder vragen; ik zoek alleen in wat Nikki nu heeft.</p>'; return; }
-    var h = '<h2>Wat zoek je?</h2>';
-    S.turns.forEach(function (t, i) {
+  // Het hele gesprek: alles wat gevraagd en geantwoord is, met de gevonden stukken als links.
+  function full(withClose) {
+    var h = withClose ? '<div class="head"><h2>Wat zoek je?</h2><button type="button" class="ic" data-close aria-label="Gesprek kleiner maken">' + SHRINK + '</button></div>' : '<h2>Wat zoek je?</h2>';
+    if (S.mode === 'uit') return h + '<p class="empty">Het gesprek staat uit. De zoekbalk zoekt op woorden. Met de knop rechtsboven zet je het weer aan.</p>' +
+      (last() ? '<p class="turn-ai">' + parts(last().say) + '</p>' + (last().hits && last().hits.length ? hitsGrid(last().hits) : '') : '');
+    if (!S.turns.length) return h + '<p class="empty">Zeg het in je eigen woorden in de zoekbalk, bijvoorbeeld “een warme jas voor de winter, tot € 300”. Ik zoek alleen in wat Nikki nu heeft.</p>';
+    S.turns.forEach(function (t) {
       if (t.me) h += '<div class="turn-me">' + esc(t.me) + '</div>';
       if (t.ai) {
-        h += '<div class="turn-ai">' + esc(t.ai.say) + '</div>';
-        var isLast = t.ai === last();
-        if (t.ai.hits && t.ai.hits.length && isLast) h += '<div class="hits">' + t.ai.hits.map(function (k, j) { return '<button type="button" data-hit="' + j + '" aria-label="Bekijk ' + esc(ITEMS[k].t) + '">' + drawing(ITEMS[k]) + '<span>€ ' + ITEMS[k].p + '</span></button>'; }).join('') + '</div>';
-        if (isLast) h += chipsHtml(t.ai);
+        h += '<p class="turn-ai">' + parts(t.ai.say) + (t.ai.why ? ' <span class="count">' + esc(t.ai.why) + '</span>' : '') + '</p>' + links(t.ai);
+        if (t.ai === last()) { if (t.ai.hits && t.ai.hits.length > 2) h += hitsGrid(t.ai.hits); h += extra(t.ai); }
       }
     });
     if (S.busy) h += '<div class="dots3" role="img" aria-label="Even zoeken"><i></i><i></i><i></i></div>';
-    el.innerHTML = h; el.scrollTop = el.scrollHeight;
+    return h;
+  }
+  function hitsGrid(list) { return '<div class="hits">' + list.map(function (k) { return '<button type="button" data-item="' + k + '" aria-label="Bekijk ' + esc(ITEMS[k].t) + '">' + drawing(ITEMS[k]) + '<span>€ ' + ITEMS[k].p + '</span></button>'; }).join('') + '</div>'; }
+  function renderModes() {
+    $('modes').innerHTML = MODES.map(function (m) { return '<button type="button" class="opt" role="radio" data-mode="' + m[0] + '" aria-checked="' + (S.mode === m[0]) + '"><i></i><span><b>' + m[1] + '</b><small>' + m[2] + '</small></span></button>'; }).join('');
+    $('offdot').hidden = S.mode !== 'uit';
+    $('setbtn').setAttribute('aria-label', 'Hulp bij zoeken: ' + MODES.filter(function (m) { return m[0] === S.mode; })[0][1]);
   }
   function render(fade) {
     var it = ITEMS[S.list[S.at]], n = S.list.length;
@@ -285,30 +383,52 @@ svg { display: block; }
       return k === null ? '<button type="button" class="th" disabled aria-label="Geen stuk"></button>' : '<button type="button" class="th" data-go="' + k + '" aria-label="' + (i ? 'Bekijk ' : 'Terug naar ') + esc(ITEMS[S.list[k]].t) + '">' + drawing(ITEMS[S.list[k]]) + '</button>';
     }).join('');
     $('clear').hidden = !S.turns.length; $('search').classList.toggle('on', !!S.turns.length);
-    renderStrip(); renderSide();
+    document.querySelector('.stage').classList.toggle('uit', S.mode === 'uit');
+    renderModes(); renderStrip();
+    $('side').innerHTML = full(false); $('side').scrollTop = $('side').scrollHeight;
+    if (S.open === 'big') { $('big').innerHTML = full(true); }
   }
   function go(k) { if (k === S.at || k == null) return; S.prev = S.at; S.at = k; if (S.turns.length) S.small = true; render(true); }
+  // Een link naar een stuk: dat stuk in de grote foto. Staat het niet in wat je bekijkt, dan komt het erbij.
+  function show(item) {
+    var at = S.list.indexOf(item);
+    if (at < 0) { S.list = [item].concat(S.list); at = 0; S.prev = null; S.at = 0; }
+    closePop(); if (at !== S.at) go(at); else render(true);
+  }
+  function closePop() { $('set').hidden = true; $('big').hidden = true; $('setbtn').setAttribute('aria-expanded', 'false'); S.open = null; }
+  function openPop(k) {
+    var was = S.open; closePop(); if (was === k) return;
+    if (k === 'big') { var top = $('strip').offsetTop; $('big').style.top = (top - 4) + 'px'; $('big').innerHTML = full(true); }
+    if (k === 'set') $('setbtn').setAttribute('aria-expanded', 'true');
+    $(k).hidden = false; S.open = k;
+    if (k === 'set') { var on = $('set').querySelector('[aria-checked="true"]'); if (on) on.focus(); }
+  }
 
   // ---------- bediening ----------
-  $('search').addEventListener('submit', function (e) { e.preventDefault(); ask($('q').value); $('q').blur(); });
+  $('search').addEventListener('submit', function (e) { e.preventDefault(); var t = $('q').value; if (S.turns.length && S.mode === 'uit') S.turns = []; if (S.mode !== 'uit' && !S.turns.length) S.want = {}; ask(t); $('q').blur(); });
   $('clear').addEventListener('click', stop);
+  $('setbtn').addEventListener('click', function () { openPop('set'); });
   $('voice').addEventListener('click', function () { $('q').placeholder = 'Praten werkt in de echte versie'; $('q').focus(); });
   $('try').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { stop(); ask(b.textContent); } });
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-chip],[data-go],[data-hit],[data-more]'); if (!b) return;
+    var b = e.target.closest('[data-chip],[data-go],[data-item],[data-more],[data-big],[data-close],[data-mode]'); if (!b) return;
     var a = last();
+    if (b.hasAttribute('data-mode')) return setMode(b.getAttribute('data-mode'));
     if (b.hasAttribute('data-chip')) { var c = a.follow.chips[Number(b.getAttribute('data-chip'))]; refine(c[1], c[0]); }
     else if (b.hasAttribute('data-go')) go(Number(b.getAttribute('data-go')));
-    else if (b.hasAttribute('data-hit')) go(Number(b.getAttribute('data-hit')));
+    else if (b.hasAttribute('data-item')) show(Number(b.getAttribute('data-item')));
     else if (b.hasAttribute('data-more')) { S.small = false; render(); }
+    else if (b.hasAttribute('data-big')) openPop('big');
+    else if (b.hasAttribute('data-close')) { closePop(); $('strip').querySelector('[data-big]') && $('strip').querySelector('[data-big]').focus(); }
   });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.open) closePop(); });
   document.addEventListener('submit', function (e) {
     if (!e.target.hasAttribute('data-cm')) return; e.preventDefault();
     var v = Number(String(e.target.querySelector('input').value).replace(',', '.'));
     if (!(v >= 30 && v <= 90)) { e.target.querySelector('input').setAttribute('aria-invalid', 'true'); return; }
     S.turns.push({ me: v + ' cm' }); S.want.mine = Math.round(v); reply();
   });
-  // Omhoog/omlaag vegen of scrollen op de foto: volgend stuk binnen wat je bekijkt (zoals optie B).
+  // Omhoog/omlaag vegen op de foto: volgend stuk binnen wat je bekijkt (zoals optie B).
   var y0 = null;
   $('photo').addEventListener('pointerdown', function (e) { y0 = e.clientY; });
   $('photo').addEventListener('pointerup', function (e) { if (y0 !== null && Math.abs(e.clientY - y0) > 50) go((S.at + (e.clientY < y0 ? 1 : -1) + S.list.length) % S.list.length); y0 = null; });

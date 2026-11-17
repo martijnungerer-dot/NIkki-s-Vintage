@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 17 november 2026 — mock zoeken: hulpstand, uitvergroten, links
+- Op verzoek van Martijn: gesprek aan/uit en meer of minder hulp (knop rechtsboven: Uit, Zakelijk, Gewoon, Meer uitleg; onthouden in de browser), het gesprek uitvergroten om terug te kijken, genoemde stukken als links, en terughoudend aanraden (hooguit twee namen, geen aanprijzing). Details in `concept/README.md`.
+- Nog steeds alleen een mock met nagespeelde AI; winkel, server en Gemini zijn niet veranderd. `node tests/zoeken-gesprek.cjs` slaagt op 390, 320 × 568 en 1280 px.
+
 ### 16 november 2026 — mock: zoeken als gesprek
 - Martijn koos een zoekbalk in de winkel (afwijking van optie B, met akkoord) en bovenbalk B uit [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md). Hij kon zich het gesprek op een telefoon niet voorstellen; daarom eerst een mock.
 - `concept/zoeken-gesprek.html`: op de telefoon één zin en hooguit één rij knoppen onder de zoekbalk, de gevonden stukken in de grote foto en de onderrij, de strook klapt in bij bladeren; op de laptop een gesprekskolom naast de winkel. Maat alleen als de bezoeker erom vraagt (plat oksel tot oksel, "past waarschijnlijk").

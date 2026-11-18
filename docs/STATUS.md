@@ -10,6 +10,12 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 18 november 2026 — zoeken als gesprek in de echte winkel
+- Op branch `codex/zoeken-gesprek`: bovenbalk B, vier hulpstanden, mobiel gesprekspaneel en laptopkolom. Dezelfde catalogus en Collectie-woordzoekfunctie; geen zoeksignalen naar smaakprofiel, geen voorraad- of Airtablemutaties.
+- Openbare functie `zoek` met serverfilters, publieke catalogusprojectie, maat alleen bij expliciete platte borstbreedte (±2 cm), begrensde context en eigen quotum (40 per bezoeker/2000 totaal per UTC-dag). Migratie `20261117090000_zoek_usage.sql`; geen IP of gesprek opgeslagen.
+- Na herstel van de cloudomgeving opnieuw gecontroleerd: build, 109 Node-/PGlite-tests, volledige browsertests en projectcontrole geslaagd. [Beelden vóór/na naast de referenties](screenshots/zoeken-gesprek/README.md).
+- Spraak/golfjes weggelaten. Live Supabase/Gemini niet getest. Niet gemerged of uitgerold; [handoff na merge](LIVEGANG.md#zoeken-als-gesprek-uitrollen).
+
 ### 17 november 2026 — mock zoeken: hulpstand, uitvergroten, links
 - Op verzoek van Martijn: gesprek aan/uit en meer of minder hulp (knop rechtsboven: Uit, Zakelijk, Gewoon, Meer uitleg; onthouden in de browser), het gesprek uitvergroten om terug te kijken, genoemde stukken als links, en terughoudend aanraden (hooguit twee namen, geen aanprijzing). Details in `concept/README.md`.
 - Nog steeds alleen een mock met nagespeelde AI; winkel, server en Gemini zijn niet veranderd. `node tests/zoeken-gesprek.cjs` slaagt op 390, 320 × 568 en 1280 px.

@@ -73,6 +73,8 @@ window.NikkiApp={
   },
   // Taste ranking (docs/SMAAKPROFIEL.md): only the compact profile summary leaves the browser.
   personalise:profile=>api.request('/functions/v1/personalise',{method:'POST',auth:false,body:{profile},signal:AbortSignal.timeout(50000)}),
+  // Public conversational search: no auth session or taste profile is sent.
+  search:(body,signal)=>api.request('/functions/v1/zoek',{method:'POST',auth:false,body,signal:signal || AbortSignal.timeout(25000)}),
   async publish(product,onProgress){
     if(!admin.state.staff)throw Error('Log eerst in.');
     const version=admin.state.editVersions.get(product.key)||0;

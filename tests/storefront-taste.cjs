@@ -167,7 +167,7 @@ module.exports = async function ({context, width, output, personalise}) {
  await close();
  const beforeSearch=await read();
  await shop.locator('.shop').click();await shop.getByRole('menuitem',{name:'Collectie',exact:true}).click();
- await shop.getByRole('searchbox').fill('jas');await shop.getByRole('combobox',{name:'Materiaal',exact:true}).selectOption('Wol');
+ await shop.getByRole('searchbox',{name:'Zoek in Collectie',exact:true}).fill('jas');await shop.getByRole('combobox',{name:'Materiaal',exact:true}).selectOption('Wol');
  assert.deepEqual(await read(),beforeSearch,'search and filters never learn');
  await close();
  // Readable labels instead of bare stored values ("Ja", "200-350"); other values name their kind.

@@ -101,7 +101,9 @@ async function layout(frame,width) {
     assert.equal(actual[selector][dimension],loading[selector][dimension],'loading status does not move '+selector);
    const outer=await shop.locator('#ph').boundingBox(),expectedWidth=width<=480?width:390;
    assert.equal(outer.width,expectedWidth);assert.equal(outer.height,844);
-   assert.equal(outer.x,(width-expectedWidth)/2);assert.equal(outer.y,0);
+   if(width<900)assert.equal(outer.x,(width-expectedWidth)/2);
+   else {const side=await shop.locator('#side').boundingBox();assert.ok(side&&outer.x>=side.x+side.width,'desktop conversation is left of shop, as in mock');assert.ok(Math.abs(side.x-(width-outer.x-outer.width))<1,'shop and conversation centered together');}
+   assert.equal(outer.y,0);
    assert.deepEqual(await shop.locator('#ph').evaluate(el=>{const c=getComputedStyle(el);return [c.borderWidth,c.borderRadius,c.boxShadow];}),['0px','0px','none']);
    // Normalize only the reference presentation box to the available app dimensions.
    // Its interior markup, CSS, padding, controls and container queries stay untouched.
@@ -112,8 +114,12 @@ async function layout(frame,width) {
    // Approved on 15 November 2026: the title button carries a 22px i-icon instead of the 18px arrow,
    // and the staff entrance moved from the top bar to the Shop menu (the bar keeps its height).
    await ref.evaluate(()=>{const icon=document.querySelector('.chip.title svg');icon.setAttribute('width','22');icon.setAttribute('height','22');});
+   // Approved topbar B uses more height. Normalize only its vertical budget;
+   // all photo/name/price/navigation geometry and style comparisons remain strict.
+   await ref.addStyleTag({content:'.top{height:'+actual['.top'].h+'px;min-height:'+actual['.top'].h+'px;flex-shrink:0}'});
    const refGeometry=await layout(ref,width);
    for(const [selector,expected] of Object.entries(refGeometry))for(const [key,value] of Object.entries(expected)) {
+    if(selector==='.top'||selector==='.brand')continue; // approved topbar B
     if(selector==='.ph' && key==='radius')continue; // approved removal of the presentation frame
     if(typeof value==='number')assert.ok(Math.abs(actual[selector][key]-value)<0.1,width+'px '+selector+' '+key+': '+actual[selector][key]+' != '+value);
     else assert.equal(actual[selector][key],value,width+'px '+selector+' '+key);
@@ -265,6 +271,6 @@ async function layout(frame,width) {
    assert.deepEqual(writes,[],'no write endpoints from shopping');assert.deepEqual(errors,[]);
    await context.close();
   }
-  console.log('PASS option B storefront: unchanged main layout, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket and basket overview, personal order and lead photo, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
+  console.log('PASS option B storefront: approved topbar B normalized; unchanged photo/name/price/navigation, mobile/desktop/breakpoints, 44px controls, stable status, photo loss/sold handling, safe material/species, collection search/filter/sort, saved hearts, local basket and basket overview, personal order and lead photo, detail return/focus/scroll, signed-link renewal, empty lists, gestures, no writes. Screenshots: '+output);
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

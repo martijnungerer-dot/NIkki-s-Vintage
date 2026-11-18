@@ -1,6 +1,6 @@
 (function () {
   // Option B, using only the existing public NikkiStore catalog.
-  var ITEMS = [];
+  var ITEMS = [], ALL_ITEMS = [], SEARCH_IDS = null;
   // Personal order and lead photo per piece (docs/SMAAKPROFIEL.md, onderdeel 6); null = Nikki's order.
   var PERSONAL = { order: null, lead: {} };
   var CLOSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -74,7 +74,7 @@
     if (!keepTrack) renderTrack();
     if (fade) { var el = $('photo'); el.classList.remove('wissel'); void el.offsetWidth; el.classList.add('wissel'); }
   }
-  function goItem(i) { if (!ITEMS[i] || i === S.item) return; S.prev = S.item; S.item = i; S.photo = primary(ITEMS[i]); S.zoom = false; closeAll(); render(true); }
+  function goItem(i) { if (!ITEMS[i] || i === S.item) return; S.prev = S.item; S.item = i; S.photo = primary(ITEMS[i]); S.zoom = false; closeAll(); render(true); window.dispatchEvent(new CustomEvent("nikki-browse")); }
   function goPhoto(step, wrap) {
     var count=ITEMS[S.item]?.images.length || 0; if(!count)return;
     var p = S.photo + step; S.photo = wrap ? (p + count) % count : Math.max(0, Math.min(count-1, p)); S.zoom = false;
@@ -102,11 +102,13 @@
     'Mijn favorieten':{query:'',material:'',sort:'order',scroll:0}
   };
   function fold(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('nl-NL'); }
+  function searchWords(query) {
+    var words=fold(query).trim().split(/\s+/).filter(Boolean);
+    return ALL_ITEMS.filter(it=>words.every(word=>fold([it.title,it.description,it.material,['Ja','Alleen kraag of rand'].includes(it.furClass)?it.species:''].join(' ')).includes(word)));
+  }
   function listItems() {
-    var state=lists[destination], words=fold(state.query).trim().split(/\s+/).filter(Boolean);
-    var items=ITEMS.filter(it=>(destination!=='Mijn favorieten' || S.liked[it.displayId]) &&
-      (!state.material || it.material===state.material) &&
-      words.every(word=>fold([it.title,it.description,it.material,['Ja','Alleen kraag of rand'].includes(it.furClass)?it.species:''].join(' ')).includes(word)));
+    var state=lists[destination];
+    var items=searchWords(state.query).filter(it=>(destination!=='Mijn favorieten' || S.liked[it.displayId]) && (!state.material || it.material===state.material));
     if(state.sort==='price-up')items.sort((a,b)=>a.priceMinor-b.priceMinor);
     if(state.sort==='price-down')items.sort((a,b)=>b.priceMinor-a.priceMinor);
     if(state.sort==='name')items.sort((a,b)=>a.title.localeCompare(b.title,'nl-NL',{sensitivity:'base'}));
@@ -158,7 +160,7 @@
       $('cart').innerHTML=header+'<p class="muted" style="margin:48px 0 0;text-align:center;font-size:18px">Proefboetiek · bekijken en uitproberen, nog niet afrekenen.</p>';
       return;
     }
-    var state=lists[destination], materials=Array.from(new Set(ITEMS.map(it=>it.material).concat(state.material).filter(v=>typeof v==='string' && v.trim()))).sort((a,b)=>a.localeCompare(b,'nl-NL'));
+    var state=lists[destination], materials=Array.from(new Set(ALL_ITEMS.map(it=>it.material).concat(state.material).filter(v=>typeof v==='string' && v.trim()))).sort((a,b)=>a.localeCompare(b,'nl-NL'));
     $('cart').innerHTML=header+
       (destination==='Mijn favorieten'?'<p class="catalog-note muted">Je hartjes worden alleen in deze browser bewaard.</p>':'')+
       '<div class="catalog-tools"><div class="catalog-search"><input id="catalog-search" data-field="query" type="search" autocomplete="off" aria-label="Zoek in '+destination+'" placeholder="Zoek een stuk" value="'+esc(state.query)+'">'+
@@ -193,6 +195,7 @@
     $('catalog-results').scrollTop=scroll;
   }
   function selectFromList(key,detail) {
+    if(SEARCH_IDS && !ITEMS.some(it=>it.key===key)) { window.dispatchEvent(new CustomEvent("nikki-search-stop")); }
     var index=ITEMS.findIndex(it=>it.key===key);if(index<0)return;
     var origin={destination,key,act:detail?'list-info':'list-photo'};
     closeAll(false);goItem(index);
@@ -235,7 +238,7 @@
     else if (a === 'staff') { closeAll(); window.parent.NikkiApp.openAccount(); }
     else if (a === 'list-photo' || a === 'list-info') selectFromList(b.dataset.key,a==='list-info');
     else if (a === 'list-like' || a === 'list-cart') {
-      var item=ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;
+      var item=ALL_ITEMS.find(it=>it.key===b.dataset.key);if(!item)return;
       if(a==='list-like'){S.liked[item.displayId]=!S.liked[item.displayId];save('gsf-liked',S.liked);emit(S.liked[item.displayId]?'like':'unlike',item);}
       else toggleCart(item.key);
       render(false);renderResults();
@@ -319,7 +322,8 @@
         price:new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:r.priceMinor%100?2:0}).format(r.priceMinor/100),
         measurements:r.measurements, images:r.images.map(i=>({src:i.src,path:i.path,role:i.role,main:i.main}))
       }));
-      ITEMS=ordered(ITEMS);
+      ALL_ITEMS=ordered(ITEMS);
+      ITEMS=SEARCH_IDS ? ALL_ITEMS.filter(it=>SEARCH_IDS.has(it.key)) : ALL_ITEMS.slice();
       N=ITEMS.length;
       var index=ITEMS.findIndex(it=>it.key===current?.key), same=index>=0;
       S.item=same?index:0; S.prev=ITEMS.findIndex(it=>it.key===previous);
@@ -346,7 +350,7 @@
     },
     put(record,reveal=true) {
       // Rebuild in Nikki's order, not the personal one, so that her order survives (review MED-4).
-      this.replace([...ITEMS.slice().sort((a,b)=>a.boutique-b.boutique).filter(it=>it.key!==record.key),record]);
+      this.replace([...ALL_ITEMS.slice().sort((a,b)=>a.boutique-b.boutique).filter(it=>it.key!==record.key),record]);
       if(reveal)goItem(ITEMS.findIndex(it=>it.key===record.key));
     },
     status(message, state='success') {
@@ -359,7 +363,7 @@
   var SCREENS={}, catalogListeners=[], signalListeners=[];
   function toggleCart(key, value=!S.cart[key]) {
     var was=!!S.cart[key]; if(value)S.cart[key]=true; else delete S.cart[key]; save('nikki-cart',S.cart); render(false, true);
-    var it=ITEMS.find(x=>x.key===key); if(it && was!==!!value)emit(value?'cart':'uncart',it);
+    var it=ALL_ITEMS.find(x=>x.key===key); if(it && was!==!!value)emit(value?'cart':'uncart',it);
   }
   // Signals for the taste profile: only a copy of public fields, never photos or links.
   function publicCopy(it) { return {key:it.key,priceMinor:it.priceMinor,material:it.material,model:it.model,colour:it.colour,length:it.length,fit:it.fit,era:it.era,details:it.details.slice(),furClass:it.furClass}; }
@@ -367,7 +371,24 @@
   function emit(type,it) { emitSignal({type,item:publicCopy(it)}); }
   var api={
     esc, face, CLOSE, bagIcon, heartIcon,
-    items:()=>ITEMS.slice(),
+    items:()=>ALL_ITEMS.slice(),
+    searchWords,
+    closePanels:()=>closeAll(false),
+    visibleItems:()=>ITEMS.slice(),
+    filterSearch(ids, refresh=false) {
+      var current=ITEMS[S.item], previous=ITEMS[S.prev]?.key, selected=current?.images[S.photo]?.path;
+      SEARCH_IDS=Array.isArray(ids)?new Set(ids):null;
+      ITEMS=SEARCH_IDS?ALL_ITEMS.filter(it=>SEARCH_IDS.has(it.key)):ALL_ITEMS.slice();N=ITEMS.length;
+      var index=ITEMS.findIndex(it=>it.key===current?.key), same=index>=0;
+      S.item=same?index:0;S.prev=ITEMS.findIndex(it=>it.key===previous);
+      if(S.prev<0 || S.prev===S.item)S.prev=N>1?(S.item+N-1)%N:0;
+      var photoIndex=refresh&&same?ITEMS[S.item].images.findIndex(i=>i.path===selected):-1;
+      S.photo=photoIndex>=0?photoIndex:N?primary(ITEMS[S.item]):0;
+      S.zoom=refresh&&same&&photoIndex>=0&&S.zoom;
+      // A signed-link/catalog refresh is not a navigation: preserve open screens and photos.
+      if(!refresh || (!same&&S.open==='info'))closeAll(false);
+      render(false, refresh&&same&&photoIndex>=0);
+    },
     publicCopy,
     current:()=>ITEMS[S.item] || null,
     cartKeys:()=>Object.keys(S.cart),
@@ -386,7 +407,8 @@
       var current=ITEMS[S.item]?.key, previous=ITEMS[S.prev]?.key;
       PERSONAL={order,lead};
       // Rebuild from Nikki's order so that switching personalisation off restores it exactly.
-      ITEMS=ordered(ITEMS.slice().sort((a,b)=>a.boutique-b.boutique));N=ITEMS.length;
+      ALL_ITEMS=ordered(ALL_ITEMS.slice().sort((a,b)=>a.boutique-b.boutique));
+      ITEMS=SEARCH_IDS?ALL_ITEMS.filter(it=>SEARCH_IDS.has(it.key)):ALL_ITEMS.slice();N=ITEMS.length;
       if(!N)return;
       if(choice?.fromStart) { // only before anything is painted: start at the best match
         S.item=0;S.prev=N-1===0?0:N-1;S.photo=primary(ITEMS[0]);S.zoom=false;

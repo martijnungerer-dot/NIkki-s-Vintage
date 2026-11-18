@@ -37,12 +37,12 @@ Alles in deze map is uitsluitend een skelet om gevoel bij te krijgen. Een werken
 
 ## Zoeken als gesprek (mock, november 2026)
 
-[zoeken-gesprek.html](zoeken-gesprek.html): de zoekbalk uit bovenbalk B ("Wat zoek je?") als gesprek voor bezoekers. Martijn koos op 16 november 2026 voor een zoekbalk en voor variant B. Alleen een mock met een nagespeelde AI en voorbeeldstukken; de winkel is niet veranderd.
+[zoeken-gesprek.html](zoeken-gesprek.html): de zoekbalk uit bovenbalk B ("Wat zoek je?") als gesprek voor bezoekers. Martijn koos op 16 november 2026 voor een zoekbalk en voor variant B. De mock blijft de ontwerpbron met nagespeelde AI en voorbeeldstukken. De implementatie in de echte winkel staat beschreven in [het frontendplan](../docs/FRONTEND-PLAN.md#zoeken-als-gesprek).
 
 - **Telefoon:** geen apart scherm. Het gesprek leeft in de zoekbalk: daaronder één zin en hooguit één rij knoppen. De gevonden stukken staan in de grote foto en de onderrij (vier vakjes, leeg en uit als er minder zijn). Wie gaat bladeren, ziet de strook inklappen tot één regel ("2 van 3"); "Verder vragen" opent hem weer. Het kruisje in de zoekbalk stopt het zoeken.
 - **Laptop (vanaf 900 px):** het hele gesprek in een kolom naast de winkel, met de gevonden stukken als raster.
 - **Hulp bij zoeken (17 november):** een knop rechtsboven (schuifjes, waar in optie B het accounticoon stond) met vier standen: *Uit* (geen AI; de zoekbalk zoekt op woorden zoals de Collectie-zoekfunctie, op de laptop verdwijnt de gesprekskolom), *Zakelijk* (korte antwoorden, alleen knoppen om te verfijnen), *Gewoon* (standaard) en *Meer uitleg* (zegt ook waarom, bijvoorbeeld wat "warm" betekent). De keuze wordt in de browser onthouden.
-- **Uitvergroten:** op de telefoon opent het pijltjesicoon in de strook het hele gesprek (alles wat gevraagd en geantwoord is); een tik op een stuk of het verkleinicoon sluit het weer. Op de laptop staat het hele gesprek al in de kolom.
+- **Uitvergroten:** op de telefoon opent in de echte winkel de hele strook (ook de zin zelf) het hele gesprek (alles wat gevraagd en geantwoord is); een tik op een stuk of het verkleinicoon sluit het weer. Op de laptop staat het hele gesprek al in de kolom.
 - **Links:** een stuk dat het gesprek bij naam noemt, staat cursief in de zin en als knop eronder ("Lange wollen jas · € 180 →"); een tik toont het in de grote foto. Ook in het teruggekeken gesprek.
 - **Terughoudend aanraden:** stukken alleen bij naam als er hooguit twee zijn (of één "dichtbij" als niets past); geen "perfect voor jou" of andere aanprijzing; bij veel uitkomsten blader je zelf.
 - **Regels:** hooguit één vervolgvraag, en alleen als die helpt (bont, lengte, prijs). Maat alleen als de bezoeker erom vraagt: meet een jas die goed zit plat van oksel tot oksel; het antwoord zegt "past waarschijnlijk", nooit "jouw maat". Niets gevonden: eerlijk zeggen en iets dichtbij voorstellen. Alleen kenmerken uit de catalogus.

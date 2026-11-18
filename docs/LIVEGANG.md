@@ -93,3 +93,43 @@ Het script gebruikt alleen de publieke gegevens uit `app/config.js` en kost éé
 - Gebruik per dag, in de SQL-editor van Supabase: `select day, calls from personalise_usage where scope='global' order by day desc;`
 - Gemini direct stoppen: verwijder `GEMINI_API_KEY` of `PERSONALISE_MODEL`. De winkel krijgt dan de lokale volgorde.
 - De functie helemaal weghalen: `npx supabase functions delete personalise`. De winkel valt dan terug op de lokale volgorde en blijft werken.
+
+
+## Zoeken als gesprek uitrollen
+
+Nieuwe openbare functie `zoek`, gebouwd op verzoek van Martijn. **Niet vanuit deze taak uitgerold; live Supabase/Gemini niet getest.** De winkel valt terug op woordzoeken zolang de functie of configuratie ontbreekt.
+
+Na review en merge, in de projectmap op Windows:
+
+```powershell
+npx.cmd supabase db push --remote
+npx.cmd supabase functions deploy zoek
+```
+
+Bekijk eerst welke migraties klaarstaan: `db push --remote` voert ook andere nog niet toegepaste migraties uit. De zoekmigratie `20261117090000_zoek_usage.sql` voegt uitsluitend eigen quotatellers en een serverfunctie toe; catalogus en verkoopvoorraad worden niet veranderd. De frontend volgt de bestaande releaseprocedure.
+
+Configuratie in Supabase Edge Functions → Secrets:
+
+- `ZOEK_MODEL` is optioneel: kies de exacte naam van een beschikbaar snel Flash-Lite-model. Zonder deze instelling gebruikt zoeken `PERSONALISE_MODEL`, anders `GEMINI_MODEL`.
+- Bestaande `GEMINI_API_KEY` en `ALLOWED_ORIGINS` worden hergebruikt. Sta alleen de werkelijke winkelherkomsten toe; geen wildcard.
+- Supabase levert `SUPABASE_URL` en de serversleutel. Geen sleutel in de browser toevoegen.
+
+`verify_jwt = false` is bewust: bezoekers hoeven niet in te loggen. De handler controleert herkomst, invoer (maximaal 8 kB, vraag 300 tekens, zes contextbeurten), quotum vóór Gemini en de modeluitvoer. Er zijn maximaal 40 aanvragen per bezoeker en 2000 in totaal per UTC-dag. De bezoekersteller gebruikt dezelfde dagelijks wisselende HMAC-afgeleide als `personalise`; geen IP-adres of gesprek wordt opgeslagen. De tellers bevatten alleen dag, afgeleide sleutel en aantal aanvragen. Een herkomstcontrole is geen gebruikersauthenticatie; de totale daglimiet begrenst het verbruik.
+
+Na uitrol handmatig controleren: alle vier hulpstanden, een normale vraag, nul resultaten, een vervolgvraag, een maatverzoek en terugval bij onbereikbare functie. Uit mag geen aanroep naar `zoek` doen. In de browser mogen alleen gevonden publieke stukken verschijnen. Controleer de functielogs op korte foutcodes; bezoekerstekst hoort daar niet in.
+
+Terugdraaien: rol de eerdere frontendversie terug of verwijder alleen de functie `zoek`. De nieuwe frontend valt bij afwezigheid van de functie terug op woordzoeken. De quotatabel kan blijven bestaan; verwijder geen catalogusgegevens. Alleen `ZOEK_MODEL` weghalen schakelt AI niet uit, omdat de twee bestaande modelinstellingen als terugval dienen.
+
+### Zoekfoutcodes
+
+| Code | Betekenis / actie |
+|---|---|
+| `ORIGIN_DENIED`, `METHOD`, `BAD_INPUT` | Controleer herkomst, methode of invoercontract; geen Gemini-aanroep. |
+| `NOT_CONFIGURED` | Controleer Supabase-configuratie, Gemini-sleutel en modelnaam. |
+| `RATE_LIMIT` | Daglimiet bereikt; woordzoeken blijft beschikbaar. |
+| `QUOTA_UNAVAILABLE` | Controleer of de zoekmigratie is toegepast. |
+| `CATALOG_UNAVAILABLE`, `CATALOG_TOO_LARGE` | Catalogus kon niet volledig gelezen worden (grens 5000); geen gedeeltelijke resultaten aanbieden. |
+| `GEMINI_FAILED`, `INVALID_RESULT` | Modelverzoek of modeluitvoer geweigerd; woordzoeken als terugval. |
+| `TIMEOUT`, `UNAVAILABLE` | Tijdelijke netwerk-/dienstfout; woordzoeken als terugval. |
+
+De handler logt uitsluitend `zoek:` met een vaste foutcode, nooit de vraag, context, modeltekst of catalogus.

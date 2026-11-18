@@ -46,7 +46,9 @@ shop=patchShop(shop,'<p class="note">Ontdekken, optie B. Ontwerp met voorbeeldge
 // visitors find the information panel (maten, materiaal).
 shop=patchShop(shop,'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5A50" stroke-width="1.6" aria-hidden="true" style="flex:none"><path d="M6 15l6-6 6 6"/></svg>',
   '<svg id="info-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E2420" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>');
-shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n</style>');
+// Approved search bar B replaces only the header; the rest remains option B.
+shop=patchShop(shop,'<header class="top"><span class="brand">Guaranteed Secondhand Fur</span>\n  </header>',await read('app/store-search.html'));
+shop=patchShop(shop,'</style>',await read('app/store-layout.css')+'\n'+await read('app/store-search.css')+'\n</style>');
 await mkdir(new URL('dist/cloud/',root),{recursive:true});
 for(const file of ['index.html','style.css','config.js','api.js','images.js','photo-transfer.js','main.js','manifest.webmanifest'])await copyFile(new URL('app/'+file,root),new URL('dist/cloud/'+file,root));
 // App icon from the GSF brooch (docs/brand/gsf-broche.webp).

@@ -86,5 +86,23 @@ test('actual PostgreSQL migration: RLS, photos, conflicts, sold preservation, al
     });
     await db.exec("update public.personalise_usage set calls=2000 where scope='global'");
     await as('service_role',null,async()=>{await assert.rejects(()=>db.query('select public.consume_personalise($1)',['b'.repeat(32)]),/RATE_LIMIT/,'global daily ceiling');});
+    // Search owns a separate counter. Only service_role may consume it or inspect usage.
+    for(const role of ['anon','authenticated'])await as(role,role==='anon'?null:staff,async()=>{
+      await assert.rejects(()=>db.query('select public.consume_zoek($1)',[client]),/permission denied/);
+      await assert.rejects(()=>db.query('select * from public.zoek_usage'),/permission denied/);
+    });
+    await as('service_role',null,async()=>{
+      await assert.rejects(()=>db.query('select public.consume_zoek($1)',['203.0.113.9']),/BAD_CLIENT/);
+      for(let i=0;i<40;i++)await db.query('select public.consume_zoek($1)',[client]);
+      await assert.rejects(()=>db.query('select public.consume_zoek($1)',[client]),/RATE_LIMIT/);
+    });
+    assert.equal((await db.query("select calls from public.zoek_usage where scope='global'")).rows[0].calls,40,'rejected client call rolls back global increment');
+    await db.exec("update public.zoek_usage set calls=1999 where scope='global'");
+    await as('service_role',null,async()=>{
+      await db.query('select public.consume_zoek($1)',['b'.repeat(32)]);
+      await assert.rejects(()=>db.query('select public.consume_zoek($1)',['c'.repeat(32)]),/RATE_LIMIT/);
+    });
+    assert.equal((await db.query("select calls from public.zoek_usage where scope='global'")).rows[0].calls,2000);
+    assert.equal((await db.query("select calls from public.personalise_usage where scope='global'")).rows[0].calls,2000,'search does not consume personalisation budget');
   }finally{await db.close();}
 });

@@ -14,3 +14,8 @@ verify_jwt = false
 # Free sentences in Nieuw stuk (staff only). The handler checks login, staff and a daily limit
 # (consume_understanding) before any paid call, like analyse.
 verify_jwt = false
+
+[functions.zoek]
+# Public search without login. The handler enforces ALLOWED_ORIGINS, an 8 kB body ceiling,
+# and consume_zoek's daily anonymous/global limits before Gemini; it reads only public catalog fields.
+verify_jwt = false

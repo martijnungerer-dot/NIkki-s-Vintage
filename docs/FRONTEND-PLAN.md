@@ -61,3 +61,20 @@ Regels voor B, ook te lezen in het startbestand:
 - Elk onderdeel komt in een eigen kleine PR met beelden op 390 en 320 px naast optie B, en tests voor publiek/privé, unieke voorraad (de mand reserveert niets) en foutafhandeling.
 - Na een merge van een ander onderdeel: haal `main` op en test je eigen onderdeel opnieuw.
 - Werk na afronding de tabel hierboven bij, en zet een regel in [STATUS.md](STATUS.md).
+
+
+## Zoeken als gesprek
+
+Opdracht en goedkeuring van Martijn, 17 november 2026. De ontwerpbron is [de zoekmock](../concept/zoeken-gesprek.html), met bovenbalk B: GSF-embleem naast de naam, zoekbalk eronder, Hulp bij zoeken rechtsboven. Dit zijn expliciet goedgekeurde afwijkingen van optie B. Foto, naam/prijs, onderrij met vier vakjes, Shop-menu en bestaande winkelonderdelen blijven behouden. Op lage telefoons neemt de zoekbalk ruimte van de foto in.
+
+De zoekervaring gebruikt dezelfde publieke NikkiStore-catalogus, dezelfde woordzoekfunctie als Collectie en een tijdelijke selectie voor de grote foto en onderrij. Het kruisje herstelt de volledige catalogus. Zoeken schrijft geen smaakvoorkeuren, mand, voorraad of productgegevens. Een catalogusvernieuwing mag verkochte of ingetrokken stukken niet terugbrengen in de zoekresultaten en behoudt de geselecteerde foto en geopende winkelpanelen.
+
+- Telefoon: één zin en hooguit één rij knoppen onder de zoekbalk; bladeren klapt de strook in. Een tik op de zin opent het gesprek als paneel vanuit de strook. Verkleinen, Escape, terug of een gevonden stuk sluiten het paneel; focus keert naar de strook terug.
+- Laptop vanaf 900 px: gesprek links naast de winkel, met een raster van gevonden stukken.
+- Hulpstanden: Uit, Zakelijk, Gewoon (standaard), Meer uitleg. Alleen deze keuze wordt onthouden, met een terugval wanneer lokale opslag niet werkt. Uit gebruikt uitsluitend de bestaande woordzoekfunctie en heeft geen gesprekskolom of zoekserveraanroep.
+- De openbare functie `zoek` interpreteert de vraag; alleen de server past filters op de gepubliceerde catalogus toe. Reacties bevatten geen ongecontroleerde modelclaims. Maten zijn plat gemeten borstbreedtes in cm, met ±2 cm vergelijking en uitsluitend op verzoek; geen lichaamsmaten of pasgarantie.
+- Bij ontbrekende functie, quotum-, Gemini- of netwerkfouten blijft woordzoeken beschikbaar met een rustige melding. Gesprekken worden niet op de server opgeslagen; alleen de laatste zes korte beurten gaan mee als context.
+
+Uitbreiding van het bestaande NikkiShop-contract: `searchWords(query)` deelt de Collectie-zoeklogica; `filterSearch(ids, refresh)` selecteert de zichtbare stukken zonder de catalogus te vervangen; `visibleItems()` geeft die selectie. `items()` blijft de volledige catalogus teruggeven voor winkelmand en favorieten. Zoeksignalen worden niet aan het smaakprofiel doorgegeven.
+
+Spraak/golfjes zijn in deze uitvoering weggelaten; typen en verfijnknoppen zijn de invoerroutes. Uitrol en terugdraaien staan in [LIVEGANG.md](LIVEGANG.md#zoeken-als-gesprek-uitrollen).

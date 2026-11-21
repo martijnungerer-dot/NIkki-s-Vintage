@@ -40,6 +40,7 @@ test('the answer is cut down to known fields and a short reply; failures only lo
   assert.deepEqual(normalizeResult({velden:{bont:'Misschien',kleur:'  Cognac ',prijs:'99',bijzonderheden:['Vlek',3]},reactie:'x'.repeat(300),extra:1}),{velden:{kleur:'Cognac',bijzonderheden:['Vlek']},reactie:'x'.repeat(160)});
   assert.throws(()=>normalizeResult([]));
   const s=setup({status:503});const r=await s.request();assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'GEMINI_BUSY'});
+  const lim=setup({status:429});const l=await lim.request();assert.equal(l.status,503);assert.deepEqual(await l.json(),{error:'GEMINI_LIMIT'});
   assert.ok(s.logs.every(l=>!l.includes('lammy')&&!l.includes('secret')));
   const bad=setup({result:'niet json'});assert.equal((await bad.request()).status,502);
   delete setup().settings.GEMINI_MODEL;

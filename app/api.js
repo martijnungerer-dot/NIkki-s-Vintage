@@ -31,6 +31,7 @@ export class Api {
         response.status === 429 ? 'De analyselimiet is bereikt. Vul zelf in of probeer morgen opnieuw.' :
         response.status === 403 ? 'Dit account heeft geen beheerrechten.' :
         data?.error === 'NOT_CONFIGURED' ? 'Fotoanalyse is nog niet ingesteld. Je kunt zelf invullen.' :
+        data?.error === 'GEMINI_LIMIT' ? 'De limiet van de Gemini-sleutel is bereikt. Vul zelf in of probeer het later opnieuw.' :
         data?.error === 'GEMINI_BUSY' ? 'Gemini is even te druk. Wacht een minuut en probeer opnieuw, of vul zelf in.' :
         data?.error === 'ANALYSIS_TIMEOUT' ? 'Gemini deed er te lang over. Probeer het nog eens of vul zelf in.' :
         data?.error === 'BAD_IMAGES' ? 'Een foto is niet geschikt voor analyse. Kies een andere foto of vul zelf in.' :

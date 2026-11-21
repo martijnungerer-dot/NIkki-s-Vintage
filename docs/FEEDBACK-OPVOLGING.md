@@ -53,3 +53,18 @@ Besluit van Martijn nodig: voorkeur A of B (en of de zoekbalk überhaupt in de w
 
 ## Tests
 `tests/review-queue.cjs` (nieuw), `tests/review-notes.test.mjs` (ontdubbeling, conflict, auteurscheiding, herhalen bij bereikt quotum), `tests/admin-collection.cjs` (directe prijsbevestiging, Ander bedrag, navigatie), `tests/review-kit.cjs`, `tests/cloud-browser.cjs`. Live Supabase is niet getest.
+
+## Ronde 19 november 2026
+
+Zes opmerkingen (#7–#12), gelezen op 21 november 2026 rechtstreeks uit `public.review_notes` (alleen lezen; records niet gewijzigd). Alle zes op een telefoon (384 × 693).
+
+| # | Scherm | Feedback | Afhandeling |
+|---|--------|----------|-------------|
+| 7 | Nieuw stuk | "Gemini wilt niet met mij werken" bij *Gemini is even te druk* | De functies `analyse` en `begrijp` gaven zowel 429 (limiet van de sleutel) als 503 (Google overbelast) als `GEMINI_BUSY`. Nu: 429 → `GEMINI_LIMIT` met de melding *De limiet van de Gemini-sleutel is bereikt*, 503 blijft *even te druk*. De echte reden staat in de functielog (`HTTP_429 RESOURCE_EXHAUSTED` of `HTTP_503 UNAVAILABLE`). Een herhaalde melding wijst waarschijnlijk op de limiet van de gratis sleutel; niet live gecontroleerd. |
+| 8 | Beheer | "Concept foetsie" bij *Sheirling met persianer kraag* | Nagespeeld: niet-opgeslagen wijzigingen aan een stuk verdwenen als je via Jouw collectie hetzelfde stuk opnieuw opende (de vraag *Je niet-opgeslagen invoer wordt vervangen* bevestigen haalde de opgeslagen versie terug). Nu opent Bewerken bij hetzelfde stuk gewoon de lopende wijzigingen; bij een ander stuk noemt de vraag welk stuk verloren gaat. Of dit precies Nikki's situatie was, is niet zeker. |
+| 9 | Nieuw stuk | "Foto galerij niet zichtbaar" | Nog niet opgepakt. |
+| 10 | Nieuw stuk | "8 fotos zijn te weinig" | Nog niet opgepakt. Het maximum van 8 is ook een servergrens van `analyse` (en kosten per analyse); verhogen vraagt een keuze van Martijn. |
+| 11 | Nieuw stuk | "Foto is heel klein" | Nog niet opgepakt. |
+| 12 | Stuk bewerken | "Terug knop werkt niet" | Nagespeeld: de terugknop opende de laatste vraag en de volgende tik sloot die weer, dus heen en weer zonder verder terug te komen. Nu gaat elke tik één beantwoorde vraag terug tot de foto's; een vraag die je opende door op een regel te tikken, sluit nog steeds met één tik. Beelden: `docs/screenshots/feedback-19-november/` (twee tikken, voor en na, 390 en 320 px). |
+
+Tests: `tests/admin-collection.cjs` (terug door alle vragen, wijzigingen behouden bij opnieuw openen), `tests/cloud-server.test.mjs`, `tests/begrijp-server.test.mjs`, `tests/cloud-api.test.mjs` (aparte codes en meldingen, geen details van Google in het antwoord).

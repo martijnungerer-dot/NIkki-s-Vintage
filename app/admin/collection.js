@@ -43,8 +43,11 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
     open.append(photo,el('span','piece-title',row.data.title),el('span','piece-price',euro(row.data.priceMinor)));
     open.addEventListener('click',()=>action(async()=>{
       if(pendingSold.has(row.id))return;
-      const unsaved=(()=>{try{return $('intake').contentWindow.NikkiIntake.hasUnsavedInput();}catch{return true;}})();
-      if(unsaved&&!confirm('Dit opent het opgeslagen stuk. Je niet-opgeslagen invoer wordt vervangen. Doorgaan?'))return;
+      const intake=(()=>{try{return $('intake').contentWindow.NikkiIntake;}catch{return null;}})();
+      // Feedback 19 Nov 2026 ("Concept foetsie"): reopening the same piece kept wiping its unsaved changes.
+      if(intake?.editingUnsaved?.(row.id)){show('intake');say('Je niet-opgeslagen wijzigingen staan er nog.');return;}
+      const unsaved=(()=>{try{return intake.hasUnsavedInput();}catch{return true;}})(), title=(()=>{try{return intake.unsavedTitle();}catch{return '';}})();
+      if(unsaved&&!confirm((title?'Je wijzigingen aan "'+title+'" zijn nog niet opgeslagen':'Je hebt een stuk dat nog niet is opgeslagen')+'. Als je dit stuk opent, gaan die verloren. Doorgaan?'))return;
       await $('intake').contentWindow.NikkiIntake.load(await hydrate(row));state.editVersions.set(row.id,row.version);show('intake');say('Stuk geopend.');
     }));
     const foot=el('div','piece-foot'), status=el('span','piece-status',sold?'Verkocht':pending?'Wordt verkocht voor '+euro(entry.price)+'…':'In de boetiek');

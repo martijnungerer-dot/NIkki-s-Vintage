@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 21 november 2026 — feedbackronde 19 november (deel 1)
+- Zes nieuwe opmerkingen (#7–#12, telefoon 384 px) read-only gelezen uit `review_notes` via de Supabase-sleutel op de cloudomgeving; records niet gewijzigd. Afhandeling in [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md#ronde-19-november-2026).
+- Gerepareerd: terugknop in Nieuw stuk/Stuk bewerken gaat stap voor stap terug tot de foto's (was heen en weer tussen overzicht en laatste vraag); hetzelfde stuk opnieuw openen via Bewerken behoudt niet-opgeslagen wijzigingen (werden vervangen); Gemini-limiet (429) en overbelasting (503) hebben elk een eigen melding.
+- Build, 110 Node-/PGlite-tests, alle browsertests en projectcontrole geslaagd. Live Supabase/Gemini niet getest; Edge Functions `analyse` en `begrijp` moeten opnieuw worden uitgerold voor de nieuwe melding.
+
 ### 18 november 2026 — zoeken als gesprek in de echte winkel
 - Op branch `codex/zoeken-gesprek`: bovenbalk B, vier hulpstanden, mobiel gesprekspaneel en laptopkolom. Dezelfde catalogus en Collectie-woordzoekfunctie; geen zoeksignalen naar smaakprofiel, geen voorraad- of Airtablemutaties.
 - Openbare functie `zoek` met serverfilters, publieke catalogusprojectie, maat alleen bij expliciete platte borstbreedte (±2 cm), begrensde context en eigen quotum (40 per bezoeker/2000 totaal per UTC-dag). Migratie `20261117090000_zoek_usage.sql`; geen IP of gesprek opgeslagen.

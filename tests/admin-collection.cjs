@@ -238,6 +238,31 @@ async function safeguards(){
       assert.equal(await f.page.locator('#empty').isVisible(),true);
     }finally{await f.browser.close();}
   }
+  // Feedback 19 Nov 2026: the back button in Stuk bewerken only toggled between the summary and the last
+  // question ("Terug knop werkt niet"), and reopening the same piece wiped its unsaved changes ("Concept foetsie").
+  {
+    const other={...structuredClone(garment),id:'11111111-1111-4111-8111-000000000002',display_id:2,data:{...garment.data,title:'Korte jas'}};
+    const f=await fixture(390,{rows:[structuredClone(garment),other]});const dialogs=[];f.page.on('dialog',d=>dialogs.push(d.message()));
+    try{
+      const p=f.page,fr=p.frameLocator('#intake');await f.login();
+      const open=async t=>{await p.locator('.piece-open',{hasText:t}).click();};
+      await open('Leren mantel');await p.locator('#status').filter({hasText:'Stuk geopend.'}).waitFor({state:'attached'});
+      const asked=[];
+      for(let i=0;i<30&&!(await fr.locator('#back').isDisabled());i++){await fr.locator('#back').click();asked.push(await fr.locator('#talk p.ai').last().innerText());}
+      assert.equal(await fr.locator('#back').isDisabled(),true,'back reaches the photos');
+      assert.ok(asked.length>10&&new Set(asked).size===asked.length,'every tap goes one question further back');
+      await p.getByRole('button',{name:'Jouw collectie'}).click();
+      await open('Leren mantel');await p.locator('#status').filter({hasText:'Stuk geopend.'}).waitFor({state:'attached'});
+      await fr.locator('#back').click();const price=fr.locator('#talk ~ * input, input').filter({visible:true}).last();
+      await price.fill('130');await price.press('Enter');await fr.getByText('€ 130').first().waitFor();
+      dialogs.length=0;await p.getByRole('button',{name:'Jouw collectie'}).click();await open('Leren mantel');
+      await p.locator('#status').filter({hasText:'niet-opgeslagen wijzigingen staan er nog'}).waitFor({state:'attached'});
+      assert.equal(await fr.getByText('€ 130').count()>0,true,'unsaved change kept');assert.deepEqual(dialogs,[]);
+      await p.getByRole('button',{name:'Jouw collectie'}).click();await open('Korte jas');
+      assert.match(dialogs.at(-1)||'',/wijzigingen aan "Leren mantel" zijn nog niet opgeslagen/);
+      assert.deepEqual(f.state.errors,[]);
+    }finally{await f.browser.close();}
+  }
   await safeguards();
   // Reproducible mobile review images; these use the same two pieces as the before images.
   fs.mkdirSync('test-results/admin',{recursive:true});
@@ -252,5 +277,5 @@ async function safeguards(){
       assert.deepEqual(f.state.errors,[]);
     }finally{await f.browser.close();}
   }
-  console.log('PASS admin collection: 390/320 grid, equal add card, actual Newsreader, 16px/44px and uniform icons, sale price and five-second undo, duplicate taps, in-flight locking, refresh failure after success, cancellation on navigation/hidden tab/version/logout, busy refresh, errors and retry, safe text and missing photos. Services mocked.');
+  console.log('PASS admin collection: 390/320 grid, equal add card, actual Newsreader, 16px/44px and uniform icons, sale price and five-second undo, duplicate taps, in-flight locking, refresh failure after success, cancellation on navigation/hidden tab/version/logout, busy refresh, errors and retry, safe text and missing photos, back button through every question, unsaved edits kept on reopening the same piece. Services mocked.');
 })().catch(e=>{console.error(e);process.exit(1);});

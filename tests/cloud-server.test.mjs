@@ -29,8 +29,12 @@ test('invalid image counts and signatures rejected before quota/payment',async()
 });
 test('quota is durable RPC gate and errors never leak upstream details or secrets',async()=>{
   const s=setup({quota:false});assert.equal((await s.request()).status,429);assert.equal(s.calls.length,3);
-  // Upstream 429 (Google busy or over its limit) has its own code, without upstream details.
-  const u=setup({upstreamOK:false});const response=await u.request();assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'GEMINI_BUSY'});
+  // Upstream 429 (the key's own limit) and 503 (Google overloaded) each have their own code, without upstream details.
+  const u=setup({gemini:()=>Response.json({error:{status:'RESOURCE_EXHAUSTED'}},{status:429})});const response=await u.request();assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'GEMINI_LIMIT'});
+  assert.ok(u.logs.some(l=>l.includes('HTTP_429 RESOURCE_EXHAUSTED')),'the log keeps the real reason');
+  const busy=setup({gemini:()=>Response.json({error:{status:'UNAVAILABLE',message:'overloaded secret-gemini'}},{status:503})});
+  const r=await busy.request();assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'GEMINI_BUSY'});
+  assert.ok(busy.logs.every(l=>!l.includes('secret')&&!l.includes('overloaded')));
 });
 test('server chooses instructions/model; output allowlist omits price and measurements; species is only a proposal',async()=>{
   const s=setup({result:{titel:'Korte jas',price:100,measurements:[20],bontsoort:{waarde:'Nerts'},kleur:{waarde:'Zwart',zekerheid:'hoog'},fotos:[{nr:50,rol:'bad'}]}});

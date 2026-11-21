@@ -21,6 +21,8 @@
   var steps = I.build({ get A() { return S.A; }, get G() { return S.G; }, get learned() { return learned; }, get seed() { return S.seed; },
     get sales() { return sales.filter(function (x) { return x.key !== S.draftId; }); } });
   var editing = null, multi = null, error = '', note = '', view = 0, saved = false;
+  // True when the open question was reached with the back button, so the next tap goes one step further back.
+  var steppedBack = false;
   var thinking = false, ctl = null, gen = 0, saving = false, status = '', saveError = '';
   var heroKey = '', thumbKey = '', askedKey = '';
   var voice = { on: false, state: 'idle', note: '', said: '', rec: null, hearing: false, timer: null };
@@ -559,15 +561,17 @@
     multi = null; error = ''; note = ''; dropHeard(); reply = '';
     if (b.hasAttribute('data-photos')) { stopVoice(); S.phase = 'photos'; editing = null; }
     else editing = b.getAttribute('data-edit');
-    render();
+    steppedBack = false; render();
   });
   $('back').addEventListener('click', function () {
     reply = '';
     if (heard) { dropHeard(); error = ''; return render(); }
-    if (editing) { editing = null; multi = null; error = ''; return render(); }
-    var answered = active().filter(done), last = answered[answered.length - 1];
+    // A question opened by tapping a line closes again; otherwise go one answered question further back.
+    if (editing && !steppedBack) { editing = null; multi = null; error = ''; return render(); }
+    var list = active(), at = editing ? list.map(function (s) { return s.id; }).indexOf(editing) : list.length;
+    var before = list.slice(0, at < 0 ? list.length : at).filter(done), last = before[before.length - 1];
     multi = null; error = '';
-    if (last) editing = last.id; else { stopVoice(); S.phase = 'photos'; }
+    if (last) { editing = last.id; steppedBack = true; } else { editing = null; steppedBack = false; stopVoice(); S.phase = 'photos'; }
     render();
   });
   $('restart').addEventListener('click', function () {
@@ -581,6 +585,9 @@
   // ---------- contract met de app (app/main.js, app/admin/collection.js) ----------
   window.NikkiIntake = {
     hasUnsavedInput: function () { return unsavedInput(); },
+    // Unsaved changes to this saved piece are open here: Bewerken continues them instead of replacing them.
+    editingUnsaved: function (key) { return !!key && S.edit && S.draftId === key && unsavedInput(); },
+    unsavedTitle: function () { return I.known(S.A.titel) ? String(S.A.titel) : ''; },
     // Alleen waarschuwen bij verlaten als de laatste invoer nog niet op het toestel bewaard is.
     needsLeaveWarning: function () { return unsavedInput() && (draftsOff || snapshot() !== lastDraft); },
     // Een concept terugzetten; de app roept dit pas aan als de gebruiker beheerder is.

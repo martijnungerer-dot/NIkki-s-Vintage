@@ -112,7 +112,9 @@ export function createHandler({env,fetcher,log=message=>console.warn(message)}){
       result=await ask(!noThinking.has(model));answer=await result.json().catch(()=>null);
       if(result.status===400&&/thinking/i.test(String(answer?.error?.message||''))){noThinking.add(model);result=await ask(false);answer=await result.json().catch(()=>null);}
     }catch(error){return error?.name==='TimeoutError'?failed('TIMEOUT',504,'UNDERSTAND_TIMEOUT'):failed('NETWORK');}
-    if(result.status===429||result.status===503)return failed('HTTP_'+result.status+reasonPart(answer?.error?.status),503,'GEMINI_BUSY');
+    // 429 means the Gemini key's own limit (RESOURCE_EXHAUSTED), 503 that Google is overloaded; Nikki sees which one.
+    if(result.status===429)return failed('HTTP_429'+reasonPart(answer?.error?.status),503,'GEMINI_LIMIT');
+    if(result.status===503)return failed('HTTP_503'+reasonPart(answer?.error?.status),503,'GEMINI_BUSY');
     if(!result.ok)return failed('HTTP_'+result.status+reasonPart(answer?.error?.status));
     const candidate=answer?.candidates?.[0];
     const out=candidate?.content?.parts?.filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('');

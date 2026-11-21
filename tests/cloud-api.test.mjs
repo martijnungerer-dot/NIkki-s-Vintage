@@ -161,3 +161,10 @@ test('a wrong address or password gets a plain message',async()=>{
   const {a}=api({'/auth/v1/token':()=>Response.json({code:'invalid_credentials'},{status:400})});
   await assert.rejects(a.login('x@example.test','fout'),e=>e.badLogin&&/klopt niet/.test(e.message));
 });
+
+test('Gemini key limit and Google overload get different messages for Nikki',async()=>{
+  for(const [error,text] of [['GEMINI_LIMIT',/limiet van de Gemini-sleutel/],['GEMINI_BUSY',/even te druk/]]){
+    const {a}=api({'/functions/v1/analyse':()=>Response.json({error},{status:503})});a.keep(session);
+    await assert.rejects(a.request('/functions/v1/analyse',{method:'POST',body:{}}),e=>text.test(e.message)&&e.code===error);
+  }
+});

@@ -31,6 +31,26 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
     const value=Math.round(Number(clean)*100);return value<=100000000?value:null;
   }
   let thumbs=new Map();
+  const intake=()=>$('intake').contentWindow.NikkiIntake;
+  // Unfinished new pieces (concepten) from this device: a red card each, before the saved pieces.
+  let concepts=[],conceptUrls=[];
+  async function loadConcepts(){
+    let list=[];
+    if(state.staff){try{list=await intake().concepts();}catch{list=[];}}
+    conceptUrls.forEach(u=>URL.revokeObjectURL(u));conceptUrls=[];
+    concepts=list.map(c=>{const src=c.photo?URL.createObjectURL(c.photo):null;if(src)conceptUrls.push(src);return {...c,src};});
+  }
+  function conceptCard(c){
+    const item=el('li','piece');item.dataset.status='concept';item.dataset.concept=c.id;
+    const title=c.title||'Nog geen titel';
+    const open=el('button','piece-open');open.type='button';open.setAttribute('aria-label','Verder met: '+title+'. Niet af, nog niet in de boetiek');
+    const photo=el('span','piece-photo');
+    if(c.src){const img=el('img');img.alt='';img.width=400;img.height=500;img.src=c.src;photo.append(img);}
+    open.append(photo,el('span','piece-title',title),el('span','piece-price',c.priceMinor?euro(c.priceMinor):'Nog geen prijs'));
+    open.addEventListener('click',()=>action(async()=>{await intake().openConcept(c.id);show('intake');say('Verder met je concept.');}));
+    const foot=el('div','piece-foot');foot.append(el('span','piece-status','Niet af'));
+    item.append(open,foot);return item;
+  }
   const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;};
   function card(row){
     const entry=pendingSold.get(row.id), pending=!!entry, sold=row.status==='sold';
@@ -43,9 +63,13 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
     open.append(photo,el('span','piece-title',row.data.title),el('span','piece-price',euro(row.data.priceMinor)));
     open.addEventListener('click',()=>action(async()=>{
       if(pendingSold.has(row.id))return;
-      const unsaved=(()=>{try{return $('intake').contentWindow.NikkiIntake.hasUnsavedInput();}catch{return true;}})();
-      if(unsaved&&!confirm('Dit opent het opgeslagen stuk. Je niet-opgeslagen invoer wordt vervangen. Doorgaan?'))return;
-      await $('intake').contentWindow.NikkiIntake.load(await hydrate(row));state.editVersions.set(row.id,row.version);show('intake');say('Stuk geopend.');
+      // An unfinished piece stays on this device as a concept (red card); only if this device cannot store it, ask first.
+      const lost=(()=>{try{return !!intake().cannotKeep();}catch{return true;}})();
+      if(lost&&!confirm('Bewaren op dit toestel lukt niet: je niet-opgeslagen invoer gaat verloren. Toch dit stuk openen?'))return;
+      const version=row.version;
+      await intake().load(await hydrate(row),{version});
+      state.editVersions.set(row.id,version);
+      show('intake');say('Stuk geopend.');
     }));
     const foot=el('div','piece-foot'), status=el('span','piece-status',sold?'Verkocht':pending?'Wordt verkocht voor '+euro(entry.price)+'…':'In de boetiek');
     foot.append(status);
@@ -147,14 +171,15 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
     const active=document.activeElement,id=active?.closest('.piece')?.dataset.id,cls=active?.className,selection=active?.selectionStart;
     const scroll=$('manage').scrollTop;
     [...$('items').querySelectorAll('.piece')].forEach(li=>li.remove());
-    $('empty').hidden=!state.staff||state.rows.length>0;
-    if(state.staff)$('items').append(...state.rows.map(card));
+    $('empty').hidden=!state.staff||state.rows.length+concepts.length>0;
+    if(state.staff)$('items').append(...concepts.map(conceptCard),...state.rows.map(card));
     controls();$('manage').scrollTop=scroll;
-    const replacement=[...$('items').children].find(li=>li.dataset.id===id);
+    const replacement=id&&[...$('items').children].find(li=>li.dataset.id===id);
     const focus=replacement&&[...replacement.querySelectorAll('button,input')].find(e=>e.className===cls);
-    if(focus&&!focus.disabled){focus.focus({preventScroll:true});if(selection!=null)focus.setSelectionRange(selection,selection);}
+    if(focus&&!focus.disabled){focus.focus({preventScroll:true});if(selection!=null&&typeof focus.setSelectionRange==='function')focus.setSelectionRange(selection,selection);}
   }
-  new MutationObserver(()=>{if(document.body.dataset.screen!=='manage')cancelWaiting();}).observe(document.body,{attributes:true,attributeFilter:['data-screen']});
+  // Back on Jouw collectie: show the concepts as they are now on this device.
+  new MutationObserver(()=>{if(document.body.dataset.screen!=='manage')cancelWaiting();else loadConcepts().then(render);}).observe(document.body,{attributes:true,attributeFilter:['data-screen']});
   window.addEventListener('pagehide',cancelWaiting);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelWaiting();});
   async function refresh(){
@@ -174,6 +199,7 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
     for(const id of asking.keys())if(!next.some(r=>r.id===id&&r.status==='published'))asking.delete(id);
     updateShop();
     shopStatus('');
+    await loadConcepts();
     render();
   }
   function startRenewal(){
@@ -183,5 +209,7 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
   setInterval(renew,5*60*1000);
   document.addEventListener('visibilitychange',renew);
   }
-  return {refresh,hydrate,startRenewal};
+  // Nieuw stuk always starts empty; whatever was open stays on this device as a concept.
+  $('new').addEventListener('click',()=>{try{intake().newPiece();}catch{}},{capture:true});
+  return {refresh,hydrate,startRenewal,conceptCount:async()=>{try{return (await intake().concepts()).length;}catch{return 0;}}};
 }

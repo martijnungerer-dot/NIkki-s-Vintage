@@ -67,6 +67,10 @@ ul { list-style: none; padding: 0; }
 .piece-status { font-size: var(--admin-text-min); color: var(--muted); overflow-wrap: anywhere; }
 .piece[data-status=sold] .piece-status { padding: 2px 10px; border-radius: 999px; background: var(--chip-on); color: var(--fg); }
 .piece[data-status=sold] .piece-photo img { opacity: .55; }
+/* Not finished, not in the boutique yet (Martijn, 22 Nov 2026): a red frame and the words "Niet af" (not colour alone). */
+.piece[data-status=concept] .piece-photo { position: relative; }
+.piece[data-status=concept] .piece-photo::after { content: ''; position: absolute; inset: 0; border: 3px solid var(--admin-error); border-radius: inherit; pointer-events: none; }
+.piece[data-status=concept] .piece-status { color: var(--admin-error); }
 .piece-sold { flex: none; width: var(--admin-target-min); height: var(--admin-target-min); padding: 10px; border: 0; }
 .piece-sold svg { display: block; width: 24px; height: 24px; }
 .piece-soldfor { font-size: var(--admin-text-min); color: var(--muted); }

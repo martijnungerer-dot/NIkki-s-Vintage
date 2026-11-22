@@ -191,16 +191,17 @@ export class Api {
     catch(e) { if(e.status === 404) return []; throw e; }
     return Array.isArray(rows) ? rows : [];
   }
-  async analyse(files, signal, lists) {
+  async analyse(files, signal, lists, extra = {}) {
     const images = await Promise.all(files.map(file=>new Promise((resolve,reject)=>{
       if(file.size>2*1024*1024) {reject(Error('Foto te groot voor analyse.'));return;}
       const reader = new FileReader(); reader.onerror=()=>reject(Error('Foto onleesbaar.'));
       reader.onload=()=>resolve({mimeType:file.type,data:reader.result.split(',')[1]}); reader.readAsDataURL(file);
     })));
-    // Stop button and a time limit just above the server's own 90 seconds.
-    const limit = AbortSignal.timeout(120000);
+    // Stop button and a time limit just above the server's own ~135 seconds (retry and fallback model included).
+    const limit = AbortSignal.timeout(150000);
     const both = signal && AbortSignal.any ? AbortSignal.any([signal, limit]) : signal || limit;
-    return this.request('/functions/v1/analyse',{method:'POST',body:lists ? {images, lists} : {images},signal:both});
+    const body = {images, ...(lists ? {lists} : {}), ...(Array.isArray(extra.photos) ? {photos: extra.photos} : {}), ...(extra.note ? {note: String(extra.note).slice(0, 500)} : {})};
+    return this.request('/functions/v1/analyse',{method:'POST',body,signal:both});
   }
   // A free sentence from Nikki in Nieuw stuk, turned into answers by function begrijp (staff only).
   // Short time limit: if it does not answer quickly, the intake carries on with its own matching.

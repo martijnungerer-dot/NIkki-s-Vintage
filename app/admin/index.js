@@ -24,7 +24,12 @@ export function createAdmin({api,$,show}) {
   const collection=createCollection(context);
   setupHeader({$,show,
     reload:()=>action(async()=>{await collection.refresh();say(loaded('Collectie vernieuwd.'));}),
-    logout:()=>action(async()=>{try{await window.NikkiApp?.clearDraft?.();await api.logout();}finally{location.reload();}})
+    // Unfinished pieces stay on this device unless Nikki chooses to remove them (they can hold photos only for checking).
+    logout:()=>action(async()=>{
+      const count=await collection.conceptCount();
+      const keep=count>0&&confirm('Je hebt '+count+(count===1?' onafgemaakt stuk':' onafgemaakte stukken')+' op dit toestel. Bewaren voor de volgende keer? Kies Annuleren om '+(count===1?'het':'ze')+' te wissen.');
+      try{if(!keep)await window.NikkiApp?.clearDraft?.();await api.logout();}finally{location.reload();}
+    })
   });
   const login=setupLogin({$,submit:()=>action(async()=>{
     login.error('');

@@ -43,12 +43,14 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
   function conceptCard(c){
     const item=el('li','piece');item.dataset.status='concept';item.dataset.concept=c.id;
     const title=c.title||'Nog geen titel';
-    const open=el('button','piece-open');open.type='button';open.setAttribute('aria-label','Verder met: '+title+'. Niet af, nog niet in de boetiek');
+    const open=el('button','piece-open');open.type='button';const left=c.open>0?'Nog '+c.open+(c.open===1?' stap':' stappen'):'Klaar om op te slaan';
+    open.setAttribute('aria-label','Verder met: '+title+'. Niet af, nog niet in de boetiek. '+left);
     const photo=el('span','piece-photo');
     if(c.src){const img=el('img');img.alt='';img.width=400;img.height=500;img.src=c.src;photo.append(img);}
     open.append(photo,el('span','piece-title',title),el('span','piece-price',c.priceMinor?euro(c.priceMinor):'Nog geen prijs'));
     open.addEventListener('click',()=>action(async()=>{await intake().openConcept(c.id);show('intake');say('Verder met je concept.');}));
-    const foot=el('div','piece-foot');foot.append(el('span','piece-status','Niet af'));
+    // Red frame plus the number of steps still needed (Martijn, 22 Nov 2026); never text on the photo.
+    const foot=el('div','piece-foot');foot.append(el('span','piece-status',left));
     item.append(open,foot);return item;
   }
   const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;};

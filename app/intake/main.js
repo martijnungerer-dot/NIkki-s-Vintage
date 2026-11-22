@@ -669,7 +669,9 @@
       return (await concepts()).filter(function (c) { return !c.draft.edit; }).map(function (c) {
         var d = c.draft, i = d.photos.findIndex(function (p) { return !p.internal && p.main; });
         if (i < 0) i = d.photos.findIndex(function (p) { return !p.internal; });
-        return { id: c.id, at: d.at, title: I.known(d.A.titel) ? String(d.A.titel) : '', priceMinor: I.known(d.A.prijs) ? Math.round(Number(d.A.prijs) * 100) : null, photo: i >= 0 && c.files[i] instanceof Blob ? c.files[i] : null };
+        // Hoeveel stappen de boetiek nog nodig heeft (zelfde lijst als "Bijna. Voor de boetiek heb ik dit nog nodig").
+        var open = I.missing(I.build({ A: d.A, G: d.G || {}, learned: learned, seed: d.seed, sales: [] }), d.A, d.photos).length;
+        return { id: c.id, at: d.at, open: open, title: I.known(d.A.titel) ? String(d.A.titel) : '', priceMinor: I.known(d.A.prijs) ? Math.round(Number(d.A.prijs) * 100) : null, photo: i >= 0 && c.files[i] instanceof Blob ? c.files[i] : null };
       });
     },
     // Verder met een concept; het stuk dat nu open staat, blijft bewaard.

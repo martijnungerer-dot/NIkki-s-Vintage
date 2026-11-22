@@ -69,7 +69,10 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
       assert.equal(await intake.locator('#back').getAttribute('aria-label'),'Terug naar Jouw collectie');
       await intake.locator('#back').click();await manage.waitFor();await cards().first().waitFor();
       assert.equal(await cards().count(),1);
-      assert.equal(await cards().locator('.piece-status').textContent(),'Niet af');
+      // Below the photo: how many steps the boutique still needs (all questions were skipped: title, price, measurements …).
+      const left=await cards().locator('.piece-status').textContent();assert.match(left,/^Nog \d+ stappen$/);
+      const expected=await p.frames().find(x=>x.name()==='intake').evaluate(async()=>(await window.NikkiIntake.concepts())[0].open);
+      assert.equal(left,'Nog '+expected+' stappen');assert.ok(expected>=3);
       assert.match(await cards().locator('.piece-open').getAttribute('aria-label'),/Niet af, nog niet in de boetiek/);
       assert.equal(await cards().locator('.piece-photo img').count(),1,'with its main photo');
       const frame=await cards().locator('.piece-photo').evaluate(e=>getComputedStyle(e,'::after').borderTopColor);
@@ -106,5 +109,5 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
       assert.deepEqual(f.state.errors,[]);
     }finally{await f.browser.close();}
   }
-  console.log('PASS feedback 19 November: concepts kept as red "Niet af" cards (Bewerken, Nieuw stuk, logout), back arrow to Jouw collectie, large photo and full-screen view, gallery picker (image/*), photo roles and note to Gemini with sharp close-ups, brand only as a proposal. 390×693 and 320×568, services mocked.');
+  console.log('PASS feedback 19 November: concepts kept as red cards with the number of steps left (Bewerken, Nieuw stuk, logout), back arrow to Jouw collectie, large photo and full-screen view, gallery picker (image/*), photo roles and note to Gemini with sharp close-ups, brand only as a proposal. 390×693 and 320×568, services mocked.');
 })().catch(e=>{console.error(e);process.exit(1);});

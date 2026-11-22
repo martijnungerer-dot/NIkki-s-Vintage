@@ -16,7 +16,7 @@ De gele potloodknop rechtsonder is de testmodus voor feedback. Die staat alleen 
 Wat je ziet:
 - **Twee foto's:** op 320 px was de foto vóór de wijziging weg en lagen de fotoknoppen over de tekst. Nu blijft de foto zichtbaar en staan de knoppen erboven. Onder de foto's vraagt het scherm om een labelfoto, en er is een notitieveld voor Gemini (onderaan, scrollen).
 - **Een vraag:** de foto is veel groter. Vraag en antwoorden scrollen samen eronder.
-- **Jouw collectie:** het onaffe stuk staat vooraan met een rode rand en "Niet af". Vóór de wijziging was het onzichtbaar, en Bewerken wiste het.
+- **Jouw collectie:** het onaffe stuk staat vooraan met een rode rand; onder de foto staat hoeveel stappen nog nodig zijn. Vóór de wijziging was het onzichtbaar, en Bewerken wiste het.
 - **Bewerken:** het pijltje gaat nu terug naar Jouw collectie in plaats van naar de laatste vraag.
 - **Fotokiezer:** het verschil zit in de telefoon (Android toont de galerij in plaats van een bestandsbeheerder). Dat is op een schermafbeelding in Chromium niet te zien.
 

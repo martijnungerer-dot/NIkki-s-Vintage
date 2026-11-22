@@ -5,7 +5,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {fixture}=require('./admin-fixture.cjs');
-const {answer}=require('./intake-helper.cjs');
+const {answer,change}=require('./intake-helper.cjs');
 const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'};
 (async()=>{
   fs.mkdirSync('test-results/feedback',{recursive:true});
@@ -96,7 +96,7 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
       // Logging out asks; OK keeps the concepts on this device.
       await p.evaluate(()=>window.NikkiApp.openAccount());
       await Promise.all([p.waitForEvent('load'),p.locator('#logout').click()]);
-      assert.match(asked.at(-1),/1 onafgemaakt stuk op dit toestel\. Bewaren/);
+      assert.match(asked.at(-1),/1 onafgemaakt stuk of niet-opgeslagen wijziging op dit toestel\. Bewaren/);
       await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       await p.evaluate(()=>window.NikkiApp.openAccount());await f.login();await cards().first().waitFor();
       assert.equal(await cards().count(),1,'kept after logging out and in');
@@ -106,6 +106,19 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
       await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
       await p.evaluate(()=>window.NikkiApp.openAccount());await f.login();await p.locator('#items li.piece').first().waitFor();
       assert.equal(await cards().count(),0,'removed when Nikki chose so');
+      // An unsaved edit of a saved piece is no red card, but logging out asks about it too and can keep it
+      // (review Codex, PR #66); opening the piece again brings the edit back.
+      await p.getByRole('button',{name:'Bewerken: Leren mantel'}).click();await intake.locator('#summary').waitFor();
+      await change(intake,'titel','Leren mantel met ceintuur');await intake.locator('#summary').waitFor();
+      await intake.locator('#back').click();await manage.waitFor();assert.equal(await cards().count(),0);
+      p.removeAllListeners('dialog');const kept=[];p.on('dialog',d=>{kept.push(d.message());d.accept();});
+      await Promise.all([p.waitForEvent('load'),p.locator('#logout').click()]);
+      assert.match(kept[0],/1 onafgemaakt stuk of niet-opgeslagen wijziging/);
+      await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Collectie geladen.'));
+      await p.evaluate(()=>window.NikkiApp.openAccount());await f.login();await p.locator('#items li.piece').first().waitFor();
+      await p.evaluate(()=>window.NikkiApp.openAccount());
+      await p.getByRole('button',{name:'Bewerken: Leren mantel'}).click();await intake.locator('#summary').waitFor();
+      assert.match(await intake.locator('#summary').innerText(),/Leren mantel met ceintuur/,'the unsaved edit came back');
       assert.deepEqual(f.state.errors,[]);
     }finally{await f.browser.close();}
   }

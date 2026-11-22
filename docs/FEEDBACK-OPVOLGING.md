@@ -22,6 +22,9 @@ Gelezen uit `public.review_notes` (records 7–12, alleen lezen, niet gewijzigd)
 ### Uitrolvolgorde (Martijn of agent met schrijfrechten, na merge)
 Cloudflare bouwt `main` direct. Tot de migratie live is, werken 9–16 foto's en een merk bij opslaan niet (duidelijke foutmelding, invoer blijft staan); 1–8 foto's zonder merk blijven werken. Daarom direct na merge: zie [LIVEGANG.md](LIVEGANG.md#feedback-19-november-uitrollen).
 
+### Review Codex (PR #66)
+Vier terechte bevindingen, opgelost: (1) het merk ging niet door de vaste lijst van publieke velden in `app/api.js` en verdween bij opslaan; (2) de totale grootte van een analyse-aanvraag paste niet bij zestien foto's van maximale grootte; (3) uitloggen telde een niet-opgeslagen wijziging van een opgeslagen stuk niet mee en wiste die zonder te vragen; (4) de pogingen bij Gemini delen nu één tijdslimiet per aanvraag (inclusief login- en quotumcontrole), zodat geen poging start die niet op tijd kan eindigen.
+
 ### Tests
 `tests/feedback-browser.cjs` (nieuw, 390 × 693 en 320 × 568): concept blijft bij Bewerken en Nieuw stuk, rode kaart met aantal stappen, uitloggen bewaren/wissen, terugpijltje, fotogrootte en geen overlap, schermvullend, `image/*`, rollen en notitie naar Gemini met 1024/1600 px, merk alleen als voorstel. Uitgebreid: `tests/cloud-server.test.mjs` (16 foto's, opnieuw proberen, reservemodel, time-out, rollen/notitie als data, merk zonder vindplaats weg), `tests/internal-photos.test.mjs` (16 in totaal, `brand`), `tests/intake-steps.test.mjs` (merk), `tests/cloud-browser.cjs` (16 foto's). Beelden vóór en na: [screenshots/feedback-19-november](screenshots/feedback-19-november/README.md). Live Gemini en een echte Android-telefoon zijn niet getest.
 

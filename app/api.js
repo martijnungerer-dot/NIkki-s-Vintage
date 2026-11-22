@@ -157,6 +157,8 @@ export class Api {
     // Explicit public allowlist: no session, private notes, cost or model output.
     const data = Object.fromEntries(['title','description','priceMinor','material','species','model','colour','length','fit','era','details','measurements','furClass'].map(k=>[k,product[k]]));
     data.images = images;
+    // Brand (Nikki's own answer, optional public field since 22 November 2026): only a real text goes along.
+    if(typeof product.brand === 'string' && product.brand.trim()) data.brand = product.brand.trim().slice(0,200);
     // The only save route: the older save_garment is closed for direct calls (see the migration
     // close_save_garment), so there is no fallback that could skip the internal photos.
     try { return await this.request('/rest/v1/rpc/save_garment_with_private', {method:'POST',body:{p_id:product.key,p_data:data,p_version:version,p_internal:internal,p_ai:ai}}); }

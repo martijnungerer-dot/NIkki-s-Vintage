@@ -674,6 +674,8 @@
         return { id: c.id, at: d.at, open: open, title: I.known(d.A.titel) ? String(d.A.titel) : '', priceMinor: I.known(d.A.prijs) ? Math.round(Number(d.A.prijs) * 100) : null, photo: i >= 0 && c.files[i] instanceof Blob ? c.files[i] : null };
       });
     },
+    // Alle onafgemaakte stukken en niet-opgeslagen wijzigingen op dit toestel (voor de vraag bij uitloggen).
+    draftCount: async function () { await saveDraft(); return (await concepts()).length; },
     // Verder met een concept; het stuk dat nu open staat, blijft bewaard.
     openConcept: async function (id) {
       if (id === S.draftId) return render();

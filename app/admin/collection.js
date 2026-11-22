@@ -213,5 +213,5 @@ export function createCollection({api,$,state,show,say,shopStatus,action,control
   }
   // Nieuw stuk always starts empty; whatever was open stays on this device as a concept.
   $('new').addEventListener('click',()=>{try{intake().newPiece();}catch{}},{capture:true});
-  return {refresh,hydrate,startRenewal,conceptCount:async()=>{try{return (await intake().concepts()).length;}catch{return 0;}}};
+  return {refresh,hydrate,startRenewal,draftCount:async()=>{try{return await intake().draftCount();}catch{return 0;}}};
 }

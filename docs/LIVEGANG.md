@@ -144,4 +144,15 @@ Na merge van de PR "Feedback Nikki 19 november". Cloudflare bouwt `main` direct;
 4. **Google:** maak in AI Studio een eigen project voor de winkel met betaling aan en een budgetwaarschuwing (bijvoorbeeld € 5 per maand), maak daar een nieuwe sleutel en zet die als `GEMINI_API_KEY`. Op betaald tegoed gebruikt Google de foto's niet voor training. Verwijder de oude sleutel pas als geen ander project hem nog gebruikt.
 5. **Controleren:** Supabase → Edge Functions → analyse → Logs. `analyse retry: …` betekent dat de tweede poging of het reservemodel werd gebruikt; `analyse failed: …` dat alles mislukte. Laat Nikki op haar S24 de fotokiezer, 16 foto's en Laat Gemini kijken proberen.
 
+**Uitgerold op 23 november 2026** (stap 1 en 2) via de Management API; stap 3 niet gezet (reservemodel valt terug op `PERSONALISE_MODEL`); stap 4: de bestaande sleutel staat op een project met betaling aan. Zie [STATUS.md](STATUS.md).
+
+**Let op bij een volgende `db push`:** de migratie staat in de migratiegeschiedenis van Supabase als `20261123193322` in plaats van `20261122090000`. De CLI meldt dan een onbekende remote-versie. Herstel eerst, zonder de migratie opnieuw uit te voeren:
+
+```
+npx supabase migration repair --status reverted 20261123193322
+npx supabase migration repair --status applied 20261122090000
+```
+
+Daarna laat `npx supabase migration list --linked` beide kanten gelijk zien.
+
 Terugdraaien: de vorige versie van `analyse` opnieuw uitrollen kan altijd. De migratie is uitbreidend (ruimere grenzen, optioneel veld) en hoeft niet terug.

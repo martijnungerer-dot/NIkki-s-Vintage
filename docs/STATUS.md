@@ -6,9 +6,18 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 - Fase: P0 afgerond; P1 (productkeuzes en proefinvoer) en concept-brainstorm lopen.
 - Airtable (`appcR1TGKaoc4XAU4`): 0 records in Garments op 1 november 2026.
-- Webshop: cloudpilot gepubliceerd op Cloudflare Workers; nog geen winkelplatform of checkout. Supabase-tabellen en privéfoto-opslag zijn ingericht en database-rechten live gecontroleerd. Websiteverbinding staat klaar in code; login en volledige invoerroute wachten op een beheerder en deployment. Gemini is aangesloten voor de fotoanalyse (`gemini-3.8-flash`; gezien in het functielogboek op 19 november 2026).
+- Webshop: cloudpilot gepubliceerd op Cloudflare Workers; nog geen winkelplatform of checkout. Supabase-tabellen en privéfoto-opslag zijn ingericht en database-rechten live gecontroleerd. Websiteverbinding staat klaar in code; login en volledige invoerroute wachten op een beheerder en deployment. Gemini is aangesloten voor de fotoanalyse (`gemini-3.8-flash`, betaald tegoed met maandlimiet € 10). Feedbackreparaties van 19 november staan live sinds 23 november 2026.
 
 ## Logboek
+
+### 23 november 2026 — uitrol feedbackreparaties (PR #66)
+- PR #66 gemerged (`d0ef192`); Cloudflare bouwde `main`. De website zelf is vanuit de agentomgeving niet bereikbaar en dus niet bekeken.
+- Op verzoek van Martijn uitgerold via de Supabase Management API (eigen sleutel met alleen logboek lezen, migraties en Edge Functions; geen API keys, secrets of billing):
+  - Migratie `20261122090000_more_photos_brand.sql` toegepast. Live gecontroleerd: `valid_garment` staat 16 foto's en `brand` toe, `valid_internal_images` begrenst op 16 in totaal, `internal_images_array` op 15; het ene bestaande stuk blijft geldig; anon heeft geen toegang tot `valid_internal_images`, staff kan opslaan.
+  - Functie `analyse` versie 15 uitgerold (gelijk aan `main`). Live gecontroleerd zonder betaalde aanroep: preflight 204, zonder login 401 `LOGIN_REQUIRED`, vreemde herkomst 403 `ORIGIN_DENIED`. Een echte analyse met beheerderslogin is nog niet gedaan.
+- **Volgnummer migratie:** de Management API registreerde de migratie als `20261123193322` in plaats van `20261122090000`. Rechtzetten kon niet met deze sleutel (geen vrije schrijfrechten op de database). Zie [LIVEGANG.md](LIVEGANG.md#feedback-19-november-uitrollen) vóór een volgende `db push`.
+- Google: het project van de winkelsleutel heeft betaling aan (Tier 1), is hernoemd naar de winkelnaam en heeft een maandlimiet van € 10 in AI Studio plus een budgetwaarschuwing bij 80 % (€ 8) in Cloud Billing. De sleutel is niet vervangen; in Supabase is niets aan de Gemini-instellingen veranderd. Model fotoanalyse: `gemini-3.8-flash` (gezien in het logboek van 19 november).
+- Volgende stap: Nikki test op haar telefoon (Samsung S24); daarna `review_notes` en het `analyse`-logboek lezen.
 
 ### 22 november 2026 — testfeedback Nikki van 19 november
 - Zes opmerkingen uit `review_notes` gelezen (niet gewijzigd); afhandeling in [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md). Functielogboek `analyse` gelezen via een alleen-lezen Management-API-sleutel: twee keer `HTTP_503 UNAVAILABLE` en één `TIMEOUT` met `gemini-3.8-flash` en 8 foto's.

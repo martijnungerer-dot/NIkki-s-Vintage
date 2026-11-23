@@ -11,13 +11,16 @@
     kleur: ['Zwart', 'Donkerbruin', 'Bruin', 'Cognac', 'Camel', 'Honing', 'Crème', 'Wit', 'Zilvergrijs', 'Grijs'],
     lengte: ['Kort', 'Heuplang', 'Knielang', 'Lang'],
     pasvorm: ['Recht', 'Getailleerd', 'Boxy', 'Oversized'],
+    merk: ['Geen merk'],
     periode: ['Jaren 50', 'Jaren 60', 'Jaren 70', 'Jaren 80', 'Jaren 90', 'Onbekend'],
     bontsoort: ['Nerts', 'Vos', 'Persianer', 'Konijn', 'Bisam', 'Wasbeer', 'Lam'],
     bijzonderheden: ['Bontkraag', 'Bontmanchetten', 'Ceintuur', 'Opgestikte zakken', 'Origineel label', 'Monogram', 'Zijden voering', 'Voering vernieuwd', 'Reparatie', 'Kale plek', 'Vlek', 'Ontbrekende knoop']
   };
   // Lijsten waar Nikki eigen woorden aan kan toevoegen; die gaan ook mee naar Gemini.
-  var OWN = ['materiaal', 'model', 'kleur', 'bontsoort', 'bijzonderheden'];
-  var ROLES = ['Voorkant', 'Achterkant', 'Label', 'Detail', 'Gebrek', 'Voering', 'Sluiting', 'Overig'];
+  var OWN = ['materiaal', 'model', 'kleur', 'bontsoort', 'bijzonderheden', 'merk'];
+  var ROLES = ['Voorkant', 'Achterkant', 'Label', 'Kraag', 'Sluiting', 'Detail', 'Gebrek', 'Voering', 'Overig'];
+  // Close-ups gaan scherp naar Gemini (kleine letters, naden, ritsen); overzichtsfoto's kleiner.
+  var CLOSE = ['Label', 'Kraag', 'Sluiting', 'Detail', 'Gebrek', 'Voering'];
   var FLAWS = ['Kale plek', 'Vlek', 'Reparatie', 'Ontbrekende knoop'];
   var PARTS = ['model', 'kleur', 'lengte'];
 
@@ -136,6 +139,10 @@
         warm: function (v) { return say(SAY.fit, 'pasvorm', v); } },
       { id: 'periode', label: 'Periode', ask: function () { return pick(['Weet je uit welke tijd hij komt?', 'Uit welke tijd komt hij, denk je?', 'Weet je de periode?'], state.seed + 'periode'); }, options: function () { return list('periode'); }, guess: function () { return guess('periode'); },
         warm: function (v) { return v === 'Onbekend' ? say(SAY.eraUnknown, 'periode', v) : say(SAY.era, 'periode', v, { v: v }); } },
+      // Het merk komt van Nikki. Gemini stelt het alleen voor als hij het op een label of ritslipje las.
+      { id: 'merk', label: 'Merk', own: true, ask: function () { return 'Staat er een merk op het label?'; },
+        options: function () { var l = list('merk'), g = guess('merk'); return g && l.indexOf(g) < 0 ? [g].concat(l) : l; }, guess: function () { return guess('merk'); },
+        placeholder: 'Of typ het merk', warm: function (v) { return v === 'Geen merk' ? '' : say(SAY.title, 'merk', v); } },
       { id: 'bijzonderheden', label: 'Bijzonderheden', kind: 'multi', own: true,
         ask: function () { var g = G().bijzonderheden; return (Array.isArray(g) && g.length ? 'Ik zie: ' + g.map(lower).join(', ') + '. ' : '') + 'Wat valt er nog meer op? Ook kleine gebreken.'; },
         options: function () { return list('bijzonderheden'); }, start: function () { var g = G().bijzonderheden; return Array.isArray(g) ? g.slice(0, 30) : []; },
@@ -162,7 +169,7 @@
   function guessLine(step, G, label) {
     var g = step.guess && step.guess(); if (!g) return '';
     var why = G && G.why && typeof G.why[step.id] === 'string' ? G.why[step.id].trim() : '', sure = G && G.sure ? G.sure[step.id] : '';
-    var head = sure === 'laag' ? 'Gemini twijfelt, misschien ' + lower(label || g) + '.' : 'Gemini denkt: ' + (label || g) + '.';
+    var head = step.id === 'merk' ? 'Gemini las: ' + g + '.' : sure === 'laag' ? 'Gemini twijfelt, misschien ' + lower(label || g) + '.' : 'Gemini denkt: ' + (label || g) + '.';
     return head + (why ? ' ' + cap(why).replace(/[.!]?$/, '.') : '') + ' Tik het aan als het klopt.';
   }
   // De eerste zin van het gesprek: Gemini's eigen zin over dit stuk, of een korte zin van het scherm.
@@ -250,10 +257,13 @@
   // Het productcontract van save_garment (docs/DATA-MODEL.md); images komt van de foto-overdracht.
   function product(A, key, images) {
     var text = function (v) { return known(v) ? String(v) : ''; }, n = function (v) { return known(v) ? Number(v) : null; };
-    return { furClass: A.bont, key: key, title: text(A.titel).trim(), description: text(A.beschrijving).trim(), priceMinor: Math.round(Number(A.prijs) * 100),
+    var out = { furClass: A.bont, key: key, title: text(A.titel).trim(), description: text(A.beschrijving).trim(), priceMinor: Math.round(Number(A.prijs) * 100),
       material: text(A.materiaal), species: hasFur(A) ? text(A.bontsoort) : null, model: text(A.model), colour: text(A.kleur), length: text(A.lengte),
       fit: text(A.pasvorm), era: text(A.periode), details: Array.isArray(A.bijzonderheden) ? A.bijzonderheden.slice(0, 30) : [],
       measurements: [n(A.chest), n(A.shoulder), n(A.sleeve), n(A.length)], images: images };
+    // Alleen met een merk gaat het veld mee, zodat opslaan ook werkt zolang de databasewijziging er nog niet is.
+    if (known(A.merk) && A.merk !== 'Geen merk') out.brand = String(A.merk).trim().slice(0, 200);
+    return out;
   }
   // Een opgeslagen stuk terug naar antwoorden, zodat bewerken in het overzicht begint.
   function fromRecord(record) {
@@ -262,7 +272,7 @@
     var A = { bont: record.furClass, materiaal: or(record.material), model: or(record.model), kleur: or(record.colour), lengte: or(record.length),
       pasvorm: or(record.fit), periode: or(record.era), bijzonderheden: Array.isArray(record.details) ? record.details.slice() : [],
       chest: size(0), shoulder: size(1), sleeve: size(2), length: size(3), titel: or(record.title), beschrijving: typeof record.description === 'string' ? record.description : '',
-      prijs: Number.isInteger(record.priceMinor) ? record.priceMinor / 100 : SKIP };
+      prijs: Number.isInteger(record.priceMinor) ? record.priceMinor / 100 : SKIP, merk: or(record.brand) };
     if (hasFur(A)) A.bontsoort = or(record.species);
     return A;
   }
@@ -270,7 +280,7 @@
   function proposals(d) {
     var G = {}, short = function (v, max) { return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : ''; };
     if (!d || typeof d !== 'object') return G;
-    ['bont', 'materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort'].forEach(function (k) {
+    ['bont', 'materiaal', 'model', 'kleur', 'lengte', 'pasvorm', 'periode', 'bontsoort', 'merk'].forEach(function (k) {
       var v = d[k] && short(d[k].waarde, 60); if (!v) return;
       G[k] = v;
       // Waarom en hoe zeker: zo kan het scherm zeggen "Gemini denkt …, omdat …" of "Gemini twijfelt".
@@ -288,6 +298,6 @@
 
   function skipLine(seed, id) { return pick(SAY.skip, (seed || 0) + '|skip|' + id); }
 
-  root.GSFIntake = { SKIP: SKIP, LISTS: LISTS, OWN: OWN, ROLES: ROLES, known: known, hasFur: hasFur, composeTitle: composeTitle, build: build, active: active, missing: missing, product: product, fromRecord: fromRecord, proposals: proposals,
+  root.GSFIntake = { SKIP: SKIP, LISTS: LISTS, OWN: OWN, ROLES: ROLES, CLOSE: CLOSE, known: known, hasFur: hasFur, composeTitle: composeTitle, build: build, active: active, missing: missing, product: product, fromRecord: fromRecord, proposals: proposals,
     guessLine: guessLine, opening: opening, skipLine: skipLine, priceProposal: priceProposal, interpret: interpret, heardText: heardText, HEARD: HEARD };
 })(typeof window !== 'undefined' ? window : globalThis);

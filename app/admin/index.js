@@ -24,7 +24,13 @@ export function createAdmin({api,$,show}) {
   const collection=createCollection(context);
   setupHeader({$,show,
     reload:()=>action(async()=>{await collection.refresh();say(loaded('Collectie vernieuwd.'));}),
-    logout:()=>action(async()=>{try{await window.NikkiApp?.clearDraft?.();await api.logout();}finally{location.reload();}})
+    // Unfinished pieces stay on this device unless Nikki chooses to remove them (they can hold photos only for checking).
+    logout:()=>action(async()=>{
+      // Counts unsaved edits of saved pieces too, not only the red concept cards.
+      const count=await collection.draftCount();
+      const keep=count>0&&confirm('Je hebt '+count+(count===1?' onafgemaakt stuk of niet-opgeslagen wijziging':' onafgemaakte stukken of niet-opgeslagen wijzigingen')+' op dit toestel. Bewaren voor de volgende keer? Kies Annuleren om '+(count===1?'het':'ze')+' te wissen.');
+      try{if(!keep)await window.NikkiApp?.clearDraft?.();await api.logout();}finally{location.reload();}
+    })
   });
   const login=setupLogin({$,submit:()=>action(async()=>{
     login.error('');

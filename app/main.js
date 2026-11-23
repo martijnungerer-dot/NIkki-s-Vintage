@@ -56,11 +56,11 @@ window.NikkiApp={
   async clearDraft(){try{await $('intake').contentWindow.NikkiIntake?.clearDraft();}catch{}},
   prepareImage,
   preparePhotos:(photos,primary)=>transferPhotos(photos,primary,{prepareImage}),
-  async analyse(files,signal,lists){
+  async analyse(files,signal,lists,extra){
     if(!admin.state.staff)throw Error('Log eerst in.');
     // An answer that arrives after Nikki moved on to another piece is not kept as that piece's proposal.
     const token=++analysisToken;
-    try{const result=await api.analyse(files,signal,lists);if(token===analysisToken)lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
+    try{const result=await api.analyse(files,signal,lists,extra);if(token===analysisToken)lastAnalysis=result;return result;}catch(e){if(e.name==='AbortError')throw Object.assign(new Error('Analyse gestopt.'),{code:'cancelled'});throw e;}
   },
   // A free sentence in Nieuw stuk (function begrijp). Only for staff; the intake falls back to its own matching on any error.
   understand(input,signal){if(!admin.state.staff)return Promise.reject(Error('Log eerst in.'));return api.understand(input,signal);},

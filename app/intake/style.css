@@ -133,3 +133,25 @@ svg { display: block; }
 .warn { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--band); font-size: 16px; }
 .status { margin: 0; font-size: 16px; }
 .answer[aria-busy="true"] .chip { opacity: .5; }
+
+/* ---- Feedback Nikki, 19 november 2026 ---- */
+/* De foto houdt altijd ongeveer 40% van het scherm; vraag en antwoorden scrollen samen eronder. */
+.app { position: relative; }
+.stage { flex: none; height: 55%; min-height: 0; }
+[data-mode="photos"] .stage { flex: none; height: 62%; }
+.lower { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
+.lower .talk, [data-mode="photos"] .lower .talk { flex: 1 0 auto; max-height: none; overflow: visible; }
+.lower .answer { margin-top: auto; }
+[data-mode="overview"] .lower .talk { flex: 1 0 auto; }
+.hero img:not(.measure) { cursor: zoom-in; }
+.thumbs { scrollbar-width: none; }
+.photo-tools .chip, .photo-tools select { flex: none; white-space: nowrap; }
+.gemini-note { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--chip-line); border-radius: 10px; background: #FFFFFF; color: var(--fg); font: inherit; font-size: 16px; }
+/* Schermvullend: alleen de foto, de bediening eronder (nooit tekst op de foto). */
+.viewer { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; background: var(--photo-bg); touch-action: pan-y; }
+.viewer img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.viewer-top, .viewer-bar { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 16px; background: var(--bg); }
+.viewer-top { border-bottom: 1px solid var(--line); }
+/* De pijlen links onderin: rechtsonder staat soms de knop van de testmodus. */
+.viewer-bar { padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.viewer-count { flex: 1; font-size: 16px; color: var(--muted); }

@@ -190,13 +190,13 @@ await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').
 {
  await p.evaluate(()=>window.NikkiApp.openAccount());await p.locator('#new').click();
  const n=intake();await n.locator('#restart').click();
- const colours=['#111','#933','#393','#339','#990','#909','#099','#777','#abc'];
+ const colours=['#111','#933','#393','#339','#990','#909','#099','#777','#abc','#cba','#bac','#cab','#acb','#bca','#321','#123','#456'];
  const files=[];for(const [i,colour] of colours.entries())files.push({name:'foto-'+i+'.png',mimeType:'image/png',buffer:Buffer.from(await p.evaluate(c=>{const k=document.createElement('canvas');k.width=20;k.height=20;const x=k.getContext('2d');x.fillStyle=c;x.fillRect(0,0,20,20);return k.toDataURL().split(',')[1];},colour),'base64')});
  await n.locator('#files').setInputFiles(files);
  const thumbs=n.locator('#thumbs [data-view]');
- assert.equal(await thumbs.count(),8,'at most eight photos');
- assert.match(await n.locator('#note').innerText(),/maximaal 8 foto/);assert.equal(await n.locator('#more').count(),0,'no room for more');
- for(let i=7;i>=2;i--){await thumbs.nth(i).click();await n.locator('[data-del]').click();assert.equal(await thumbs.count(),i);}
+ assert.equal(await thumbs.count(),16,'at most sixteen photos');
+ assert.match(await n.locator('#note').innerText(),/maximaal 16 foto/);assert.equal(await n.locator('#more').count(),0,'no room for more');
+ for(let i=15;i>=2;i--){await thumbs.nth(i).click();await n.locator('[data-del]').click();assert.equal(await thumbs.count(),i);}
  await n.getByRole('button',{name:'Laat Gemini kijken'}).click();await n.locator('#question').waitFor();assert.equal(lastAnalysisCount,2,'Gemini sees every photo');
  await n.locator('#talk [data-photos]').click();await thumbs.nth(1).click();
  await n.locator('[data-intern]').click();assert.equal(await n.locator('[data-intern]').getAttribute('aria-pressed'),'true');
@@ -229,6 +229,6 @@ await reloadCatalog(v);assert.equal(await v.frames().find(f=>f.name()==='shop').
  await p.waitForFunction(()=>document.getElementById('status').textContent.includes('Cape met controlefoto is opgeslagen'));
  assert.equal(privateRows.get(cape.id).internal.length,1);assert.equal(privateRows.get(cape.id).ai.titel,'AI voorstel');
 }
-assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, option B, local cart/likes, edit sold without resurrection, eight photos with internal ones hidden from visitors. Remote services mocked.');
+assert.deepEqual(errors,[]);console.log('PASS cloud UI: login, batch photo signing, broken photo isolated, refresh keeps view and product photo, visibility renewal, analysis adapter, new-photo EXIF removal, stored-photo reuse, failed save/retry, durable reload, guest catalog, option B, local cart/likes, edit sold without resurrection, sixteen photos with internal ones hidden from visitors. Remote services mocked.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

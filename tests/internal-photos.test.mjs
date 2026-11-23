@@ -37,15 +37,29 @@ test('internal photos and the AI proposal are staff only; visitors never see the
       await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',front]);
       await assert.rejects(save,/PHOTO_NOT_UPLOADED/,'internal photos must be uploaded too');
       for(const p of [label,seam])await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['garment-photos',p]);
-      // Rejected shapes: also public, duplicate, main flag, foreign path, more than eight photos in total.
+      // Rejected shapes: also public, duplicate, main flag, foreign path, more than sixteen photos in total (eight before 22 November 2026).
       await assert.rejects(()=>save(product,0,[{path:front,role:'Voorkant'}]),/INVALID_PRODUCT/);
       await assert.rejects(()=>save(product,0,[internal[0],internal[0]]),/INVALID_PRODUCT/);
       await assert.rejects(()=>save(product,0,[{...internal[0],main:true}]),/INVALID_PRODUCT/);
       await assert.rejects(()=>save(product,0,[{path:'44444444-4444-4444-8444-444444444444/'+'d'.repeat(64)+'.jpg',role:'Label'}]),/INVALID_PRODUCT/);
-      const many=Array.from({length:8},(_,i)=>({path:path('0123456789'[i]),role:'Detail'}));
-      await assert.rejects(()=>save(product,0,many),/INVALID_PRODUCT/,'1 public + 8 internal is more than eight');
+      const many=n=>Array.from({length:n},(_,i)=>({path:id+'/'+i.toString(16).padStart(2,'0').repeat(32)+'.jpg',role:'Detail'}));
+      await assert.rejects(()=>save(product,0,many(16)),/INVALID_PRODUCT/,'1 public + 16 internal is more than sixteen');
       await assert.rejects(()=>save(product,0,internal,['not an object']),/INVALID_PRODUCT/);
       assert.equal((await save()).rows[0].item.version,1);
+      await db.exec('reset role');
+      const fits=async(pub,priv)=>(await db.query('select public.valid_internal_images($1,$2,$3) as ok',[id,JSON.stringify(pub),JSON.stringify(priv)])).rows[0].ok;
+      assert.equal(await fits([{path:front}],many(15)),true,'1 public + 15 internal fits');
+      assert.equal(await fits([{path:front},{path:label}],many(15)),false,'17 in total does not');
+      const sixteen=Array.from({length:16},(_,i)=>({path:id+'/'+i.toString(16).padStart(2,'0').repeat(32)+'.jpg',role:'Detail',main:i===0}));
+      const valid=async d=>(await db.query('select public.valid_garment($1,$2) as ok',[id,JSON.stringify(d)])).rows[0].ok;
+      assert.equal(await valid({...product,images:sixteen}),true,'sixteen boutique photos');
+      assert.equal(await valid({...product,images:[...sixteen,{path:label,role:'Detail',main:false}]}),false,'seventeen is too many');
+      assert.equal(await valid({...product,brand:'Dior'}),true,'brand is optional text');
+      assert.equal(await valid({...product,brand:null}),true);
+      assert.equal(await valid({...product,brand:42}),false);
+      assert.equal(await valid({...product,brand:'x'.repeat(201)}),false);
+      assert.equal(await valid({...product,merk:'Dior'}),false,'other new keys stay forbidden');
+      await db.exec('set role authenticated');
       const row=(await db.query('select internal_images,ai_suggestion from public.garment_private')).rows[0];
       assert.deepEqual(row.internal_images,internal);assert.equal(row.ai_suggestion.titel,'Jas');
       // An edit without a new analysis keeps the earlier proposal; internal photos follow the edit.

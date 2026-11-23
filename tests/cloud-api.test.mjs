@@ -80,6 +80,11 @@ test('saving splits photos: internal ones only reach the staff-only function, ne
   assert.deepEqual(body.p_internal,[{path:intern,role:'Label'}]);
   assert.deepEqual(body.p_ai,{titel:'Jas'});
   assert.doesNotMatch(JSON.stringify(body.p_data),/bbbb|titel/);
+  assert.equal('brand' in body.p_data,false,'no brand: the field stays out');
+  // A brand Nikki chose goes along; other extra fields still never do.
+  await a.save({...product,brand:' Dior ',costMinor:50,storage:'Kast 3'},1);
+  const branded=JSON.parse(calls[1].opts.body).p_data;
+  assert.equal(branded.brand,'Dior');assert.equal(branded.costMinor,undefined);assert.equal(branded.storage,undefined);
 
   // No fallback to the closed save_garment: a missing function is a clear error and nothing else is called.
   const old=api({'/rest/v1/rpc/save_garment_with_private':()=>Response.json({code:'PGRST202'},{status:404}),'/rest/v1/rpc/save_garment':()=>assert.fail('the old function must not be called')});old.a.keep(session);

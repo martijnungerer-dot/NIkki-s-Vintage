@@ -119,3 +119,18 @@ test('a free sentence becomes answers only within the lists, and species only wi
   assert.deepEqual(I.interpret({velden:{bontsoort:'Nerts'}},{bont:'Ja'}).values,[['bontsoort','Nerts']]);
   assert.deepEqual(I.interpret(null,{}).values,[]);
 });
+
+test('the brand comes from Nikki: Gemini only proposes what it read, and only a real brand is saved',()=>{
+  const m=make({},I.proposals({merk:{waarde:'Dior',zekerheid:'hoog',waarom:'Staat op het label'}}));
+  const merk=step(m.steps,'merk');
+  assert.equal(merk.guess(),'Dior');assert.equal(merk.options()[0],'Dior','the read brand is a button');
+  assert.equal(m.state.A.merk,undefined,'never chosen by itself');
+  assert.match(I.guessLine(merk,m.state.G,''),/^Gemini las: Dior\. Staat op het label\./);
+  const A={bont:'Nee',titel:'Jas',prijs:100,materiaal:'Leer'};
+  assert.equal(I.product({...A,merk:'Dior'},'k',[]).brand,'Dior');
+  assert.equal('brand' in I.product({...A,merk:'Geen merk'},'k',[]),false,'no brand: the field stays out');
+  assert.equal('brand' in I.product({...A,merk:SKIP},'k',[]),false);
+  assert.equal(I.fromRecord({furClass:'Nee',brand:'Dior',measurements:[]}).merk,'Dior');
+  assert.equal(I.fromRecord({furClass:'Nee',measurements:[]}).merk,SKIP);
+  assert.ok(I.ROLES.includes('Kraag')&&I.CLOSE.includes('Label')&&!I.CLOSE.includes('Voorkant'),'close-ups are sent sharp, overview photos smaller');
+});

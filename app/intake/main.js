@@ -2,7 +2,7 @@
 // Koppelt het scherm aan het bestaande contract: window.parent.NikkiApp (fotoanalyse, foto-overdracht,
 // opslaan) en window.NikkiIntake (bewerken, concepten, verlaten). Vragen en regels: steps.js.
 (function () {
-  var I = window.GSFIntake, SKIP = I.SKIP, MAX_PHOTOS = 8;
+  var I = window.GSFIntake, SKIP = I.SKIP, MAX_PHOTOS = 16;
   var app = function () { return window.parent.NikkiApp; };
   var $ = function (id) { return document.getElementById(id); };
   function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -12,7 +12,7 @@
   // S is alles wat bij dit ene stuk hoort (en in het concept bewaard wordt).
   // seed: bepaalt welke zinnen het scherm bij dit stuk kiest (steps.js); heardDetails: bijzonderheden die
   // Nikki al noemde voordat die vraag kwam, zodat ze daar alvast aanstaan.
-  function fresh() { return { A: {}, G: {}, photos: [], warnings: [], phase: 'photos', analysed: '', draftId: null, edit: false, seed: Math.floor(Math.random() * 1e9), heardDetails: [] }; }
+  function fresh() { return { A: {}, G: {}, photos: [], warnings: [], phase: 'photos', analysed: '', draftId: crypto.randomUUID(), edit: false, seed: Math.floor(Math.random() * 1e9), heardDetails: [], note: '' }; }
   var S = fresh();
   // Eigen keuzewoorden van Nikki, per lijst, in deze browser (zelfde plek als het vorige invoerscherm).
   var learned = (function () { try { var v = JSON.parse(localStorage.getItem('gsf-learned')); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
@@ -88,8 +88,11 @@
   function analyse() {
     var my = ++gen; ctl = new AbortController(); thinking = true; note = ''; stopVoice(); render();
     // Dezelfde verkleinde foto's (zonder EXIF) als bij opslaan; ook de foto's alleen voor controle.
-    Promise.all(S.photos.map(function (p) { return app().prepareImage(p.file); }))
-      .then(function (prepared) { return app().analyse(prepared, ctl.signal, lists()); })
+    // Close-ups (label, kraag, sluiting, details, foto's alleen voor controle) gaan scherp mee, overzichtsfoto's kleiner:
+    // zo blijft een aanvraag met zestien foto's licht. Wat Nikki per foto zei en haar notitie gaan mee als data.
+    var info = S.photos.map(function (p) { return { rol: p.rolByUser ? p.rol : '', intern: !!p.internal }; });
+    Promise.all(S.photos.map(function (p) { return app().prepareImage(p.file, p.internal || I.CLOSE.indexOf(p.rolByUser ? p.rol : '') >= 0 ? 1600 : 1024); }))
+      .then(function (prepared) { return app().analyse(prepared, ctl.signal, lists(), { photos: info, note: S.note }); })
       .then(function (d) { if (my === gen) takeProposals(d || {}); })
       // Een laat antwoord voor een eerder stuk wordt genegeerd (my !== gen).
       .catch(function (e) { if (my === gen) note = e && e.code === 'cancelled' ? '' : ((e && e.message) || 'Gemini kon de foto’s niet bekijken.') + ' Je kunt zelf invullen.'; })
@@ -208,7 +211,7 @@
   }
   function renderStage(step) {
     var hero = $('hero'), key, h, photos = S.photos, at = Math.max(0, Math.min(view, photos.length - 1)), manage = S.phase === 'photos' && !thinking;
-    if (!photos.length) { key = 'camera'; h = '<label class="camera pick"><span class="lens" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>Maak of kies foto’s</span><input type="file" id="files" accept="image/jpeg,image/png,image/webp" multiple aria-label="Foto’s maken of kiezen"></label>'; }
+    if (!photos.length) { key = 'camera'; h = '<label class="camera pick"><span class="lens" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>Maak of kies foto’s</span><input type="file" id="files" accept="image/*" multiple aria-label="Foto’s maken of kiezen"></label>'; }
     else if (step && step.kind === 'cm') { key = 'cm-' + step.id; h = '<img class="measure" src="' + coat(step.id === 'length', MEASURE[step.id]) + '" alt="Tekening: zo leg je het meetlint voor de ' + step.label.toLowerCase() + '">'; }
     else { key = 'photo-' + photos[at].url; h = '<img src="' + esc(photos[at].url) + '" alt="Foto ' + (at + 1) + ' van dit stuk">'; }
     if (thinking) { key += '-scan'; h += '<div class="scan" aria-hidden="true"></div>'; }
@@ -219,7 +222,7 @@
     if (key2 !== thumbKey) {
       thumbKey = key2;
       thumbs.innerHTML = photos.map(function (p, i) { return '<button type="button" data-view="' + i + '" style="--i:' + i + '"><img src="' + esc(p.url) + '" alt=""></button>'; }).join('') +
-        (manage && photos.length && photos.length < MAX_PHOTOS ? '<label class="add" title="Foto toevoegen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><input type="file" id="more" accept="image/jpeg,image/png,image/webp" multiple aria-label="Foto toevoegen"></label>' : '');
+        (manage && photos.length && photos.length < MAX_PHOTOS ? '<label class="add" title="Foto toevoegen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><input type="file" id="more" accept="image/*" multiple aria-label="Foto toevoegen"></label>' : '');
     }
     Array.prototype.forEach.call(thumbs.querySelectorAll('[data-view]'), function (b, i) {
       var p = photos[i];
@@ -257,7 +260,10 @@
     $('app').setAttribute('data-mode', overview ? 'overview' : S.phase === 'photos' || thinking ? 'photos' : 'talk');
     $('name').textContent = S.edit ? 'Stuk bewerken' : 'Nieuw stuk';
     $('steps').textContent = S.phase === 'talk' && !thinking ? Math.min(answered.length + (step ? 1 : 0), list.length) + ' van ' + list.length : '';
-    $('back').disabled = thinking || saving || S.phase === 'photos';
+    // Terug: tussen de vragen naar de vorige vraag; op het fotoscherm en in het overzicht naar Jouw collectie.
+    var away = S.phase === 'photos' || (S.phase === 'talk' && !thinking && !step && !heard);
+    $('back').disabled = thinking || saving;
+    $('back').setAttribute('aria-label', away ? 'Terug naar Jouw collectie' : 'Vorige vraag');
     $('restart').disabled = saving;
     renderStage(step);
     var warm = '', fresh = false;
@@ -267,6 +273,7 @@
       h += '<p class="ai now">' + (!photos.length ? 'Hoi Nikki. Laat me het stuk zien.' : photos.length === 1 ? 'Eén foto. Nog meer kanten?' : photos.length + ' foto’s. Zijn dit ze allemaal?') + '</p>';
       if (photos.length) h += '<p class="photo-note">Tik een foto aan om de hoofdfoto te kiezen, of om hem alleen voor controle te houden (label, naden, gebreken). Gemini bekijkt ze allemaal; bezoekers zien die foto’s nooit.</p>';
       if (p && (p.toelichting || p.bruikbaar === false)) h += '<p class="photo-note">' + esc((p.bruikbaar === false ? 'Gemini vindt deze foto minder bruikbaar. ' : '') + (p.toelichting || '')) + '</p>';
+      if (photos.length && !photos.some(function (x) { return x.rol === 'Label'; })) h += '<p class="photo-note" id="label-hint">Heb je ook een foto van het label? Kies bij die foto Label, dan leest Gemini hem scherp.</p>';
       if (photos.length && !mainPhoto()) h += '<p class="err" role="alert">Er is nog geen foto voor de boetiek: zet bij minstens één foto Alleen voor controle uit.</p>';
     } else {
       // Wat al gezegd is, staat als rij knoppen boven de vraag; een tik wijzigt het antwoord.
@@ -303,7 +310,7 @@
     talk.innerHTML = h;
     renderAnswer(step, fresh);
     speakQuestion(step);
-    talk.scrollTop = 0;
+    talk.scrollTop = 0; $('lower').scrollTop = 0;
     var row = $('trail'); if (row) row.scrollLeft = row.scrollWidth;
   }
   var VOICE_ICON = '<svg class="bars" width="30" height="24" viewBox="0 0 30 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="3" height="20" rx="1.5"/><rect x="8" y="2" width="3" height="20" rx="1.5"/><rect x="14" y="2" width="3" height="20" rx="1.5"/><rect x="20" y="2" width="3" height="20" rx="1.5"/><rect x="26" y="2" width="3" height="20" rx="1.5"/></svg>' +
@@ -314,7 +321,8 @@
     var box = $('answer'), h = '', photos = S.photos;
     if (thinking) h = '<div class="chips"><button type="button" class="chip quiet" data-stop>Stop, ik vul zelf in</button></div>';
     else if (S.phase === 'photos') {
-      if (photos.length && mainPhoto()) h = '<div class="chips">' + (S.analysed === photoSet()
+      if (photos.length) h = '<input class="gemini-note" id="gemini-note" type="text" maxlength="500" autocomplete="off" aria-label="Notitie voor Gemini over dit stuk" placeholder="Iets wat Gemini moet weten? Bijvoorbeeld: gekocht in Parijs" value="' + esc(S.note || '') + '">';
+      if (photos.length && mainPhoto()) h += '<div class="chips">' + (S.analysed === photoSet()
         ? '<button type="button" class="chip main" data-next>Verder</button>'
         : '<button type="button" class="chip main" data-analyse>Laat Gemini kijken</button><button type="button" class="chip quiet" data-next>Zelf invullen</button>') + '</div>';
     } else if (!step) {
@@ -444,61 +452,121 @@
   }
 
   // ---------- niet-opgeslagen invoer en concepten ----------
-  function snapshot() { return JSON.stringify({ p: S.photos.map(function (p) { return [p.url, p.rol, !!p.main, !!p.internal]; }), A: S.A }); }
+  // Elk stuk in dit scherm heeft een eigen sleutel (S.draftId; bij bewerken het id van het opgeslagen stuk).
+  // Zolang er niet-opgeslagen invoer is, staat het als concept op dit toestel (drafts.js). Een ander stuk
+  // openen of een nieuw stuk beginnen bewaart het huidige eerst; alleen opslaan of bewust weggooien wist het.
+  function snapshot() { return JSON.stringify({ p: S.photos.map(function (p) { return [p.url, p.rol, !!p.main, !!p.internal]; }), A: S.A, n: S.note || '' }); }
   var emptyState = snapshot(), baseline = emptyState;
-  var lastDraft = null, lastPhotoSet = null, draftsOff = false, draftSaving = false, draftRestored = Promise.resolve(false);
+  var lastDraft = null, lastPhotoSet = null, lastId = null, draftsOff = false, queue = Promise.resolve(), draftRestored = Promise.resolve(false);
   function unsavedInput() { return snapshot() !== baseline; }
-  function clearDraft() { lastDraft = null; lastPhotoSet = null; return I.store.clear().catch(function () {}); }
-  function markSaved() { baseline = snapshot(); clearDraft(); }
-  async function saveDraft() {
-    if (draftsOff || draftSaving || saving) return;
-    if (!unsavedInput() || snapshot() === emptyState) { if (lastDraft !== null) await clearDraft(); return; }
-    var state = snapshot(); if (state === lastDraft) return;
-    draftSaving = true;
-    try {
-      if (photoSet() !== lastPhotoSet) { await I.store.put(I.store.PHOTOS, S.photos.map(function (p) { return p.file; })); lastPhotoSet = photoSet(); }
-      await I.store.put(I.store.KEY, { v: 3, at: Date.now(), draftId: S.draftId, edit: S.edit, version: S.draftId && app().editVersion ? app().editVersion(S.draftId) : null,
-        phase: S.phase, analysed: S.analysed === photoSet(), A: S.A, G: S.G, warnings: S.warnings, seed: S.seed, heardDetails: S.heardDetails, ai: app().currentAnalysis ? app().currentAnalysis() : null,
-        photos: S.photos.map(function (p) { return { cloudPath: p.cloudPath || null, rol: p.rol || '', rolByUser: !!p.rolByUser, main: !!p.main, internal: !!p.internal, toelichting: p.toelichting || '', bruikbaar: p.bruikbaar !== false }; }) });
-      lastDraft = state;
-    } catch (e) { draftsOff = true; }
-    finally { draftSaving = false; }
+  // Schrijfacties na elkaar, zodat een concept dat net wordt bewaard nooit een later besluit overschrijft.
+  function enqueue(work) { queue = queue.then(work).catch(function () { draftsOff = true; }); return queue; }
+  function forget(id) { if (id === lastId) { lastDraft = null; lastPhotoSet = null; } return enqueue(function () { return I.store.remove(id); }); }
+  function clearDraft() { lastDraft = null; lastPhotoSet = null; return enqueue(function () { return I.store.clear(); }); }
+  function markSaved() { baseline = snapshot(); return forget(S.draftId); }
+  // Alles wat bewaard wordt, wordt hier meteen vastgelegd; het schrijven zelf gebeurt daarna in de rij.
+  function saveDraft() {
+    if (draftsOff || saving) return queue;
+    var id = S.draftId, state = snapshot();
+    if (!unsavedInput() || state === emptyState) return lastDraft !== null && lastId === id ? forget(id) : queue;
+    if (state === lastDraft && id === lastId) return queue;
+    var files = photoSet() !== lastPhotoSet || id !== lastId ? S.photos.map(function (p) { return p.file; }) : null;
+    var draft = { v: 3, at: Date.now(), draftId: id, edit: S.edit, version: S.edit && app().editVersion ? app().editVersion(id) : null,
+      phase: S.phase, analysed: S.analysed === photoSet(), A: JSON.parse(JSON.stringify(S.A)), G: S.G, warnings: S.warnings, seed: S.seed, heardDetails: S.heardDetails.slice(), note: S.note || '',
+      ai: app().currentAnalysis ? app().currentAnalysis() : null,
+      photos: S.photos.map(function (p) { return { cloudPath: p.cloudPath || null, rol: p.rol || '', rolByUser: !!p.rolByUser, main: !!p.main, internal: !!p.internal, toelichting: p.toelichting || '', bruikbaar: p.bruikbaar !== false }; }) };
+    lastDraft = state; lastId = id; if (files) lastPhotoSet = photoSet();
+    return enqueue(function () { return I.store.put(id, draft, files); });
   }
-  async function restoreDraft() {
-    var d, files;
-    try { d = await I.store.get(I.store.KEY); files = await I.store.get(I.store.PHOTOS); } catch (e) { draftsOff = true; return false; }
-    if (!d || d.v !== 3 || !Array.isArray(d.photos) || !d.A || typeof d.A !== 'object') return false;
-    if (Date.now() - d.at > I.store.DAYS * 24 * 60 * 60 * 1000) { await clearDraft(); return false; }
-    // Intussen is iets anders geopend (bijvoorbeeld Bewerken): dat blijft staan, het concept ook.
-    if (snapshot() !== emptyState) return false;
-    files = Array.isArray(files) ? files : [];
-    S = fresh();
-    S.photos = d.photos.map(function (p, i) { return Object.assign({}, p, { file: files[i] }); }).filter(function (p) { return p.file instanceof Blob; }).map(function (p) { return Object.assign(p, { url: URL.createObjectURL(p.file) }); });
-    S.A = d.A; S.G = d.G && typeof d.G === 'object' ? d.G : {}; S.warnings = Array.isArray(d.warnings) ? d.warnings : [];
-    if (Number.isInteger(d.seed)) S.seed = d.seed;
-    S.heardDetails = Array.isArray(d.heardDetails) ? d.heardDetails.filter(function (v) { return typeof v === 'string'; }).slice(0, 30) : [];
-    S.draftId = d.draftId || null; S.edit = !!d.edit; S.phase = d.phase === 'talk' && S.photos.length ? 'talk' : 'photos'; S.analysed = d.analysed ? photoSet() : '';
-    if (S.draftId && d.version != null && app().restoreEditVersion) app().restoreEditVersion(S.draftId, d.version);
-    if (d.ai && app().restoreAnalysis) app().restoreAnalysis(d.ai);
-    lastPhotoSet = photoSet(); lastDraft = snapshot(); view = 0; editing = null; multi = null;
-    note = 'Je niet-opgeslagen stuk van ' + new Date(d.at).toLocaleString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + ' is teruggezet.';
-    render();
-    return true;
-  }
-  function startOver() {
+  // Het scherm leeg maken zonder iets op het toestel te wissen.
+  function resetState() {
     gen++; if (ctl) ctl.abort(); thinking = false; stopVoice();
     S.photos.forEach(function (p) { try { URL.revokeObjectURL(p.url); } catch (e) {} });
     dropHeard(); reply = '';
     S = fresh(); editing = null; multi = null; error = ''; note = ''; view = 0; saved = false; status = ''; saveError = ''; askedKey = '';
     if (app().forgetAnalysis) app().forgetAnalysis();
-    markSaved(); render();
+    baseline = emptyState; lastDraft = null; lastPhotoSet = null; lastId = null;
   }
-
+  // Een bewaard concept in het scherm zetten.
+  function putBack(c, message) {
+    var d = c.draft, files = c.files;
+    resetState();
+    S.photos = d.photos.map(function (p, i) { return Object.assign({}, p, { file: files[i] }); }).filter(function (p) { return p.file instanceof Blob; }).map(function (p) { return Object.assign(p, { url: URL.createObjectURL(p.file) }); });
+    S.A = d.A; S.G = d.G && typeof d.G === 'object' ? d.G : {}; S.warnings = Array.isArray(d.warnings) ? d.warnings : [];
+    if (Number.isInteger(d.seed)) S.seed = d.seed;
+    S.heardDetails = Array.isArray(d.heardDetails) ? d.heardDetails.filter(function (v) { return typeof v === 'string'; }).slice(0, 30) : [];
+    S.note = typeof d.note === 'string' ? d.note.slice(0, 500) : '';
+    S.draftId = c.id; S.edit = !!d.edit; S.phase = d.phase === 'talk' && S.photos.length ? 'talk' : 'photos'; S.analysed = d.analysed ? photoSet() : '';
+    if (S.edit && d.version != null && app().restoreEditVersion) app().restoreEditVersion(S.draftId, d.version);
+    if (d.ai && app().restoreAnalysis) app().restoreAnalysis(d.ai);
+    lastPhotoSet = photoSet(); lastDraft = snapshot(); lastId = c.id; view = 0;
+    note = message || 'Je niet-opgeslagen stuk van ' + new Date(d.at).toLocaleString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + ' is teruggezet.';
+    render();
+  }
+  function usable(c) { return c && c.draft && c.draft.v === 3 && Array.isArray(c.draft.photos) && c.draft.A && typeof c.draft.A === 'object'; }
+  async function concepts() {
+    var list; try { list = await I.store.list(); } catch (e) { draftsOff = true; return []; }
+    var old = Date.now() - I.store.DAYS * 24 * 60 * 60 * 1000, out = [];
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      // Ouder dan veertien dagen: dat concept vervalt, zoals voorheen.
+      if (!usable(c) || (c.draft.at || 0) < old) { await forget(c.id); continue; }
+      out.push(c);
+    }
+    return out;
+  }
+  // Na een vernieuwing: het laatst bewaarde concept terug in het scherm, als dat nog leeg is.
+  async function restoreDraft() {
+    var list = await concepts();
+    if (!list.length || snapshot() !== emptyState) return false;
+    putBack(list[0]);
+    return true;
+  }
   // ---------- bediening ----------
   $('app').addEventListener('change', function (e) {
     if (e.target.type === 'file') { addFiles(e.target.files); e.target.value = ''; }
     if (e.target.id === 'role') { var p = S.photos[view]; if (p) { p.rol = e.target.value; p.rolByUser = true; render(); } }
   });
+  // ---------- foto schermvullend ----------
+  var shownPhoto = 0;
+  function paintViewer() {
+    var n = S.photos.length; if (!n) return closeViewer();
+    shownPhoto = (shownPhoto + n) % n; var p = S.photos[shownPhoto];
+    $('viewer-img').src = p.url; $('viewer-img').alt = 'Foto ' + (shownPhoto + 1) + ' van ' + n + (p.internal ? ', alleen voor controle' : '');
+    $('viewer-count').textContent = (shownPhoto + 1) + ' van ' + n;
+    $('viewer-prev').disabled = $('viewer-next').disabled = n < 2;
+  }
+  function openViewer(at) { shownPhoto = at; $('viewer').hidden = false; paintViewer(); $('viewer-close').focus({ preventScroll: true }); }
+  function closeViewer() {
+    if ($('viewer').hidden) return; $('viewer').hidden = true;
+    // Terug in het scherm staat de foto die het laatst bekeken is.
+    if (S.photos.length && view !== shownPhoto) { view = shownPhoto; render(); }
+  }
+  function swipe(el, go) {
+    var x = null, y = null;
+    el.addEventListener('pointerdown', function (e) { x = e.clientX; y = e.clientY; });
+    el.addEventListener('pointerup', function (e) {
+      if (x === null) return; var dx = e.clientX - x, dy = e.clientY - y; x = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { el.dataset.swiped = '1'; go(dx < 0 ? 1 : -1); }
+    });
+  }
+  swipe($('viewer'), function (d) { shownPhoto += d; paintViewer(); });
+  // Op de grote foto zelf: vegen voor de volgende foto, tikken voor schermvullend.
+  swipe($('hero'), function (d) { if (S.photos.length < 2 || $('hero').querySelector('.measure')) return; view = (view + d + S.photos.length) % S.photos.length; render(); });
+  $('hero').addEventListener('click', function (e) {
+    if ($('hero').dataset.swiped) { delete $('hero').dataset.swiped; return; }
+    var img = e.target.closest('img'); if (!img || img.classList.contains('measure') || !S.photos.length) return;
+    openViewer(Math.max(0, Math.min(view, S.photos.length - 1)));
+  });
+  $('viewer-prev').addEventListener('click', function () { shownPhoto--; paintViewer(); });
+  $('viewer-next').addEventListener('click', function () { shownPhoto++; paintViewer(); });
+  $('viewer-close').addEventListener('click', closeViewer);
+  document.addEventListener('keydown', function (e) {
+    if ($('viewer').hidden) return;
+    if (e.key === 'Escape') closeViewer(); else if (e.key === 'ArrowLeft') { shownPhoto--; paintViewer(); } else if (e.key === 'ArrowRight') { shownPhoto++; paintViewer(); }
+  });
+
+  $('answer').addEventListener('input', function (e) { if (e.target.id === 'gemini-note') S.note = e.target.value.slice(0, 500); });
   $('thumbs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-view]'); if (!b) return;
     view = Number(b.getAttribute('data-view')); render();
@@ -565,16 +633,19 @@
     reply = '';
     if (heard) { dropHeard(); error = ''; return render(); }
     if (editing) { editing = null; multi = null; error = ''; return render(); }
+    if (S.phase === 'photos' || !current()) return leave();
     var answered = active().filter(done), last = answered[answered.length - 1];
     multi = null; error = '';
     if (last) editing = last.id; else { stopVoice(); S.phase = 'photos'; }
     render();
   });
   $('restart').addEventListener('click', function () {
-    if (unsavedInput() && !confirm('Wat je hebt ingevuld is nog niet opgeslagen. Toch opnieuw beginnen met een leeg stuk?')) return;
-    startOver();
+    if (unsavedInput() && !confirm('Wat je hebt ingevuld is nog niet opgeslagen. Dit stuk weggooien en opnieuw beginnen met een leeg stuk?')) return;
+    var id = S.draftId; resetState(); forget(id); render();
   });
   setInterval(saveDraft, 2000);
+  // Naar Jouw collectie, met de invoer bewaard als concept (terugpijltje op het fotoscherm en het overzicht).
+  function leave() { saveDraft(); if (app().openAccount) app().openAccount(); }
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveDraft(); });
   addEventListener('pagehide', function () { saveDraft(); });
 
@@ -582,27 +653,63 @@
   window.NikkiIntake = {
     hasUnsavedInput: function () { return unsavedInput(); },
     // Alleen waarschuwen bij verlaten als de laatste invoer nog niet op het toestel bewaard is.
-    needsLeaveWarning: function () { return unsavedInput() && (draftsOff || snapshot() !== lastDraft); },
+    needsLeaveWarning: function () { return unsavedInput() && (draftsOff || snapshot() !== lastDraft || S.draftId !== lastId); },
+    // Bewaren op dit toestel lukt niet: dan gaat niet-opgeslagen invoer verloren als iets anders wordt geopend.
+    cannotKeep: function () { return unsavedInput() && draftsOff; },
     // Een concept terugzetten; de app roept dit pas aan als de gebruiker beheerder is.
     restoreDraft: function () { draftRestored = restoreDraft(); return draftRestored; },
     get draftRestored() { return draftRestored; },
-    // Het concept van dit toestel verwijderen (uitloggen).
-    clearDraft: function () { return clearDraft(); },
+    // Bewaar wat er nu staat en wacht tot het op het toestel staat.
+    flush: function () { return saveDraft(); },
+    // Alle concepten van dit toestel verwijderen (uitloggen, als Nikki daarvoor kiest); ook het scherm wordt leeg.
+    clearDraft: function () { resetState(); render(); return clearDraft(); },
+    // Onafgemaakte nieuwe stukken voor Jouw collectie: titel, prijs en de hoofdfoto (alleen op dit toestel).
+    concepts: async function () {
+      await saveDraft();
+      return (await concepts()).filter(function (c) { return !c.draft.edit; }).map(function (c) {
+        var d = c.draft, i = d.photos.findIndex(function (p) { return !p.internal && p.main; });
+        if (i < 0) i = d.photos.findIndex(function (p) { return !p.internal; });
+        // Hoeveel stappen de boetiek nog nodig heeft (zelfde lijst als "Bijna. Voor de boetiek heb ik dit nog nodig").
+        var open = I.missing(I.build({ A: d.A, G: d.G || {}, learned: learned, seed: d.seed, sales: [] }), d.A, d.photos).length;
+        return { id: c.id, at: d.at, open: open, title: I.known(d.A.titel) ? String(d.A.titel) : '', priceMinor: I.known(d.A.prijs) ? Math.round(Number(d.A.prijs) * 100) : null, photo: i >= 0 && c.files[i] instanceof Blob ? c.files[i] : null };
+      });
+    },
+    // Alle onafgemaakte stukken en niet-opgeslagen wijzigingen op dit toestel (voor de vraag bij uitloggen).
+    draftCount: async function () { await saveDraft(); return (await concepts()).length; },
+    // Verder met een concept; het stuk dat nu open staat, blijft bewaard.
+    openConcept: async function (id) {
+      if (id === S.draftId) return render();
+      await saveDraft();
+      var c = await I.store.get(id);
+      if (!usable(c)) throw Error('Dit concept kon niet worden geopend.');
+      putBack(c, 'Verder waar je was.');
+    },
+    // Een nieuw, leeg stuk; het stuk dat nu open staat, blijft als concept bewaard.
+    newPiece: function () { var kept = saveDraft(); if (snapshot() !== emptyState || S.edit) { resetState(); render(); } return kept; },
     // Na een geslaagde opslag begint Nieuw stuk leeg, tenzij intussen een ander stuk is geopend.
-    reset: function (savedKey) { if (!savedKey || !S.draftId || S.draftId === savedKey) startOver(); },
+    reset: function (savedKey) { if (!savedKey || S.draftId === savedKey) { resetState(); render(); } },
     // Een opgeslagen stuk openen om te bewerken: alle foto's (ook die alleen voor controle) en alle antwoorden.
-    load: async function (record) {
+    // Staat er van dit stuk nog een niet-opgeslagen wijziging op dit toestel, dan komt die terug.
+    load: async function (record, options) {
+      var version = options && Number.isInteger(options.version) ? options.version : null;
+      await saveDraft();
+      var kept = null; try { kept = await I.store.get(record.key); } catch (e) {}
+      if (usable(kept) && kept.draft.edit) {
+        if (version === null || kept.draft.version === version) { putBack(kept, 'Je niet-opgeslagen wijziging is teruggezet.'); return; }
+        await forget(record.key);
+      }
       var internal = await app().internalPhotos(record.key);
       var incoming = await Promise.all(record.images.concat(internal.map(function (i) { return Object.assign({}, i, { main: false, internal: true }); })).map(async function (image) {
         var response = await fetch(image.src); if (!response.ok) throw Error('Een foto kon niet worden geopend.');
         var blob = await response.blob();
         return { file: new File([blob], 'foto.jpg', { type: blob.type }), cloudPath: image.path, rol: image.role || '', rolByUser: true, main: !!image.main, internal: !!image.internal, toelichting: '', bruikbaar: true };
       }));
-      startOver();
+      await saveDraft();
+      resetState();
       S.photos = incoming.map(function (p) { return Object.assign(p, { url: URL.createObjectURL(p.file) }); });
       S.A = I.fromRecord(record); S.draftId = record.key; S.edit = true; S.phase = 'talk'; S.analysed = photoSet();
       view = Math.max(0, S.photos.indexOf(mainPhoto()));
-      markSaved(); render();
+      baseline = snapshot(); render();
     }
   };
   render();

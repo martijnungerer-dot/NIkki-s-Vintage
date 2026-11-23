@@ -133,3 +133,15 @@ Terugdraaien: rol de eerdere frontendversie terug of verwijder alleen de functie
 | `TIMEOUT`, `UNAVAILABLE` | Tijdelijke netwerk-/dienstfout; woordzoeken als terugval. |
 
 De handler logt uitsluitend `zoek:` met een vaste foutcode, nooit de vraag, context, modeltekst of catalogus.
+
+## Feedback 19 november uitrollen
+
+Na merge van de PR "Feedback Nikki 19 november". Cloudflare bouwt `main` direct; doe stap 1 en 2 meteen daarna. **Niet vanuit de agentomgeving uitgerold; live niet getest.**
+
+1. **Database:** `npx supabase db push --remote`. Voegt alleen `20261122090000_more_photos_brand.sql` toe als de eerdere migraties al live zijn; controleer vooraf met `npx supabase migration list --linked` welke openstaan en voer niet blind andere uit. Effect: 16 foto's per stuk en het optionele veld `brand`. Bestaande stukken veranderen niet.
+2. **Functie:** `npx supabase functions deploy analyse`. Effect: 16 foto's, foto-rollen en notitie, gerichte labelvragen, opnieuw proberen bij overbelasting en het reservemodel.
+3. **Reservemodel (optioneel):** secret `ANALYSE_FALLBACK_MODEL` met een snel model, bijvoorbeeld `gemini-3.5-flash-lite`. Zonder deze secret gebruikt de functie `PERSONALISE_MODEL`; staat die ook niet, dan is er geen reservemodel (wel de tweede poging).
+4. **Google:** maak in AI Studio een eigen project voor de winkel met betaling aan en een budgetwaarschuwing (bijvoorbeeld € 5 per maand), maak daar een nieuwe sleutel en zet die als `GEMINI_API_KEY`. Op betaald tegoed gebruikt Google de foto's niet voor training. Verwijder de oude sleutel pas als geen ander project hem nog gebruikt.
+5. **Controleren:** Supabase → Edge Functions → analyse → Logs. `analyse retry: …` betekent dat de tweede poging of het reservemodel werd gebruikt; `analyse failed: …` dat alles mislukte. Laat Nikki op haar S24 de fotokiezer, 16 foto's en Laat Gemini kijken proberen.
+
+Terugdraaien: de vorige versie van `analyse` opnieuw uitrollen kan altijd. De migratie is uitbreidend (ruimere grenzen, optioneel veld) en hoeft niet terug.

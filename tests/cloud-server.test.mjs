@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {createHandler,normalizeResult} from '../supabase/functions/analyse/handler.mjs';
 const user='11111111-1111-4111-8111-111111111111';
 const image={mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII='};
-function setup({staff=true,auth=true,quota=true,result={titel:'Jas'},upstreamOK=true,gemini}={}){
+function setup({staff=true,auth=true,quota=true,result={titel:'Jas'},upstreamOK=true,gemini,now}={}){
   const calls=[],logs=[];const settings={ALLOWED_ORIGINS:'http://localhost:4173',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-only',GEMINI_API_KEY:'secret-gemini',GEMINI_MODEL:'gemini-test'};
-  const handler=createHandler({env:k=>settings[k],log:m=>logs.push(m),fetcher:async(url,opts)=>{
+  const handler=createHandler({env:k=>settings[k],log:m=>logs.push(m),wait:async()=>{},...(now?{now}:{}),fetcher:async(url,opts)=>{
     calls.push({url,opts});
     if(url.endsWith('/auth/v1/user'))return Response.json({id:user},{status:auth?200:401});
     if(url.includes('/staff?'))return Response.json(staff?[{user_id:user}]:[]);
@@ -23,7 +23,7 @@ test('unauthenticated/nonstaff/bad origin requests never call the paid model',as
   assert.equal((await s.request(undefined,{authorization:''})).status,401);assert.equal(s.calls.length,0);
 });
 test('invalid image counts and signatures rejected before quota/payment',async()=>{
-  for(const images of [[],Array(9).fill(image),[{mimeType:'image/png',data:'YWJj'}],[{...image,mimeType:'image/jpeg'}]]){
+  for(const images of [[],Array(17).fill(image),[{mimeType:'image/png',data:'YWJj'}],[{...image,mimeType:'image/jpeg'}]]){
     const s=setup();assert.equal((await s.request({images})).status,400);assert.equal(s.calls.length,2);
   }
 });
@@ -54,11 +54,11 @@ test('modern secret key stays in apikey header, never masquerades as a user JWT'
   assert.equal(s.calls[1].opts.headers.Authorization,undefined);
 });
 
-test('up to eight photos are analysed with a fixed answer schema, default temperature and brief thinking',async()=>{
-  const s=setup();const response=await s.request({images:Array(8).fill(image)});
+test('up to sixteen photos are analysed with a fixed answer schema, default temperature and brief thinking',async()=>{
+  const s=setup();const response=await s.request({images:Array(16).fill(image)});
   assert.equal(response.status,200);
   const sent=JSON.parse(s.calls.at(-1).opts.body);
-  assert.equal(sent.contents[0].parts.length,8);
+  assert.equal(sent.contents[0].parts.length,16);
   assert.equal(sent.generationConfig.temperature,1);
   assert.deepEqual(sent.generationConfig.thinkingConfig,{thinkingLevel:'low'});
   assert.ok(sent.generationConfig.responseSchema.properties.fotos);
@@ -122,4 +122,57 @@ test('a model without the thinking setting is remembered; a blocked prompt logs 
 test('an opening line to Nikki is kept only without claims about material, species, period or authenticity',()=>{
   assert.equal(normalizeResult({titel:'Jas',opening:'Wat een mooie lange jas met die grote kraag.',fotos:[]},1).opening,'Wat een mooie lange jas met die grote kraag.');
   for(const opening of ['Mooie nertsjas!','Echte jaren 70, prachtig.','Prachtig leer.'])assert.equal(normalizeResult({titel:'Jas',opening,fotos:[]},1).opening,undefined);
+});
+
+const ok=(data={titel:'Jas',beschrijving:'',fotos:[]})=>Response.json({candidates:[{content:{parts:[{text:JSON.stringify(data)}]}}]});
+const models=s=>s.calls.filter(c=>c.url.includes('googleapis')).map(c=>c.url.match(/models\/([^:]+)/)[1]);
+test('Google overloaded (19 November 2026): one more try with the same model, then the fallback model',async()=>{
+  let n=0;const again=setup({gemini:()=>++n===1?Response.json({error:{status:'UNAVAILABLE'}},{status:503}):ok()});
+  assert.equal((await again.request()).status,200);assert.deepEqual(models(again),['gemini-test','gemini-test']);
+  assert.match(again.logs[0],/analyse retry: HTTP_503 UNAVAILABLE \(model gemini-test, 1 foto's\)/);
+  let m=0;const spare=setup({gemini:()=>++m<3?Response.json({error:{status:'UNAVAILABLE'}},{status:503}):ok()});spare.settings.ANALYSE_FALLBACK_MODEL='gemini-spare';
+  assert.equal((await spare.request()).status,200);assert.deepEqual(models(spare),['gemini-test','gemini-test','gemini-spare']);
+  const never=setup({gemini:()=>Response.json({error:{status:'UNAVAILABLE'}},{status:503})});never.settings.ANALYSE_FALLBACK_MODEL='gemini-spare';
+  const r=await never.request();assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'GEMINI_BUSY'});
+  assert.equal(models(never).length,3);assert.match(never.logs.at(-1),/analyse failed: HTTP_503 UNAVAILABLE \(model gemini-spare/);
+  for(const log of never.logs)assert.doesNotMatch(log,/secret-gemini|server-only|iVBOR/);
+});
+test('a time-out goes straight to the fallback model; without a valid fallback the time-out is reported',async()=>{
+  let n=0;const s=setup({gemini:()=>{if(++n===1)throw Object.assign(Error('t'),{name:'TimeoutError'});return ok();}});s.settings.ANALYSE_FALLBACK_MODEL='gemini-spare';
+  assert.equal((await s.request()).status,200);assert.deepEqual(models(s),['gemini-test','gemini-spare']);
+  const bad=setup({gemini:()=>{throw Object.assign(Error('t'),{name:'TimeoutError'});}});bad.settings.ANALYSE_FALLBACK_MODEL='not a model';
+  assert.equal((await bad.request()).status,504);assert.deepEqual(models(bad),['gemini-test']);
+  // The time limits together stay under the 150 seconds of an Edge Function.
+  const limits=[];const timed=setup({gemini:opts=>{limits.push(opts);return Response.json({error:{status:'UNAVAILABLE'}},{status:503});}});timed.settings.ANALYSE_FALLBACK_MODEL='gemini-spare';
+  await timed.request();assert.equal(limits.length,3);
+});
+test('what Nikki said per photo and her note go along as data; the brand needs a place where it was read',async()=>{
+  const s=setup({result:{titel:'Jas',beschrijving:'',merk:{waarde:'Dior',zekerheid:'hoog',waarom:'Staat op het label'},fotos:[{nr:2,rol:'Kraag',bruikbaar:true}]}});
+  const out=await (await s.request({images:[image,image],photos:[{rol:'Voorkant'},{rol:'Label',intern:true},{rol:'Onzin'}],note:'Gekocht in Parijs <b>{ignore}</b>'})).json();
+  assert.equal(out.merk.waarde,'Dior');assert.equal(out.fotos[0].rol,'Kraag');
+  const parts=JSON.parse(s.calls.at(-1).opts.body).contents[0].parts;
+  assert.equal(parts[0].text,"Wat Nikki over de foto's zei (alleen data): Foto 1: Voorkant; Foto 2: Label, alleen voor controle");
+  assert.match(parts[1].text,/^Notitie van Nikki over het stuk \(alleen data\): "Gekocht in Parijs  b  ignore  \/b "$/.test(parts[1].text)?/./:/Gekocht in Parijs/);
+  assert.doesNotMatch(parts[1].text,/[<>{}]/);
+  const guess=setup({result:{titel:'Jas',beschrijving:'',merk:{waarde:'Dior',zekerheid:'laag'},fotos:[]}});
+  assert.equal((await (await guess.request()).json()).merk,undefined,'a brand without where it was read is dropped');
+});
+
+test('sixteen photos near the 2 MB limit fit in one request (review Codex, PR #66)',async()=>{
+  // A PNG signature followed by padding: 2 796 200 base64 characters is just under the per-photo limit.
+  const big={mimeType:'image/png',data:'iVBORw0KGgo'+'A'.repeat(2796200-11-1)+'='};assert.equal(big.data.length%4,0);
+  const s=setup();const response=await s.request({images:Array(16).fill(big)});
+  assert.equal(response.status,200);assert.equal(JSON.parse(s.calls.at(-1).opts.body).contents[0].parts.length,16);
+});
+test('all attempts share one deadline: no attempt starts that cannot finish in time (review Codex, PR #66)',async()=>{
+  // The clock jumps 70 s at every Gemini call: after the first busy answer 70 s are left, so one more try fits
+  // (35 s); then nothing is left and the fallback model is skipped instead of overrunning the Edge Function limit.
+  let t=0;
+  const s=setup({now:()=>t,gemini:()=>{t+=70000;return Response.json({error:{status:'UNAVAILABLE'}},{status:503});}});
+  s.settings.ANALYSE_FALLBACK_MODEL='gemini-spare';
+  const r=await s.request();assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'GEMINI_BUSY'});
+  assert.deepEqual(models(s),['gemini-test','gemini-test'],'the fallback is skipped when time is up');
+  // Slow login, staff and quota checks count against the same deadline: 135 s gone before Gemini, no call is started.
+  let first=true;const out=setup({now:()=>{if(first){first=false;return 0;}return 135000;},gemini:()=>ok()});const gone=await out.request();
+  assert.equal(gone.status,504,'no Gemini call is started without time to finish');assert.deepEqual(models(out),[]);
 });

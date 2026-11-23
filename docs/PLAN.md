@@ -38,6 +38,15 @@ Nikki controleert alle publieke content en conditiefoto's. Martijn controleert t
 
 Klaar wanneer: een volledige testorder en herstelproef slagen; restore van collectie-invoer is beproefd; statusmeldingen bruikbaar zijn; productiedomein en toegang goed staan; eigenaar de release heeft geautoriseerd.
 
+## Kernlijn: Gemini leert van Nikki (protocol)
+
+Uitgewerkt in [LEREN-VAN-NIKKI.md](LEREN-VAN-NIKKI.md) (Martijn, 22 november 2026): elk opgeslagen stuk bewaart Gemini's voorstel naast Nikki's keuze; die verschillen en haar eigen woorden worden voorbeelden bij volgende analyses. Bouwen in een eigen PR na de feedbackreparaties van 19 november.
+
+## Goede ideeën voor later
+
+- **Verder werken op een ander apparaat** (Martijn, 22 november 2026): concepten staan nu alleen op het toestel waar ze zijn gemaakt. Later op de server bewaren (privé, alleen beheer, met privéfoto-opslag), zodat Nikki op de laptop verder kan met een stuk van haar telefoon en een concept niet meer verloren kan gaan bij het wissen van browsergegevens.
+- **Merk in de winkel tonen**: het veld `brand` bestaat sinds 22 november; tonen in het informatievenster is een winkelwijziging met akkoord.
+
 ## Eerste taak na de fundering
 
 Doe P1 vóór het bouwen van een volledige frontend. Vervolgens P2 met een read-only catalogusadapter. Zo wordt eerst bewezen dat Nikki's echte kleding- en meetgegevens passen bij het ontwerp.

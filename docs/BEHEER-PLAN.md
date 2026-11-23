@@ -85,7 +85,7 @@ Optie (a) maakt de fotocoach, het meten en de detailfoto's veel beter onderhoudb
 ### Fase 4: AI en foto-opslag (backend, elk een eigen PR met akkoord)
 13. **Interne foto's en meer analysefoto's:**
     - een kenmerk per foto, intern of publiek;
-    - een grens van 8 foto's per analyse;
+    - een grens van 8 foto's per analyse (sinds 22 november 2026: 16 per stuk, overzichtsfoto's kleiner naar Gemini; zie FEEDBACK-OPVOLGING.md);
     - interne foto's worden aan de serverkant nooit aan de publieke catalogus of de getekende links voor bezoekers gegeven;
     - tests voor die scheiding tussen publiek en intern.
 14. **Detailrollen** (rits, knopen, kraag en revers, voering en huidkant, etiket en maatlabel, naden, zakken en manchetten, gebrek), met het protocol uit de brief. Eerst laat Nikki de lijst nakijken.

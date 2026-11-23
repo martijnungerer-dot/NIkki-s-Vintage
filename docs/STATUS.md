@@ -6,9 +6,15 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 - Fase: P0 afgerond; P1 (productkeuzes en proefinvoer) en concept-brainstorm lopen.
 - Airtable (`appcR1TGKaoc4XAU4`): 0 records in Garments op 1 november 2026.
-- Webshop: cloudpilot gepubliceerd op Cloudflare Workers; nog geen winkelplatform of checkout. Supabase-tabellen en privéfoto-opslag zijn ingericht en database-rechten live gecontroleerd. Websiteverbinding staat klaar in code; login en volledige invoerroute wachten op een beheerder en deployment. Gemini is nog niet aangesloten.
+- Webshop: cloudpilot gepubliceerd op Cloudflare Workers; nog geen winkelplatform of checkout. Supabase-tabellen en privéfoto-opslag zijn ingericht en database-rechten live gecontroleerd. Websiteverbinding staat klaar in code; login en volledige invoerroute wachten op een beheerder en deployment. Gemini is aangesloten voor de fotoanalyse (`gemini-3.8-flash`; gezien in het functielogboek op 19 november 2026).
 
 ## Logboek
+
+### 22 november 2026 — testfeedback Nikki van 19 november
+- Zes opmerkingen uit `review_notes` gelezen (niet gewijzigd); afhandeling in [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md). Functielogboek `analyse` gelezen via een alleen-lezen Management-API-sleutel: twee keer `HTTP_503 UNAVAILABLE` en één `TIMEOUT` met `gemini-3.8-flash` en 8 foto's.
+- Op branch `claude/feedback-19-november`: meerdere concepten op het toestel met rode kaart en het aantal resterende stappen in Jouw collectie (Bewerken wist geen concept meer), terugpijltje naar Jouw collectie vanaf fotoscherm en overzicht, grotere foto met schermvullende weergave, fotokiezer `image/*`, 16 foto's, foto-rollen (nieuw: Kraag) en notitie naar Gemini, gerichte labelvragen en een merkvraag, opnieuw proberen en reservemodel in `analyse`.
+- Nieuwe migratie `20261122090000_more_photos_brand.sql` (16 foto's, optioneel `brand`), lokaal met PGlite getest; niet live toegepast. Functie `analyse` niet uitgerold.
+- Gecontroleerd lokaal (Node 22, niet 24): `npm test` 115/115 (na de Codex-review), volledige `npm run test:browser` (incl. nieuwe `tests/feedback-browser.cjs`), `npm run check`, `git diff --check`. Live Gemini/Supabase en een echte Android-telefoon niet getest. [Beelden vóór/na](screenshots/feedback-19-november/README.md).
 
 ### 18 november 2026 — zoeken als gesprek in de echte winkel
 - Op branch `codex/zoeken-gesprek`: bovenbalk B, vier hulpstanden, mobiel gesprekspaneel en laptopkolom. Dezelfde catalogus en Collectie-woordzoekfunctie; geen zoeksignalen naar smaakprofiel, geen voorraad- of Airtablemutaties.

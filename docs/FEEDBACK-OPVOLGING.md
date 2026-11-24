@@ -1,6 +1,40 @@
 # Opvolging van testfeedback (review_notes)
 
+## Ronde 3: 25 opmerkingen en één mail van 24 november 2026
+
+Gelezen uit `public.review_notes` (records 13–37, alleen lezen) en één mailantwoord op het voorstelmailtje. Telefoon 384 × 693. Klein opgelost en zelf gemerged volgens "Dagelijkse controle"; groot voorgelegd aan Martijn.
+
+| # | Opmerking (scherm) | Afhandeling |
+|---|---|---|
+| 13 | Helemaal naar beneden scrollen zonder dat de foto blijft staan (Nieuw stuk) | Opgelost: het hele scherm scrolt, de foto scrolt mee omhoog; de kop met terugpijl blijft staan. |
+| 14 | Haas en konijn als aparte keuze | Opgelost (PR #69): Haas bij de bontsoorten. |
+| 15 | Aangeven waar je wat ziet (kale plek) | **Voorstel Martijn**: per voorstel van Gemini de foto en een korte reden tonen. |
+| 16 | Wat bedoel je met reparatie? | **Voorstel Martijn**, samen met 15. |
+| 17 | Bontmanchetten bij een jas die helemaal van bont is | Opgelost (PR #69): bij volledig bont geen Bontkraag/Bontmanchetten, ook niet als voorstel. |
+| 18 | Zakken, niet per se opgestikt | Opgelost (PR #69): keuze "Zakken". |
+| 19, 22 | Getypte tekst verdwijnt bij een andere foto | Opgelost: wat Nikki typt blijft staan tot ze bevestigt. |
+| 20 | Bontsoort in de titel | Opgelost (PR #69): tweede titelknop uit haar antwoorden, bijvoorbeeld "Heuplange nertsjas". |
+| 21 | Geen omgeslagen boorden (tekst van Gemini klopt niet) | Nikki kan de tekst aanpassen; meegenomen in het voorstel over de kwaliteit van Gemini. |
+| 23 | Graag een prijsvoorstel | **Voorstel Martijn**: er zijn nog te weinig verkopen met prijs om te vergelijken. |
+| 24 | Waar is de titel? | Opgelost: "Nog geen titel – tik om er een te kiezen". |
+| 25 | Prijs met twee cijfers achter de komma | Opgelost (PR #69): € 147,50. |
+| 26 | Tekst past niet op de pagina (lange titel in het overzicht) | Opgelost: de titel loopt niet meer buiten de kaart. |
+| 27 | "Volledig bont" in plaats van "Ja, helemaal" | Opgelost (PR #69). |
+| 28, 29 | Niet kort; waarom een jack bij een bontjas | Opgelost (PR #69): "Kort jack" uit de modellen (lengte heeft een eigen vraag). |
+| 30 | Bijzonderheden: standaardkenmerken apart, en ruimte voor het verhaal (herkomst, tijd) | **Voorstel Martijn**: indeling van de vragen. |
+| 31 | Tekst onder elkaar (overzicht) | Opgelost: lange tekst staat onder zijn kopje. |
+| 32 | Foto staat niet goed in beeld (winkel) | **Voorstel Martijn** (winkel voor bezoekers). |
+| 33 | Op de foto klikken om in te zoomen (winkel) | **Voorstel Martijn** (winkel). |
+| 34 | Titel niet goed zichtbaar (winkel) | **Voorstel Martijn** (winkel). |
+| 35 | "Nog geen voorkeuren…" onduidelijk (Mijn smaak) | **Voorstel Martijn** (winkeltekst). |
+| 36 | Tekst gaat door elkaar heen (informatievenster winkel) | **Voorstel Martijn** (winkel). |
+| 37 | Winkelmandje ontbreekt op deze pagina (winkel) | **Voorstel Martijn** (winkel). |
+| mail | Standaard lettertype in de mail | Opgelost in de instellingen van de dagelijkse controle (geen code). |
+
+Tests: `tests/intake-steps.test.mjs` (keuzes, titel), `tests/feedback-browser.cjs` (€ 147,50) en nieuw `tests/nikki-24-november-browser.cjs` (scrollen, getypte tekst, overzicht) op 390 × 693 en 320 × 568.
+
 ## Ronde 2: zes opmerkingen van 19 november 2026
+
 
 Gelezen uit `public.review_notes` (records 7–12, alleen lezen, niet gewijzigd), allemaal op een telefoon van 384 × 693. Nagespeeld in Chromium op 384/390 en 320 px. Logboek van de functie `analyse` gelezen via de Supabase Management API (alleen-lezen-sleutel van Martijn). Besluiten van Martijn op 21 en 22 november 2026.
 

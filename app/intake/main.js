@@ -46,7 +46,8 @@
     var list = active();
     return (editing && list.filter(function (s) { return s.id === editing; })[0]) || list.filter(function (s) { return !done(s); })[0] || null;
   }
-  function euro(v) { return '€ ' + String(v).replace('.', ','); }
+  // Bedragen met centen altijd met twee cijfers achter de komma: € 147,50 (Nikki, 24 november 2026).
+  function euro(v) { var n = Number(v); return '€ ' + (n % 1 ? n.toFixed(2) : String(n)).replace('.', ','); }
   function shown(s) {
     var v = S.A[s.id];
     if (v === SKIP) return 'Weet ik nog niet';

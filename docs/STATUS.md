@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 24 november 2026 — feedback Nikki (25 opmerkingen, 1 mail)
+- Klein opgelost en zelf gemerged volgens "Dagelijkse controle": PR #69 (keuzes en teksten in Nieuw stuk) en de PR met opmaakreparaties (scrollen, getypte tekst, overzicht). Beide staan direct live via Cloudflare. Details en de voorstellen voor Martijn: [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md).
+- Gecontroleerd lokaal (Node 22): `npm test` 116/116, volledige `npm run test:browser` inclusief `tests/nikki-24-november-browser.cjs`.
+- Bekend in de agentomgeving: de live winkel laadt in een browser vanuit deze omgeving geen stukken (Supabase antwoordt 401), omdat de netwerkproxy de geheime sleutel aan browserverzoeken toevoegt. Echte bezoekers krijgen 200 (gezien in het logboek). Live-controles door agents kijken daarom alleen of de pagina en `views.js` laden.
+
 ### 22 november 2026 — testfeedback Nikki van 19 november
 - Zes opmerkingen uit `review_notes` gelezen (niet gewijzigd); afhandeling in [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md). Functielogboek `analyse` gelezen via een alleen-lezen Management-API-sleutel: twee keer `HTTP_503 UNAVAILABLE` en één `TIMEOUT` met `gemini-3.8-flash` en 8 foto's.
 - Op branch `claude/feedback-19-november`: meerdere concepten op het toestel met rode kaart en het aantal resterende stappen in Jouw collectie (Bewerken wist geen concept meer), terugpijltje naar Jouw collectie vanaf fotoscherm en overzicht, grotere foto met schermvullende weergave, fotokiezer `image/*`, 16 foto's, foto-rollen (nieuw: Kraag) en notitie naar Gemini, gerichte labelvragen en een merkvraag, opnieuw proberen en reservemodel in `analyse`.

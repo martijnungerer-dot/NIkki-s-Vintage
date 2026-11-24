@@ -93,6 +93,9 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
       assert.equal(await intake.locator('#name').textContent(),'Nieuw stuk');
       assert.match(await intake.locator('#summary').innerText(),/Merk\s+Dior/);
       assert.equal(await intake.locator('#thumbs [data-view]').count(),2);
+      // An amount with cents shows two digits after the comma (Nikki, 24 November 2026).
+      await change(intake,'prijs','147,5');await intake.locator('#summary').waitFor();
+      assert.match(await intake.locator('#summary').innerText(),/€ 147,50/);
       // Logging out asks; OK keeps the concepts on this device.
       await p.evaluate(()=>window.NikkiApp.openAccount());
       await Promise.all([p.waitForEvent('load'),p.locator('#logout').click()]);

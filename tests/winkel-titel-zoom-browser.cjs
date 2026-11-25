@@ -33,6 +33,14 @@ const row={id,display_id:1,status:'published',version:1,data:{title:'Bruin gemê
       assert.equal(await shop.locator('.viewer-dots').getAttribute('aria-label'),'Foto 1 van 2');
       for(const b of ['close','prev','next']){const r=await shop.locator(`[data-viewer=${b}]`).boundingBox();assert.ok(r.width>=44&&r.height>=44,b+' at least 44 px');}
       await p.screenshot({path:`test-results/winkel/schermvullend-${width}.png`});
+      // Keyboard focus stays inside the viewer, and the photo dots sit in the middle between the arrows.
+      await shop.locator('[data-viewer=close]').focus();
+      await p.keyboard.press('Shift+Tab');
+      assert.equal(await shop.evaluate(()=>!!document.activeElement.closest('.viewer')),true,'Shift+Tab stays in the viewer');
+      for(let k=0;k<4;k++)await p.keyboard.press('Tab');
+      assert.equal(await shop.evaluate(()=>!!document.activeElement.closest('.viewer')),true,'Tab stays in the viewer');
+      const pv=await shop.locator('[data-viewer=prev]').boundingBox(),nx=await shop.locator('[data-viewer=next]').boundingBox(),dt=await shop.locator('.viewer-dots').boundingBox();
+      assert.ok(Math.abs((dt.x+dt.width/2)-((pv.x+pv.width+nx.x)/2))<2,'dots centred between the arrows');
       // Double tap zooms in, double tap again zooms out.
       const stage=await shop.locator('.viewer-stage').boundingBox(),cx=stage.x+stage.width/2,cy=stage.y+stage.height/2;
       await p.mouse.click(cx,cy);await p.mouse.click(cx,cy);

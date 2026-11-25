@@ -342,7 +342,14 @@
       if (v.opener && v.opener.focus) v.opener.focus({ preventScroll: true });
       if (S.photo !== v.at) { S.photo = v.at; place(0); }
     };
-    v.key = function (e) { if (e.key === 'Escape') v.close(); else if (e.key === 'ArrowLeft') show(v.at - 1); else if (e.key === 'ArrowRight') show(v.at + 1); };
+    v.key = function (e) {
+      // Keep keyboard focus inside the viewer while it is open (it is a modal dialog).
+      if (e.key === 'Tab') {
+        var f = Array.from(el.querySelectorAll('button:not(:disabled)')); if (!f.length) return;
+        var i = f.indexOf(document.activeElement), n = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i < 0 || i === f.length - 1 ? 0 : i + 1);
+        e.preventDefault(); f[n].focus(); return;
+      }
+      if (e.key === 'Escape') v.close(); else if (e.key === 'ArrowLeft') show(v.at - 1); else if (e.key === 'ArrowRight') show(v.at + 1); };
     document.addEventListener('keydown', v.key);
     el.addEventListener('click', function (e) {
       var b = e.target.closest('[data-viewer]'); if (!b) return;

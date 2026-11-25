@@ -22,7 +22,9 @@ module.exports = async function ({context, width, output, personalise}) {
  await shop.locator('.shop').click();
  assert.deepEqual(await shop.getByRole('menuitem').allTextContents(), ['Collectie','Mijn favorieten','Winkelmand','Mijn smaak','Beheer']);
  await shop.getByRole('menuitem', {name:'Mijn smaak',exact:true}).click();
- assert.ok(await shop.locator('.taste-empty').isVisible());
+ assert.equal(await shop.locator('.taste-empty,.taste-note,.taste-window h2,.taste-chip').count(),0,'empty preferences have no explanatory copy');
+ assert.equal(await shop.locator('[data-act=taste-picker]').count(),1);
+ assert.deepEqual((await shop.locator('.taste-window').innerText()).split('\n').map(s=>s.trim()).filter(Boolean),['Persoonlijke volgorde','Wis alles']);
  assert.equal(await shop.locator('#cart input, #cart select').count(), 0, 'no budget or choice fields');
  await page.screenshot({path:path.join(output,'taste-empty-'+width+'.png')});
  await close();
@@ -132,8 +134,9 @@ module.exports = async function ({context, width, output, personalise}) {
   assert.equal(await button.textContent(), '', 'icons without visible words');
  }
  await open();
- assert.ok(await shop.getByRole('heading',{name:'Meer van',exact:true}).isVisible());
- assert.ok(await shop.getByRole('heading',{name:'Minder van',exact:true}).isVisible());
+ assert.ok(await shop.locator('.taste-chip svg[aria-label="Meer van"]').count()>0);
+ assert.equal(await shop.locator('.taste-window h2').count(),0,'direction is an icon, not a heading');
+ assert.ok(await shop.locator('.taste-chip svg[aria-label="Minder van"]').count()>0);
  await page.screenshot({path:path.join(output,'taste-filled-'+width+'.png')});
  assert.ok(await shop.locator('.taste-window').evaluate(el => el.scrollWidth <= el.clientWidth));
  assert.ok(await shop.locator('.taste-window').evaluate(el => {
@@ -197,6 +200,44 @@ module.exports = async function ({context, width, output, personalise}) {
  await shop.locator('[data-act=taste-forget]').click();assert.deepEqual((await read()).features,{});assert.equal((await read()).enabled,false);
  await close();
  await shop.evaluate(reviewCases);
+ // Catalogue additions reuse the existing explicit-filter signal; no text input or new payload fields.
+ await open();
+ await shop.locator('[data-act=taste-picker]').click();
+ const choices=shop.locator('[data-act=taste-add]');
+ assert.ok(await choices.count()>0 && await choices.count()<=12,'small catalogue-only list');
+ assert.equal(await shop.locator('.taste-window input,.taste-window textarea,.taste-window [contenteditable]').count(),0,'no free input');
+ const offered=await choices.evaluateAll(buttons=>buttons.map(b=>b.dataset.key));
+ const known=await shop.evaluate(()=>window.NikkiShop.api.items().flatMap(it=>window.NikkiTaste.aggregate.featuresOf(it).map(x=>x[0])));
+ assert.ok(offered.every(key=>known.includes(key)&&/^(material|colour|model|length|fur):/.test(key)),'only supported catalogue features');
+ for(const button of await choices.all()) {const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44);assert.ok(await button.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));}
+ await page.screenshot({path:path.join(output,'taste-choices-'+width+'.png')});
+ const selected=offered[0],dimension=selected.split(':')[0];
+ await choices.first().click();
+ assert.equal(await shop.locator('[data-act=taste-picker]').getAttribute('aria-expanded'),'false');
+ assert.ok((await read()).explicit.include[dimension]?.length,'choice saved explicitly as more');
+ assert.equal(await shop.locator('[data-act=taste-picker]').evaluate(el=>document.activeElement===el),true,'focus returns to plus');
+ await shop.locator('[data-act=taste-forget]').evaluateAll((buttons,key)=>buttons.find(b=>b.dataset.key===key).click(),selected);
+ assert.ok(!(await read()).explicit.include[dimension]?.length,'forget removes an added preference');
+ await shop.locator('[data-act=taste-picker]').click();
+ const intact=await read();
+ await choices.first().evaluate(el=>{el.dataset.key='material:not in catalog';el.click();});
+ assert.deepEqual(await read(),intact,'forged choice is rejected before save');
+ await shop.locator('[data-act=taste-picker]').click();
+ await close();
+
+ // A large catalogue still offers a fixed pool of at most twelve, and failed adds keep state.
+ await shop.evaluate(()=>{const source=NikkiShop.api.items()[0];NikkiStore.replace(Array.from({length:30},(_,i)=>({...source,key:'10000000-0000-4000-8000-'+String(i).padStart(12,'0'),material:'Materiaal '+i,colour:'Kleur '+i})));});
+ await open();await shop.locator('[data-act=taste-picker]').click();
+ assert.equal(await shop.locator('[data-act=taste-add]').count(),12,'large catalogue stays bounded');
+ const beforeFailedAdd=await read(),beforeFailedRefresh=await refreshes();
+ await shop.evaluate(()=>{window.savedSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='nikki-taste')throw Error('quota');return window.savedSet.call(this,k,v);};});
+ try {
+  await shop.locator('[data-act=taste-add]').first().click();
+  assert.deepEqual(await read(),beforeFailedAdd,'failed add leaves preferences intact');
+  assert.equal(await refreshes(),beforeFailedRefresh,'failed add makes no personalisation request');
+  assert.ok(await shop.locator('.taste-window [role=status]').isVisible());
+ } finally {await shop.evaluate(()=>{Storage.prototype.setItem=window.savedSet;delete window.savedSet;});}
+ await close();
  await shop.evaluate(()=>window.NikkiStore.replace([],[]));
  assert.ok(await more.isHidden());assert.ok(await less.isHidden());
  // Restore shared fixture state for the remainder of the existing suite.

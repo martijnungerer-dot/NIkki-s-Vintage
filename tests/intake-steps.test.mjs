@@ -63,7 +63,7 @@ test('proposals keep only short plain values; the title is composed from what Ni
   const G=I.proposals({titel:'x'.repeat(500),beschrijving:' tekst ',bont:{waarde:'Misschien'},materiaal:{waarde:null},bijzonderheden:{waarde:['Vlek',5,'']},controleer:{titel:['leren']},prijs:10});
   assert.equal(G.titel.length,200);assert.equal(G.beschrijving,'tekst');assert.deepEqual(G.bijzonderheden,['Vlek']);assert.equal(G.materiaal,undefined);assert.equal(G.prijs,undefined);
   assert.equal(step(make({},G).steps,'bont').guess(),null,'an unknown fur value is not offered');
-  assert.equal(I.composeTitle({bont:'Ja',bontsoort:'Nerts',lengte:'Lang',model:'Sjaalkraag'}),'Lange jas van nerts met sjaalkraag');
+  assert.equal(I.composeTitle({bont:'Ja',bontsoort:'Nerts',lengte:'Lang',model:'Sjaalkraag'}),'Lange nertsjas met sjaalkraag');
   assert.equal(I.composeTitle({bont:'Alleen kraag of rand',bontsoort:'Vos',materiaal:'Leer',lengte:'Kort'}),'Korte jas van leer, kraag van vos');
   assert.equal(I.composeTitle({bont:SKIP,lengte:SKIP}),'Jas','nothing unknown ends up in the title');
   // Own words are offered next time, after the standard choices.
@@ -133,4 +133,25 @@ test('the brand comes from Nikki: Gemini only proposes what it read, and only a 
   assert.equal(I.fromRecord({furClass:'Nee',brand:'Dior',measurements:[]}).merk,'Dior');
   assert.equal(I.fromRecord({furClass:'Nee',measurements:[]}).merk,SKIP);
   assert.ok(I.ROLES.includes('Kraag')&&I.CLOSE.includes('Label')&&!I.CLOSE.includes('Voorkant'),'close-ups are sent sharp, overview photos smaller');
+});
+
+test('feedback Nikki 24 November: fur species in the title, separate choices, nothing that says nothing',()=>{
+  // Haas and konijn are separate choices; "Volledig bont" instead of "Ja, helemaal".
+  const m=make({},{});
+  assert.ok(step(m.steps,'bontsoort').options().includes('Haas')&&step(m.steps,'bontsoort').options().includes('Konijn'));
+  assert.deepEqual(step(m.steps,'bont').options()[0],['Ja','Volledig bont']);
+  assert.ok(!step(m.steps,'model').options().includes('Kort jack'),'length is its own question, and a fur coat is no jack');
+  // A coat that is all fur: no fur collar or cuffs, but plain pockets are a choice.
+  const fur=make({bont:'Ja',bontsoort:'Nerts'},I.proposals({bijzonderheden:{waarde:['Bontmanchetten','Zakken'],zekerheid:'hoog'}}));
+  const extra=step(fur.steps,'bijzonderheden');
+  assert.ok(!extra.options().includes('Bontmanchetten')&&!extra.options().includes('Bontkraag')&&extra.options().includes('Zakken'));
+  assert.deepEqual(extra.start(),['Zakken'],'a Gemini proposal of fur cuffs on an all-fur coat is left out');
+  const collar=make({bont:'Alleen kraag of rand'},{});assert.ok(step(collar.steps,'bijzonderheden').options().includes('Bontkraag'));
+  // The title: Gemini's proposal plus one from Nikki's own answers, with the species.
+  const t=make({bont:'Ja',bontsoort:'Nerts',lengte:'Heuplang'},I.proposals({titel:'Bruin gemêleerde halflange bontjas met platte kraag'}));
+  const title=step(t.steps,'titel');
+  assert.deepEqual(title.options(),[['Bruin gemêleerde halflange bontjas met platte kraag','Goed zo'],['Heuplange nertsjas','Heuplange nertsjas']]);
+  assert.equal(I.composeTitle({bont:'Ja',bontsoort:'Haas'}),'Hazenjas');
+  assert.equal(I.composeTitle({bont:'Ja',bontsoort:'Lam',lengte:'Kort'}),'Korte jas van lam','unknown coat word: jas van …');
+  assert.equal(I.heardText([['bont','Ja']]),'volledig bont');
 });

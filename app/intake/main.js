@@ -27,6 +27,8 @@
   // Een vrije zin die Gemini aan het begrijpen is ({busy}) of begreep ({values, reply}), en de reactie
   // die na "Klopt" één keer boven de volgende vraag staat.
   var heard = null, heardCtl = null, heardGen = 0, reply = '';
+  // Tekst die Nikki in een lange tekstvraag typt maar nog niet bevestigde, per vraag.
+  var typing = {};
 
   var active = function () { return I.active(steps); };
   var done = function (s) { return S.A[s.id] !== undefined; };
@@ -46,7 +48,8 @@
     var list = active();
     return (editing && list.filter(function (s) { return s.id === editing; })[0]) || list.filter(function (s) { return !done(s); })[0] || null;
   }
-  function euro(v) { return '€ ' + String(v).replace('.', ','); }
+  // Bedragen met centen altijd met twee cijfers achter de komma: € 147,50 (Nikki, 24 november 2026).
+  function euro(v) { var n = Number(v); return '€ ' + (n % 1 ? n.toFixed(2) : String(n)).replace('.', ','); }
   function shown(s) {
     var v = S.A[s.id];
     if (v === SKIP) return 'Weet ik nog niet';
@@ -118,7 +121,7 @@
     try { localStorage.setItem('gsf-learned', JSON.stringify(learned)); } catch (e) {}
   }
   function give(step, value) {
-    error = ''; dropHeard(); reply = '';
+    error = ''; dropHeard(); reply = ''; delete typing[step.id];
     S.A[step.id] = value; if (step.set) step.set(value);
     (Array.isArray(value) ? value : [value]).forEach(function (v) { learn(step.id, v); });
     editing = null; multi = null; saved = false; saveError = ''; render();
@@ -248,10 +251,10 @@
         return;
       }
       if (s.id === 'titel' || s.id === 'prijs' || S.A[s.id] === SKIP || (s.id === 'periode' && S.A.periode === 'Onbekend') || (s.kind === 'long' && !S.A[s.id])) return;
-      rows += '<button type="button" class="kv" data-edit="' + s.id + '" aria-label="' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(s.label) + '</span><span>' + esc(shown(s)) + '</span></button>';
+      rows += '<button type="button" class="kv' + (s.kind === 'long' ? ' stack' : '') + '" data-edit="' + s.id + '" aria-label=""' + esc(s.label + ': ' + shown(s) + '. Tik om te wijzigen') + '"><span>' + esc(s.label) + '</span><span>' + esc(shown(s)) + '</span></button>';
     });
     return '<div class="card" id="summary"><div class="card-head">' + (main ? '<img src="' + esc(main.url) + '" alt="Hoofdfoto">' : '') +
-      '<div><button type="button" class="kv" data-edit="titel" style="border:0;padding:0"><span class="card-title" style="color:var(--fg)">' + esc(I.known(S.A.titel) ? S.A.titel : 'Nog geen titel') + '</span></button>' +
+      '<div><button type="button" class="kv" data-edit="titel" style="border:0;padding:0"><span class="card-title" style="color:var(--fg)">' + esc(I.known(S.A.titel) ? S.A.titel : 'Nog geen titel – tik om er een te kiezen') + '</span></button>' +
       '<button type="button" class="kv" data-edit="prijs" style="border:0;padding:0"><span style="color:var(--fg)">' + (I.known(S.A.prijs) ? esc(euro(S.A.prijs)) : 'Nog geen prijs') + '</span></button></div></div>' + rows + '</div>';
   }
   function render() {
@@ -310,7 +313,7 @@
     talk.innerHTML = h;
     renderAnswer(step, fresh);
     speakQuestion(step);
-    talk.scrollTop = 0; $('lower').scrollTop = 0;
+    talk.scrollTop = 0; $('app').scrollTop = 0;
     var row = $('trail'); if (row) row.scrollLeft = row.scrollWidth;
   }
   var VOICE_ICON = '<svg class="bars" width="30" height="24" viewBox="0 0 30 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="3" height="20" rx="1.5"/><rect x="8" y="2" width="3" height="20" rx="1.5"/><rect x="14" y="2" width="3" height="20" rx="1.5"/><rect x="20" y="2" width="3" height="20" rx="1.5"/><rect x="26" y="2" width="3" height="20" rx="1.5"/></svg>' +
@@ -348,7 +351,8 @@
         return '<button type="button" class="chip' + (guess === o[0] ? ' guess' : '') + '" style="--i:' + i + '" data-value="' + esc(o[0]) + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
       }).join('') + '</div>';
       var numeric = step.kind === 'cm' || step.kind === 'euro', had = S.A[step.id];
-      if (step.kind === 'long') h += '<textarea class="long" id="free" maxlength="4000" aria-labelledby="question">' + esc(typeof had === 'string' && had !== SKIP ? had : step.proposal()) + '</textarea>' +
+      // Wat Nikki al typte, blijft staan als het scherm opnieuw tekent (bijvoorbeeld bij een andere foto; Nikki, 24 november 2026).
+      if (step.kind === 'long') h += '<textarea class="long" id="free" maxlength="4000" aria-labelledby="question">' + esc(typeof typing[step.id] === 'string' ? typing[step.id] : typeof had === 'string' && had !== SKIP ? had : step.proposal()) + '</textarea>' +
         '<div class="free"><button type="button" class="voice" id="voice" data-voice="' + voice.state + '" aria-label="' + VOICE_LABEL[voice.state] + '">' + VOICE_ICON + '</button><button type="submit" class="chip main" style="flex:1">Zo is het goed</button></div>';
       else h += '<div class="free"><button type="button" class="voice" id="voice" data-voice="' + voice.state + '" aria-label="' + VOICE_LABEL[voice.state] + '">' + VOICE_ICON + '</button>' + (step.kind === 'euro' ? '<span class="unit">€</span>' : '') +
         '<input id="free" autocomplete="off" ' + (numeric ? 'inputmode="decimal"' : 'type="text"') + ' aria-label="' + esc(numeric ? step.label : 'Typ of dicteer je antwoord') + '" placeholder="' + esc(numeric ? '' : step.placeholder || (step.kind === 'multi' ? 'Iets anders? Typ of dicteer' : 'Of typ of dicteer je antwoord')) + '"' +
@@ -483,7 +487,7 @@
     gen++; if (ctl) ctl.abort(); thinking = false; stopVoice();
     S.photos.forEach(function (p) { try { URL.revokeObjectURL(p.url); } catch (e) {} });
     dropHeard(); reply = '';
-    S = fresh(); editing = null; multi = null; error = ''; note = ''; view = 0; saved = false; status = ''; saveError = ''; askedKey = '';
+    S = fresh(); editing = null; multi = null; error = ''; note = ''; view = 0; saved = false; status = ''; saveError = ''; askedKey = ''; typing = {};
     if (app().forgetAnalysis) app().forgetAnalysis();
     baseline = emptyState; lastDraft = null; lastPhotoSet = null; lastId = null;
   }
@@ -566,7 +570,10 @@
     if (e.key === 'Escape') closeViewer(); else if (e.key === 'ArrowLeft') { shownPhoto--; paintViewer(); } else if (e.key === 'ArrowRight') { shownPhoto++; paintViewer(); }
   });
 
-  $('answer').addEventListener('input', function (e) { if (e.target.id === 'gemini-note') S.note = e.target.value.slice(0, 500); });
+  $('answer').addEventListener('input', function (e) {
+    if (e.target.id === 'gemini-note') S.note = e.target.value.slice(0, 500);
+    var step = current(); if (e.target.id === 'free' && step && step.kind === 'long') typing[step.id] = e.target.value.slice(0, 4000);
+  });
   $('thumbs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-view]'); if (!b) return;
     view = Number(b.getAttribute('data-view')); render();

@@ -7,14 +7,14 @@
   var LISTS = {
     bont: ['Ja', 'Alleen kraag of rand', 'Nee'],
     materiaal: ['Leer', 'Suède', 'Shearling', 'Wol', 'Anders'],
-    model: ['Sjaalkraag', 'Reverskraag', 'Opstaande kraag', 'Capuchon', 'Pilotenjack', 'Autojas', 'Trenchcoat', 'Cape', 'Bolero', 'Kort jack', 'Overslag met ceintuur'],
+    model: ['Sjaalkraag', 'Reverskraag', 'Opstaande kraag', 'Capuchon', 'Pilotenjack', 'Autojas', 'Trenchcoat', 'Cape', 'Bolero', 'Overslag met ceintuur'],
     kleur: ['Zwart', 'Donkerbruin', 'Bruin', 'Cognac', 'Camel', 'Honing', 'Crème', 'Wit', 'Zilvergrijs', 'Grijs'],
     lengte: ['Kort', 'Heuplang', 'Knielang', 'Lang'],
     pasvorm: ['Recht', 'Getailleerd', 'Boxy', 'Oversized'],
     merk: ['Geen merk'],
     periode: ['Jaren 50', 'Jaren 60', 'Jaren 70', 'Jaren 80', 'Jaren 90', 'Onbekend'],
-    bontsoort: ['Nerts', 'Vos', 'Persianer', 'Konijn', 'Bisam', 'Wasbeer', 'Lam'],
-    bijzonderheden: ['Bontkraag', 'Bontmanchetten', 'Ceintuur', 'Opgestikte zakken', 'Origineel label', 'Monogram', 'Zijden voering', 'Voering vernieuwd', 'Reparatie', 'Kale plek', 'Vlek', 'Ontbrekende knoop']
+    bontsoort: ['Nerts', 'Vos', 'Persianer', 'Konijn', 'Haas', 'Bisam', 'Wasbeer', 'Lam'],
+    bijzonderheden: ['Bontkraag', 'Bontmanchetten', 'Ceintuur', 'Zakken', 'Opgestikte zakken', 'Origineel label', 'Monogram', 'Zijden voering', 'Voering vernieuwd', 'Reparatie', 'Kale plek', 'Vlek', 'Ontbrekende knoop']
   };
   // Lijsten waar Nikki eigen woorden aan kan toevoegen; die gaan ook mee naar Gemini.
   var OWN = ['materiaal', 'model', 'kleur', 'bontsoort', 'bijzonderheden', 'merk'];
@@ -23,6 +23,10 @@
   var CLOSE = ['Label', 'Kraag', 'Sluiting', 'Detail', 'Gebrek', 'Voering'];
   var FLAWS = ['Kale plek', 'Vlek', 'Reparatie', 'Ontbrekende knoop'];
   var PARTS = ['model', 'kleur', 'lengte'];
+  // Bij een jas die helemaal van bont is, zeggen een bontkraag of bontmanchetten niets extra (Nikki, 24 november 2026).
+  var FUR_PARTS = ['Bontkraag', 'Bontmanchetten'];
+  // Zo heet een jas die helemaal van een bontsoort is; onbekende soorten worden "jas van …".
+  var FUR_COAT = { Nerts: 'nertsjas', Vos: 'vossenjas', Persianer: 'persianerjas', Konijn: 'konijnenjas', Haas: 'hazenjas', Bisam: 'bisamjas', Wasbeer: 'wasberenjas' };
 
   // ---------- zo praat het scherm ----------
   // Per gelegenheid een paar zinnen. Welke zin komt, hangt af van het stuk (seed), de vraag en het
@@ -83,7 +87,10 @@
     var len = { Kort: 'Korte', Heuplang: 'Heuplange', Knielang: 'Knielange', Lang: 'Lange' }[A.lengte] || '';
     var what = A.bont === 'Ja' ? A.bontsoort : A.materiaal;
     var collar = ['Sjaalkraag', 'Reverskraag', 'Opstaande kraag', 'Capuchon'].indexOf(A.model) >= 0 ? ' met ' + lower(A.model) : '';
-    var text = (len ? len + ' jas' : 'Jas') + (known(what) && what !== 'Anders' && what !== 'Bont' ? ' van ' + lower(what) : '') + collar +
+    // Helemaal bont, met een bekende soort: de soort zit in het woord ("Heuplange nertsjas").
+    var coat = A.bont === 'Ja' && known(A.bontsoort) && FUR_COAT[A.bontsoort];
+    var text = coat ? (len ? len + ' ' : '') + coat + collar :
+      (len ? len + ' jas' : 'Jas') + (known(what) && what !== 'Anders' && what !== 'Bont' ? ' van ' + lower(what) : '') + collar +
       (A.bont === 'Alleen kraag of rand' && known(A.bontsoort) ? ', kraag van ' + lower(A.bontsoort) : '');
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
@@ -109,8 +116,8 @@
       warm: warm || function (v) { return say(SAY.cm, id, v, { v: String(v).replace('.', ',') }); } }; };
     return [
       { id: 'bont', need: true, label: 'Bont', ask: function () { return 'Is dit stuk van bont?'; },
-        options: function () { return [['Ja', 'Ja, helemaal'], ['Alleen kraag of rand', 'Alleen kraag of rand'], ['Nee', 'Nee, geen bont']]; }, guess: function () { return LISTS.bont.indexOf(guess('bont')) >= 0 ? guess('bont') : null; },
-        say: { 'Alleen kraag of rand': /kraag|rand/, Ja: /^(ja|helemaal)/, Nee: /^(nee|geen)/ },
+        options: function () { return [['Ja', 'Volledig bont'], ['Alleen kraag of rand', 'Alleen kraag of rand'], ['Nee', 'Nee, geen bont']]; }, guess: function () { return LISTS.bont.indexOf(guess('bont')) >= 0 ? guess('bont') : null; },
+        say: { 'Alleen kraag of rand': /kraag|rand/, Ja: /^(ja|helemaal|volledig)/, Nee: /^(nee|geen)/ },
         set: function (v) {
           var a = A();
           if (v === 'Ja') { if (!known(a.materiaal)) a.materiaal = 'Bont'; }
@@ -145,14 +152,17 @@
         placeholder: 'Of typ het merk', warm: function (v) { return v === 'Geen merk' ? '' : say(SAY.title, 'merk', v); } },
       { id: 'bijzonderheden', label: 'Bijzonderheden', kind: 'multi', own: true,
         ask: function () { var g = G().bijzonderheden; return (Array.isArray(g) && g.length ? 'Ik zie: ' + g.map(lower).join(', ') + '. ' : '') + 'Wat valt er nog meer op? Ook kleine gebreken.'; },
-        options: function () { return list('bijzonderheden'); }, start: function () { var g = G().bijzonderheden; return Array.isArray(g) ? g.slice(0, 30) : []; },
+        options: function () { return list('bijzonderheden').filter(function (v) { return !(A().bont === 'Ja' && FUR_PARTS.indexOf(v) >= 0); }); },
+        start: function () { var g = G().bijzonderheden; return Array.isArray(g) ? g.filter(function (v) { return !(A().bont === 'Ja' && FUR_PARTS.indexOf(v) >= 0); }).slice(0, 30) : []; },
         warm: function (v) { return say(v.some(function (x) { return FLAWS.indexOf(x) >= 0; }) ? SAY.flaws : v.length ? SAY.details : SAY.noDetails, 'bijzonderheden', v); } },
       cm('chest', 'Borstbreedte', true, 'Leg hem plat. Hoe breed is de borst, van oksel tot oksel?'),
       cm('length', 'Ruglengte', true, 'En de ruglengte, van de kraagnaad tot de zoom?'),
       cm('shoulder', 'Schouderbreedte', false, 'De schouders, van naad tot naad?'),
       cm('sleeve', 'Mouwlengte', false, 'En de mouw, van schoudernaad tot manchet?', function (v) { return say(SAY.measured, 'sleeve', v); }),
       { id: 'titel', need: true, label: 'Titel', kind: 'text', proposal: function () { return guess('titel') || composeTitle(A()); },
-        ask: function () { return 'Als titel stel ik voor: “' + this.proposal() + '”. Goed zo?'; }, options: function () { return [[this.proposal(), 'Goed zo']]; },
+        ask: function () { return 'Als titel stel ik voor: “' + this.proposal() + '”. Goed zo?'; },
+        // Naast het voorstel van Gemini ook een titel uit Nikki's eigen antwoorden, met de bontsoort (Nikki, 24 november 2026).
+        options: function () { var own = composeTitle(A()), p = this.proposal(); return own !== p && own !== 'Jas' ? [[p, 'Goed zo'], [own, own]] : [[p, 'Goed zo']]; },
         hint: function () { return guess('titel') ? claimHint(G(), 'titel') : ''; }, placeholder: 'Of typ je eigen titel', warm: function (v) { return say(SAY.title, 'titel', v); } },
       { id: 'beschrijving', label: 'Beschrijving', kind: 'long', proposal: function () { return guess('beschrijving') || ''; },
         ask: function () { return guess('beschrijving') ? 'Dit is mijn voorstel voor de tekst in de boetiek. Pas hem aan zoals jij het zou zeggen.' : 'Wil je er nog iets over vertellen? Dit komt als tekst in de boetiek.'; },
@@ -243,7 +253,7 @@
   // "materiaal shearling, bontsoort vos" voor de vraag of het klopt.
   var HEARD_LABEL = { bont: 'bont', materiaal: 'materiaal', bontsoort: 'bontsoort', model: 'model', kleur: 'kleur', lengte: 'lengte', pasvorm: 'pasvorm', periode: 'periode', bijzonderheden: 'bijzonderheden' };
   function heardText(values) {
-    var BONT = { Ja: 'helemaal bont', 'Alleen kraag of rand': 'bont alleen aan kraag of rand', Nee: 'geen bont' };
+    var BONT = { Ja: 'volledig bont', 'Alleen kraag of rand': 'bont alleen aan kraag of rand', Nee: 'geen bont' };
     return values.map(function (kv) { return kv[0] === 'bont' ? BONT[kv[1]] : HEARD_LABEL[kv[0]] + ' ' + (Array.isArray(kv[1]) ? kv[1].map(lower).join(' en ') : lower(kv[1])); }).join(', ');
   }
 

@@ -10,6 +10,10 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 24 november 2026 — feedback Nikki (25 opmerkingen, 1 mail)
+- Klein opgelost en zelf gemerged volgens "Dagelijkse controle": PR #69 (keuzes en teksten in Nieuw stuk) en de PR met opmaakreparaties (scrollen, getypte tekst, overzicht). Beide staan direct live via Cloudflare. Details en de voorstellen voor Martijn: [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md).
+- Gecontroleerd lokaal (Node 22): `npm test` 116/116, volledige `npm run test:browser` inclusief `tests/nikki-24-november-browser.cjs`.
+- Bekend in de agentomgeving: de live winkel laadt in een browser vanuit deze omgeving geen stukken (Supabase antwoordt 401), omdat de netwerkproxy de geheime sleutel aan browserverzoeken toevoegt. Echte bezoekers krijgen 200 (gezien in het logboek). Live-controles door agents kijken daarom alleen of de pagina en `views.js` laden.
 ### 23 november 2026 — uitrol feedbackreparaties (PR #66)
 - PR #66 gemerged (`d0ef192`); Cloudflare bouwde `main`. De website zelf is vanuit de agentomgeving niet bereikbaar en dus niet bekeken.
 - Op verzoek van Martijn uitgerold via de Supabase Management API (eigen sleutel met alleen logboek lezen, migraties en Edge Functions; geen API keys, secrets of billing):

@@ -10,6 +10,7 @@ Lees eerst README.md, docs/ACCESS.md, docs/PLAN.md en relevante onderdelen van d
 - Controleer branch en werkboom. Behoud wijzigingen van anderen. Eén agent per checkout. Gebruik een eigen branch voor een taak; maak geen nieuwe worktree tenzij aangevraagd of concreet afgesproken.
 - Geen force-push of destructieve resets. Kleine, samenhangende wijzigingen; contract- en schemawijzigingen documenteren. Bewerk overlappende bestanden niet tegelijk met een andere agent.
 - Lever via pull request met doel, checks, beperkingen en handoff. Standaard beslist Martijn over merge/release; expliciete gebruikersautorisatie voor een concrete taak geldt.
+- Uitzondering (Martijn, 23 november 2026): een agent mag een **kleine PR** zelf mergen als alle CI-checks groen zijn, er relevante tests bij zitten en de PR binnen de regels van "Dagelijkse controle" hieronder valt. Al het andere merget Martijn.
 - Routinematige lokale wijzigingen en controles binnen de opdracht mogen zonder nieuwe bevestiging. Productieschrijfacties, publicatie of betalingen moeten binnen de expliciete taakscope vallen.
 - Node.js 24: `npm run build`, `npm test`, `npm run test:browser`, `npm run check`. De cloudtests gebruiken lokale testdiensten; meld live Supabase/Gemini apart als niet getest zolang accounts ontbreken.
 - Voeg bij latere functionele wijzigingen relevante tests toe voor publiek/privé-scheiding, unieke voorraad, herhaalbaarheid en foutafhandeling. Geen tests die alleen documenttekst dupliceren.
@@ -39,3 +40,13 @@ Controleer vooral dubbelverkoop, herhaald initialiseren van voorraad, lekken van
 - Gebruikerskeuzes en projectafspraken gaan vóór algemene skilladviezen. Een skill autoriseert geen frameworkmigratie, productiewijzigingen of nieuwe functionaliteit. Bestaande gegevens en functies moeten per wijziging expliciet behouden, verplaatst of na akkoord vervangen worden.
 - Zie [skillbeheer](.agents/skills/README.md) voor bronversies, lokale aanpassingen en gebruik. Deze bestanden staan in de repository zodat volgende sessies dezelfde basis hebben.
 
+
+## Dagelijkse controle
+
+Afgesproken met Martijn op 23 november 2026. Een geplande sessie kijkt elke dag rond 15:00 (Nederlandse tijd, na Nikki's testmoment rond 11:00) naar het project.
+
+- **Lezen:** nieuwe records in `public.review_notes` (alleen lezen), het logboek van de Edge Functions, open PR's en CI. Welke feedbackrecords al zijn afgehandeld staat in `docs/FEEDBACK-OPVOLGING.md`; werk die lijst bij.
+- **Klein, zelf doen en mergen** na groene CI: een duidelijke fout herstellen, een tekst verbeteren, een kapotte test repareren, een kleine opmaakfout binnen het bestaande ontwerp. Alleen in `app/` (beheer en Nieuw stuk), `tests/`, `scripts/` en `docs/`; met een test die de fout laat zien; zonder nieuwe functionaliteit.
+- **Groot, voorleggen aan Martijn** in gewone taal met een aanbeveling: alles aan het ontwerp of gedrag van de winkel voor bezoekers, nieuwe functies, migraties of schemawijzigingen, Edge Functions, uitrollen naar Supabase, schrijfacties in Supabase of Airtable, kosten, betalingen, voorraad en privégegevens. Bij twijfel is het groot.
+- **Nooit:** force-push, testen uitschakelen om groen te krijgen, secrets of privévelden in PR's of berichten.
+- **Melden:** alleen als er iets is (nieuwe feedback, een gemergede reparatie, een keuze voor Martijn). Een merge naar `main` staat direct live via Cloudflare; noem dat in het verslag. Werk `docs/STATUS.md` bij bij elke gemergede reparatie.

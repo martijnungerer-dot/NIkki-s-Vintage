@@ -115,3 +115,21 @@ button:disabled { cursor: default; }
 .menu .menu-staff { color: var(--muted); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
 /* "Onze volgorde" fits in the sort choice on a 320px phone. */
 .catalog-filters select { padding-right: 2px; text-overflow: ellipsis; }
+
+/* Info window: every part keeps its own height, so a long title never slides over the text (Nikki, 24 November 2026). */
+.info > * { flex-shrink: 0; }
+.info .head .ptitle { min-width: 0; }
+
+/* Photo full screen with zoom (Martijn, 25 November 2026): only the photo, the controls above and below it, never text on it. */
+.viewer { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; background: var(--bg);
+  padding: calc(8px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left)); }
+.viewer-top, .viewer-bar { flex: none; display: flex; align-items: center; }
+.viewer-top { justify-content: flex-end; }
+.viewer-bar { justify-content: space-between; gap: 8px; }
+.viewer-stage { flex: 1; min-height: 0; overflow: hidden; border-radius: 8px; background: var(--photo-bg); touch-action: none; display: grid; place-items: center; }
+.viewer-stage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center; user-select: none; -webkit-user-select: none; transition: transform 80ms linear; }
+.viewer-dots { position: static; display: flex; gap: 6px; transform: none; left: auto; right: auto; bottom: auto; padding: 0; background: none; }
+.viewer-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--chip-line); }
+.viewer-dots i.on { background: var(--fg); }
+.viewer .ic:disabled { opacity: .3; }
+@media (prefers-reduced-motion: reduce) { .viewer-stage img { transition: none; } }

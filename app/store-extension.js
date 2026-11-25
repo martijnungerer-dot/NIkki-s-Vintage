@@ -291,11 +291,16 @@
     if (!axis) {
       var now = Date.now();
       if (now - g.lastTap < 320) {
+        clearTimeout(g.viewerTimer);
         g.lastTap = 0; S.zoom = !S.zoom;
         var slide = $('track').children[S.photo], pic = slide.firstElementChild, r = photo.getBoundingClientRect();
         pic.style.transformOrigin = Math.round((e.clientX - r.left) / r.width * 100) + '% ' + Math.round((e.clientY - r.top) / r.height * 100) + '%';
         slide.classList.toggle('zoomed', S.zoom);
-      } else g.lastTap = now;
+      } else {
+        g.lastTap = now;
+        // One tap: the photo full screen, where Nikki and visitors can zoom in (Martijn, 25 November 2026).
+        clearTimeout(g.viewerTimer); g.viewerTimer = setTimeout(function () { if (!S.zoom) openViewer(S.photo); }, 320);
+      }
       place(0); return;
     }
     if (S.zoom) { place(0); return; }
@@ -303,6 +308,83 @@
     else if (axis === 'y' && Math.abs(dy) > 50) goItem((S.item + (dy < 0 ? 1 : -1) + N) % N);
     else place(0);
   });
+  // ---- Photo full screen with zoom: pinch or double tap to zoom, drag to look around, swipe for the next photo. ----
+  var viewer = null;
+  function openViewer(at) {
+    var it = ITEMS[S.item]; if (!it || !it.images.length || S.open) return;
+    var v = { at: at, scale: 1, x: 0, y: 0, pointers: new Map(), pinch: null, drag: null, lastTap: 0, opener: document.activeElement };
+    var el = document.createElement('div');
+    el.className = 'viewer'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Foto’s van ' + it.title);
+    el.innerHTML = '<div class="viewer-top"><button type="button" class="ic" data-viewer="close" aria-label="Sluiten">' + CLOSE + '</button></div>' +
+      '<div class="viewer-stage"><img alt="" draggable="false"></div>' +
+      '<div class="viewer-bar"><button type="button" class="ic" data-viewer="prev" aria-label="Vorige foto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+      '<div class="dots viewer-dots" role="img"></div>' +
+      '<button type="button" class="ic" data-viewer="next" aria-label="Volgende foto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>';
+    ph.appendChild(el); viewer = v; v.el = el; v.img = el.querySelector('img'); v.stage = el.querySelector('.viewer-stage');
+    function apply() { v.img.style.transform = 'translate(' + v.x + 'px,' + v.y + 'px) scale(' + v.scale + ')'; }
+    function clamp() {
+      var r = v.stage.getBoundingClientRect(), mx = r.width * (v.scale - 1) / 2, my = r.height * (v.scale - 1) / 2;
+      v.x = Math.max(-mx, Math.min(mx, v.x)); v.y = Math.max(-my, Math.min(my, v.y));
+    }
+    function show(i) {
+      var n = it.images.length; v.at = (i + n) % n; v.scale = 1; v.x = 0; v.y = 0;
+      v.img.src = it.images[v.at].src; v.img.alt = (it.images[v.at].role || it.title) + ', foto ' + (v.at + 1) + ' van ' + n; apply();
+      var d = ''; for (var k = 0; k < n; k++) d += '<i' + (k === v.at ? ' class="on"' : '') + '></i>';
+      var dots = el.querySelector('.viewer-dots'); dots.innerHTML = d; dots.setAttribute('aria-label', 'Foto ' + (v.at + 1) + ' van ' + n);
+      el.querySelectorAll('[data-viewer=prev],[data-viewer=next]').forEach(function (b) { b.disabled = n < 2; });
+    }
+    function zoomAt(scale, cx, cy) {
+      var r = v.stage.getBoundingClientRect(), ox = cx - (r.left + r.width / 2), oy = cy - (r.top + r.height / 2), k = scale / v.scale;
+      v.x = ox - (ox - v.x) * k; v.y = oy - (oy - v.y) * k; v.scale = scale; clamp(); apply();
+    }
+    v.close = function () {
+      el.remove(); viewer = null; document.removeEventListener('keydown', v.key);
+      if (v.opener && v.opener.focus) v.opener.focus({ preventScroll: true });
+      if (S.photo !== v.at) { S.photo = v.at; place(0); }
+    };
+    v.key = function (e) { if (e.key === 'Escape') v.close(); else if (e.key === 'ArrowLeft') show(v.at - 1); else if (e.key === 'ArrowRight') show(v.at + 1); };
+    document.addEventListener('keydown', v.key);
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-viewer]'); if (!b) return;
+      var a = b.getAttribute('data-viewer');
+      if (a === 'close') v.close(); else if (a === 'prev') show(v.at - 1); else if (a === 'next') show(v.at + 1);
+    });
+    v.stage.addEventListener('pointerdown', function (e) {
+      v.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { v.stage.setPointerCapture(e.pointerId); } catch (err) {}
+      if (v.pointers.size === 2) {
+        var p = Array.from(v.pointers.values());
+        v.pinch = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), scale: v.scale }; v.drag = null;
+      } else v.drag = { x: e.clientX, y: e.clientY, ox: v.x, oy: v.y, moved: false };
+    });
+    v.stage.addEventListener('pointermove', function (e) {
+      if (!v.pointers.has(e.pointerId)) return;
+      v.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (v.pinch && v.pointers.size === 2) {
+        var p = Array.from(v.pointers.values()), d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        zoomAt(Math.max(1, Math.min(4, v.pinch.scale * d / v.pinch.d)), (p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2);
+      } else if (v.drag) {
+        var dx = e.clientX - v.drag.x, dy = e.clientY - v.drag.y;
+        if (Math.abs(dx) + Math.abs(dy) > 8) v.drag.moved = true;
+        if (v.scale > 1) { v.x = v.drag.ox + dx; v.y = v.drag.oy + dy; clamp(); apply(); }
+      }
+    });
+    function up(e) {
+      if (!v.pointers.has(e.pointerId)) return;
+      v.pointers.delete(e.pointerId);
+      if (v.pinch) { if (v.pointers.size < 2) v.pinch = null; v.drag = null; return; }
+      var d = v.drag; v.drag = null; if (!d) return;
+      var dx = e.clientX - d.x;
+      if (!d.moved) {
+        var now = Date.now();
+        if (now - v.lastTap < 320) { v.lastTap = 0; if (v.scale > 1) { v.scale = 1; v.x = 0; v.y = 0; apply(); } else zoomAt(2.5, e.clientX, e.clientY); }
+        else v.lastTap = now;
+      } else if (v.scale === 1 && Math.abs(dx) > 60) show(v.at + (dx < 0 ? 1 : -1));
+    }
+    v.stage.addEventListener('pointerup', up); v.stage.addEventListener('pointercancel', up);
+    show(at); el.querySelector('[data-viewer=close]').focus({ preventScroll: true });
+  }
+
   photo.addEventListener('wheel', function (e) {
     if (!N || S.open || Math.abs(e.deltaY) < 30) return;
     e.preventDefault();

@@ -2,6 +2,7 @@
   // Mijn smaak: local learning and controls, using the existing taste and shop contracts.
   var shop = window.NikkiShop, api = shop.api;
   var P = window.NikkiTaste.profile, A = window.NikkiTaste.aggregate;
+  var adding = false;
   var currentKey = null, pressed = null, storageFailed = false, scrollToRestore = null, rawCache = null, readFailed = false;
   // Release state for the pressed more/less button (memory only, per piece; see undo()).
   var base = null, log = [], ownRaw = null, external = false;
@@ -117,6 +118,29 @@
       return Math.abs(b.weight) - Math.abs(a.weight) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
     });
   }
+  function thumb(sign) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" role="img" aria-label="' + (sign > 0 ? 'Meer van' : 'Minder van') + '"><path d="' + THUMB[sign > 0 ? 'more' : 'less'] + '"/></svg>';
+  }
+  // A bounded, deterministic pool from existing public feature dimensions. Species is not a
+  // supported profile dimension; never disguise it as material or extend the server payload.
+  function catalogChoices(profile) {
+    var dimensions = ['material', 'colour', 'model', 'length', 'fur'], groups = {};
+    dimensions.forEach(function (d) { groups[d] = new Map(); });
+    api.items().forEach(function (item) {
+      A.featuresOf(item).forEach(function (pair) {
+        var dimension = pair[0].split(':')[0];
+        if (!groups[dimension] || (dimension === 'fur' && !FUR[pair[0].slice(4)])) return;
+        if (!groups[dimension].has(pair[0])) groups[dimension].set(pair[0], { key: pair[0], label: pair[1], dimension: dimension });
+      });
+    });
+    var lists = dimensions.map(function (d) { return Array.from(groups[d].values()).sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; }); });
+    var pool = [];
+    for (var i = 0; pool.length < 12 && lists.some(function (list) { return i < list.length; }); i++) {
+      lists.forEach(function (list) { if (list[i] && pool.length < 12) pool.push(list[i]); });
+    }
+    var present = new Set(preferences(profile).filter(function (entry) { return entry.weight !== 0; }).map(function (entry) { return entry.key; }));
+    return pool.filter(function (entry) { return !present.has(entry.key); });
+  }
   shop.registerScreen('Mijn smaak', {
     render: function (api) {
       var profile = load(), esc = api.esc;
@@ -131,22 +155,39 @@
         scrollToRestore = null;
       });
       var entries = preferences(profile);
-      function section(title, sign) {
+      function section(sign) {
         var list = entries.filter(function (entry) { return entry.weight * sign > 0; });
-        return list.length ? '<section class="taste-section"><h2>' + esc(title) + '</h2><ul>' + list.map(function (entry) {
+        return list.length ? '<ul class="taste-chips" aria-label="' + (sign > 0 ? 'Meer van' : 'Minder van') + '">' + list.map(function (entry) {
           var shown = readable(entry.key, entry.label);
-          return '<li class="line"><span class="taste-label">' + esc(shown.text) + '</span>' + (shown.kind ? '<span class="taste-kind muted">' + shown.kind + '</span>' : '') +
+          return '<li class="taste-chip">' + thumb(sign) + '<span class="taste-label">' + esc(shown.text) + '</span>' + (shown.kind ? '<span class="taste-kind muted">' + esc(shown.kind) + '</span>' : '') +
             '<button type="button" class="ic" data-act="taste-forget" data-key="' + esc(entry.key) + '" aria-label="' + esc('Vergeet ' + shown.text) + '">' + api.CLOSE + '</button></li>';
-        }).join('') + '</ul></section>' : '';
+        }).join('') + '</ul>' : '';
       }
+      var choices = catalogChoices(profile);
       return '<div class="taste-window"><button type="button" class="taste-toggle line" role="switch" aria-checked="' + profile.enabled + '" data-act="taste-enable"><span>Persoonlijke volgorde</span><span class="taste-switch" aria-hidden="true"></span></button>' +
-        '<p class="taste-note muted">Je voorkeuren blijven in deze browser.</p>' +
         (storageFailed ? '<p class="taste-note" role="status">Opslaan lukt niet. Controleer of browseropslag beschikbaar is.</p>' : '') +
-        (entries.length ? section('Meer van', 1) + section('Minder van', -1) : '<p class="taste-empty muted">Nog geen voorkeuren. Hartjes, je winkelmand en meer/minder zoals dit vullen dit vanzelf.</p>') +
+        section(1) + section(-1) +
+        // No plus when there is nothing left to add: an empty list would look broken.
+        (choices.length ? '<button type="button" class="ic taste-add" data-act="taste-picker" aria-label="Voorkeur toevoegen" aria-expanded="' + adding + '" aria-controls="taste-choices"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></button>' : '') +
+        '<div id="taste-choices" class="taste-choices"' + (adding ? '' : ' hidden') + '>' + (adding ? choices.map(function (entry) {
+          var shown = readable(entry.key, entry.label);
+          return '<button type="button" class="taste-choice" data-act="taste-add" data-key="' + esc(entry.key) + '" aria-label="' + esc('Meer van ' + shown.text + (shown.kind ? ', ' + shown.kind : '')) + '"><span>' + esc(shown.text) + '</span>' + (shown.kind ? '<span class="taste-kind muted">' + esc(shown.kind) + '</span>' : '') + '</button>';
+        }).join('') : '') + '</div>' +
         '<button type="button" class="checkout taste-clear" data-act="taste-clear">Wis alles</button></div>';
     },
     action: function (act, button, api) {
-      if (!['taste-clear', 'taste-forget', 'taste-enable'].includes(act)) return;
+      if (!['taste-clear', 'taste-forget', 'taste-enable', 'taste-picker', 'taste-add'].includes(act)) return;
+      if (act === 'taste-picker') {
+        adding = !adding; api.refresh();
+        var focus = document.querySelector(adding ? '[data-act=taste-add]' : '[data-act=taste-picker]') || document.querySelector('[data-act=taste-picker]');
+        // The first choice may sit below the visible part of the panel: let focus scroll it into view.
+        if (focus) { if (adding) { focus.focus({ preventScroll: true }); focus.scrollIntoView({ block: 'nearest' }); } else focus.focus({ preventScroll: true }); }
+        return;
+      }
+      if (act === 'taste-add') {
+        var choice = catalogChoices(load()).find(function (entry) { return entry.key === button.dataset.key; });
+        if (!choice) return;
+      }
       var panel = document.querySelector('.taste-window'), scroll = panel.scrollTop;
       var buttons = Array.from(panel.querySelectorAll('[data-act="taste-forget"]')), index = buttons.indexOf(button);
       var neighbour = buttons[index + 1] || buttons[index - 1];
@@ -156,9 +197,11 @@
         var written = false;
         P.clear({ setItem: function (key, value) { storage.setItem(key, value); written = true; } }, Date.now(), load().enabled);
         storageFailed = !written;
-      } else if (act === 'taste-forget') apply({ type: 'forget', key: button.dataset.key });
+      } else if (act === 'taste-add') apply({ type: 'filter', dimension: choice.dimension, value: choice.label, mode: 'include', on: true });
+      else if (act === 'taste-forget') apply({ type: 'forget', key: button.dataset.key });
       else if (act === 'taste-enable') apply({ type: 'enable', on: !load().enabled });
       if (!storageFailed) {
+        if (act === 'taste-add' || act === 'taste-clear') adding = false;
         pressed = null; base = null; log = [];
         syncPhoto();
         if (act === 'taste-clear') scrollToRestore = 0;
@@ -170,6 +213,7 @@
         var next = neighbour && Array.from(panel.querySelectorAll('[data-act="taste-forget"]')).find(function (b) { return b.dataset.key === neighbour.dataset.key; });
         (next || panel.querySelector('[data-act="taste-enable"]')).focus({ preventScroll: true });
       }
+      if (act === 'taste-add') (panel.querySelector(storageFailed ? '[data-act=taste-add]' : '[data-act=taste-picker]') || panel.querySelector('[data-act=taste-picker]') || panel.querySelector('[data-act=taste-enable]')).focus({ preventScroll: true });
       panel.scrollTop = act === 'taste-clear' && !storageFailed ? 0 : scroll;
     }
   });

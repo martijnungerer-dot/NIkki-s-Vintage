@@ -24,10 +24,10 @@ Gelezen uit `public.review_notes` (records 13–37, alleen lezen) en één maila
 | 30 | Bijzonderheden: standaardkenmerken apart, en ruimte voor het verhaal (herkomst, tijd) | **Voorstel Martijn**: indeling van de vragen. |
 | 31 | Tekst onder elkaar (overzicht) | Opgelost: lange tekst staat onder zijn kopje. |
 | 32 | Foto staat niet goed in beeld (winkel) | **Voorstel Martijn** (winkel voor bezoekers). |
-| 33 | Op de foto klikken om in te zoomen (winkel) | **Voorstel Martijn** (winkel). |
-| 34 | Titel niet goed zichtbaar (winkel) | **Voorstel Martijn** (winkel). |
-| 35 | "Nog geen voorkeuren…" onduidelijk (Mijn smaak) | **Voorstel Martijn** (winkeltekst). |
-| 36 | Tekst gaat door elkaar heen (informatievenster winkel) | **Voorstel Martijn** (winkel). |
+| 33 | Op de foto klikken om in te zoomen (winkel) | Opgelost (PR #71, akkoord Martijn 25 november): één tik opent de foto schermvullend met inzoomen. |
+| 34 | Titel niet goed zichtbaar (winkel) | Stijlkeuze bij Nikki: vijf varianten als plaatjes gemaild op 25 november; wacht op haar antwoord. |
+| 35 | "Nog geen voorkeuren…" onduidelijk (Mijn smaak) | In PR (Martijn, 25–26 november): geen uitlegtekst meer; voorkeuren als kaartjes met duimpje, toevoegen via een vaste keuzelijst uit de collectie. Gebouwd door Codex (issue #72), aangevuld door Claude. |
+| 36 | Tekst gaat door elkaar heen (informatievenster winkel) | Opgelost (PR #71): een lange titel blijft boven de tekst. |
 | 37 | Winkelmandje ontbreekt op deze pagina (winkel) | **Voorstel Martijn** (winkel). |
 | mail | Standaard lettertype in de mail | Opgelost in de instellingen van de dagelijkse controle (geen code). |
 

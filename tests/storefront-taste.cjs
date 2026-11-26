@@ -236,8 +236,9 @@ module.exports = async function ({context, width, output, personalise}) {
 
  // A large catalogue still offers a fixed pool of at most twelve, and failed adds keep state.
  await shop.evaluate(()=>{const source=NikkiShop.api.items()[0];NikkiStore.replace(Array.from({length:30},(_,i)=>({...source,key:'10000000-0000-4000-8000-'+String(i).padStart(12,'0'),material:'Materiaal '+i,colour:'Kleur '+i})));});
- await open();await shop.locator('[data-act=taste-picker]').click();
+ await open();await shop.locator('[data-act=taste-picker]').focus();await page.keyboard.press('Enter');
  assert.equal(await shop.locator('[data-act=taste-add]').count(),12,'large catalogue stays bounded');
+ assert.ok(await shop.evaluate(()=>{const el=document.activeElement,box=el.getBoundingClientRect(),panel=document.querySelector('.taste-window').getBoundingClientRect();return el.dataset.act==='taste-add'&&box.top>=panel.top-1&&box.bottom<=panel.bottom+1;}),'focused first choice is visible');
  const beforeFailedAdd=await read(),beforeFailedRefresh=await refreshes();
  await shop.evaluate(()=>{window.savedSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='nikki-taste')throw Error('quota');return window.savedSet.call(this,k,v);};});
  try {
@@ -249,6 +250,8 @@ module.exports = async function ({context, width, output, personalise}) {
  await close();
  await shop.evaluate(()=>window.NikkiStore.replace([],[]));
  assert.ok(await more.isHidden());assert.ok(await less.isHidden());
+ // Nothing left to add: no plus button that opens an empty list.
+ await open();assert.equal(await shop.locator('[data-act=taste-picker]').count(),0,'no plus without choices');await close();
  // Restore shared fixture state for the remainder of the existing suite.
  await page.evaluate(()=>{localStorage.removeItem('nikki-taste');sessionStorage.clear();});
  await page.close();

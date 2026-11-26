@@ -167,7 +167,8 @@
       return '<div class="taste-window"><button type="button" class="taste-toggle line" role="switch" aria-checked="' + profile.enabled + '" data-act="taste-enable"><span>Persoonlijke volgorde</span><span class="taste-switch" aria-hidden="true"></span></button>' +
         (storageFailed ? '<p class="taste-note" role="status">Opslaan lukt niet. Controleer of browseropslag beschikbaar is.</p>' : '') +
         section(1) + section(-1) +
-        '<button type="button" class="ic taste-add" data-act="taste-picker" aria-label="Voorkeur toevoegen" aria-expanded="' + adding + '" aria-controls="taste-choices"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></button>' +
+        // No plus when there is nothing left to add: an empty list would look broken.
+        (choices.length ? '<button type="button" class="ic taste-add" data-act="taste-picker" aria-label="Voorkeur toevoegen" aria-expanded="' + adding + '" aria-controls="taste-choices"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></button>' : '') +
         '<div id="taste-choices" class="taste-choices"' + (adding ? '' : ' hidden') + '>' + (adding ? choices.map(function (entry) {
           var shown = readable(entry.key, entry.label);
           return '<button type="button" class="taste-choice" data-act="taste-add" data-key="' + esc(entry.key) + '" aria-label="' + esc('Meer van ' + shown.text + (shown.kind ? ', ' + shown.kind : '')) + '"><span>' + esc(shown.text) + '</span>' + (shown.kind ? '<span class="taste-kind muted">' + esc(shown.kind) + '</span>' : '') + '</button>';
@@ -178,8 +179,9 @@
       if (!['taste-clear', 'taste-forget', 'taste-enable', 'taste-picker', 'taste-add'].includes(act)) return;
       if (act === 'taste-picker') {
         adding = !adding; api.refresh();
-        var focus = document.querySelector(adding ? '[data-act=taste-add]' : '[data-act=taste-picker]');
-        (focus || document.querySelector('[data-act=taste-picker]')).focus({ preventScroll: true });
+        var focus = document.querySelector(adding ? '[data-act=taste-add]' : '[data-act=taste-picker]') || document.querySelector('[data-act=taste-picker]');
+        // The first choice may sit below the visible part of the panel: let focus scroll it into view.
+        if (focus) { if (adding) { focus.focus({ preventScroll: true }); focus.scrollIntoView({ block: 'nearest' }); } else focus.focus({ preventScroll: true }); }
         return;
       }
       if (act === 'taste-add') {
@@ -211,7 +213,7 @@
         var next = neighbour && Array.from(panel.querySelectorAll('[data-act="taste-forget"]')).find(function (b) { return b.dataset.key === neighbour.dataset.key; });
         (next || panel.querySelector('[data-act="taste-enable"]')).focus({ preventScroll: true });
       }
-      if (act === 'taste-add') (panel.querySelector(storageFailed ? '[data-act=taste-add]' : '[data-act=taste-picker]') || panel.querySelector('[data-act=taste-picker]')).focus({ preventScroll: true });
+      if (act === 'taste-add') (panel.querySelector(storageFailed ? '[data-act=taste-add]' : '[data-act=taste-picker]') || panel.querySelector('[data-act=taste-picker]') || panel.querySelector('[data-act=taste-enable]')).focus({ preventScroll: true });
       panel.scrollTop = act === 'taste-clear' && !storageFailed ? 0 : scroll;
     }
   });

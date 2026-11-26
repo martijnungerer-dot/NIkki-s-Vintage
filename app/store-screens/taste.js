@@ -138,7 +138,7 @@
     for (var i = 0; pool.length < 12 && lists.some(function (list) { return i < list.length; }); i++) {
       lists.forEach(function (list) { if (list[i] && pool.length < 12) pool.push(list[i]); });
     }
-    var present = new Set(preferences(profile).filter(function (entry) { return entry.weight > 0; }).map(function (entry) { return entry.key; }));
+    var present = new Set(preferences(profile).filter(function (entry) { return entry.weight !== 0; }).map(function (entry) { return entry.key; }));
     return pool.filter(function (entry) { return !present.has(entry.key); });
   }
   shop.registerScreen('Mijn smaak', {

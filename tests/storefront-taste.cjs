@@ -224,6 +224,15 @@ module.exports = async function ({context, width, output, personalise}) {
  assert.deepEqual(await read(),intact,'forged choice is rejected before save');
  await shop.locator('[data-act=taste-picker]').click();
  await close();
+ // Something marked "less" is not offered again as "more" (Martijn, 26 November 2026).
+ const lessKey=offered[1]||offered[0];
+ await shop.evaluate(key=>{const p=JSON.parse(localStorage.getItem('nikki-taste'));p.features[key]={w:-1,t:Date.now(),label:key.slice(key.indexOf(':')+1)};localStorage.setItem('nikki-taste',JSON.stringify(p));},lessKey);
+ await open();await shop.locator('[data-act=taste-picker]').click();
+ assert.ok(await shop.locator('.taste-chip svg[aria-label="Minder van"]').count()>0,'less preference shown');
+ assert.ok(!(await shop.locator('[data-act=taste-add]').evaluateAll(b=>b.map(x=>x.dataset.key))).includes(lessKey),'a less preference is not offered in the plus list');
+ await shop.locator('[data-act=taste-forget]').evaluateAll((buttons,key)=>buttons.find(b=>b.dataset.key===key).click(),lessKey);
+ await shop.locator('[data-act=taste-picker]').click();
+ await close();
 
  // A large catalogue still offers a fixed pool of at most twelve, and failed adds keep state.
  await shop.evaluate(()=>{const source=NikkiShop.api.items()[0];NikkiStore.replace(Array.from({length:30},(_,i)=>({...source,key:'10000000-0000-4000-8000-'+String(i).padStart(12,'0'),material:'Materiaal '+i,colour:'Kleur '+i})));});

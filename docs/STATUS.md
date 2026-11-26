@@ -10,6 +10,11 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 26 november 2026 — Mijn smaak zonder tekst (PR, wacht op akkoord Martijn)
+- Codex bouwde issue #72 op branch `codex/issue-72-taste-chips` (kaartjes met duimpje en kruisje, plusknop met hooguit twaalf kenmerken uit de collectie, geen vrije invoer). Claude controleerde de wijziging en voegde toe dat iets met "minder van" niet in het plus-lijstje staat, met test.
+- Gecontroleerd lokaal (Node 22): `npm test` 116/116, `npm run check`, volledige `npm run test:browser`.
+### 25 november 2026 — winkel: titel en inzoomen (PR #71)
+- PR #71 gemerged na review door Codex (twee punten opgelost: focus blijft in het fotovenster, puntjes in het midden). Live gecontroleerd: `views.js` bevat de nieuwe code, de pagina laadt zonder JavaScript-fouten. Nikki gemaild met vijf titelvarianten als plaatjes.
 ### 24 november 2026 — feedback Nikki (25 opmerkingen, 1 mail)
 - Klein opgelost en zelf gemerged volgens "Dagelijkse controle": PR #69 (keuzes en teksten in Nieuw stuk) en de PR met opmaakreparaties (scrollen, getypte tekst, overzicht). Beide staan direct live via Cloudflare. Details en de voorstellen voor Martijn: [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md).
 - Gecontroleerd lokaal (Node 22): `npm test` 116/116, volledige `npm run test:browser` inclusief `tests/nikki-24-november-browser.cjs`.

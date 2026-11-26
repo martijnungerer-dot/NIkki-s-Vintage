@@ -45,6 +45,7 @@ Uitgewerkt in [LEREN-VAN-NIKKI.md](LEREN-VAN-NIKKI.md) (Martijn, 22 november 202
 ## Goede ideeën voor later
 
 - **Verder werken op een ander apparaat** (Martijn, 22 november 2026): concepten staan nu alleen op het toestel waar ze zijn gemaakt. Later op de server bewaren (privé, alleen beheer, met privéfoto-opslag), zodat Nikki op de laptop verder kan met een stuk van haar telefoon en een concept niet meer verloren kan gaan bij het wissen van browsergegevens.
+- **Bontsoort als voorkeur in Mijn smaak** (Martijn en Claude, 26 november 2026): nu kent Mijn smaak alleen met of zonder bont. Oppakken zodra er een stuk of twintig stukken met een ingevulde bontsoort zijn; vraagt een uitbreiding van het smaakprofiel en de personalisatie.
 - **Merk in de winkel tonen**: het veld `brand` bestaat sinds 22 november; tonen in het informatievenster is een winkelwijziging met akkoord.
 
 ## Eerste taak na de fundering

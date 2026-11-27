@@ -1,5 +1,18 @@
 # Opvolging van testfeedback (review_notes)
 
+## Ronde 4: acht opmerkingen van 27 november 2026
+
+Gelezen uit `public.review_notes` (records 38–45, alleen lezen), telefoon 384 × 693, rond 11:00. Geen mail van Nikki. Logboek: twee analyses in Nieuw stuk (10:53 en 10:59 UTC) en één `begrijp` en één `personalise`, allemaal geslaagd; geen "analyse failed" of "analyse retry". Niets klein genoeg om zelf te repareren: alles raakt de winkel, de Gemini-functie of is een nieuwe functie.
+
+| # | Opmerking (scherm) | Afhandeling |
+|---|---|---|
+| 38, 44 | Hele foto tonen zonder te hoeven tikken (winkel) | Ligt al bij Martijn als voorstel (#32, foto niet goed in beeld). Nu drie keer genoemd. |
+| 45 | Klein fotootje toont de mouw in plaats van de hele jas (winkel) | **Voorstel Martijn**: oorzaak is de goedgekeurde "hoofdfoto per bezoeker"; Gemini mag nu elke foto kiezen, ook een close-up. Aanbeveling: alleen voor- of achterkant als hoofdfoto toestaan (functie `personalise`). |
+| 39, 40 | "Zakken" ontbreekt bij "Wat staat er op foto …" (Nieuw stuk) | **Voorstel Martijn**: de lijst staat ook in de Gemini-functie `analyse`, dus de functie moet opnieuw uitgerold worden. Aanbeveling: toevoegen, met een gerichte vraag over de zakken. |
+| 41 | Analyse gaat niet door als ze ondertussen iets anders op de telefoon doet (Nieuw stuk) | **Voorstel Martijn**: de telefoon pauzeert de pagina op de achtergrond; de server gaf wel antwoord (10:59, geslaagd). Aanbeveling: het antwoord kort op de server bewaren en bij terugkeer ophalen, zodat er niet opnieuw betaald hoeft te worden. |
+| 42 | Maatsuggestie (Nieuw stuk) | **Voorstel Martijn** (nieuwe functie): maten uit foto's zijn onbetrouwbaar zonder meetlint in beeld; aanbeveling voorlopig niet, hooguit later met een meetlint op de foto. |
+| 43 | Prijssuggestie (Nieuw stuk) | Ligt al bij Martijn (#23). |
+
 ## Ronde 3: 25 opmerkingen en één mail van 24 november 2026
 
 Gelezen uit `public.review_notes` (records 13–37, alleen lezen) en één mailantwoord op het voorstelmailtje. Telefoon 384 × 693. Klein opgelost en zelf gemerged volgens "Dagelijkse controle"; groot voorgelegd aan Martijn.

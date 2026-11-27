@@ -10,6 +10,9 @@ Korte logboekregels, nieuwste bovenaan. Alleen feiten die zijn gecontroleerd; pl
 
 ## Logboek
 
+### 27 november 2026 — dagelijkse controle
+- Acht nieuwe opmerkingen van Nikki (records 38–45); geen mail. Alles voorgelegd aan Martijn of lag er al; niets gerepareerd. Zie [FEEDBACK-OPVOLGING.md](FEEDBACK-OPVOLGING.md).
+- Gecontroleerd: live website laadt zonder JavaScript-fouten op 390 px en `views.js` is gelijk aan `main`; CI op `main` groen; logboek Edge Functions zonder fouten.
 ### 26 november 2026 — Mijn smaak zonder tekst (PR, wacht op akkoord Martijn)
 - Codex bouwde issue #72 op branch `codex/issue-72-taste-chips` (kaartjes met duimpje en kruisje, plusknop met hooguit twaalf kenmerken uit de collectie, geen vrije invoer). Claude controleerde de wijziging en voegde toe dat iets met "minder van" niet in het plus-lijstje staat, met test.
 - Gecontroleerd lokaal (Node 22): `npm test` 116/116, `npm run check`, volledige `npm run test:browser`.
